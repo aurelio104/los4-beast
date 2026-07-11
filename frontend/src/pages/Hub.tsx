@@ -112,8 +112,15 @@ export default function Hub() {
   if (booting || !user) {
     return (
       <AppShell>
-        <div className="min-h-dvh flex items-center justify-center">
-          <RetoLogo size="lg" animate glow />
+        <div className="app-container py-6 pb-24 space-y-4 animate-pulse">
+          <div className="h-36 rounded-3xl bg-white/5" />
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 2, 3, 4, 5, 6].map((n) => (
+              <div key={n} className="h-16 rounded-2xl bg-white/5" />
+            ))}
+          </div>
+          <div className="h-48 rounded-3xl bg-white/5" />
+          <div className="h-32 rounded-3xl bg-white/5" />
         </div>
       </AppShell>
     );

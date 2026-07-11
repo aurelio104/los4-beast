@@ -19,11 +19,18 @@ html, body, #root {
   margin: 0;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+
 body {
   font-family: var(--font-display);
   background: #050508;
   color: #f8fafc;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
+  touch-action: manipulation;
 }
 
 ::selection {
@@ -238,4 +245,59 @@ input:focus, select:focus, textarea:focus {
     overflow-x: visible;
     scroll-snap-type: none;
   }
+}
+
+/* —— Rendimiento PWA / móvil —— */
+.perf-card {
+  contain: layout style paint;
+}
+
+.scroll-contain {
+  contain: strict;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.feed-row-in {
+  animation: feed-in 0.32s ease both;
+}
+
+@keyframes feed-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .glass-btn:hover {
+    transform: none;
+  }
+
+  .shimmer-bar {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-data: reduce) {
+  .glass, .glass-strong, .glass-hero {
+    backdrop-filter: blur(12px) saturate(120%);
+    -webkit-backdrop-filter: blur(12px) saturate(120%);
+  }
+}
+
+@media (max-width: 640px) {
+  .glass, .glass-strong {
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+  }
+}
+
+button, a, [role="button"] {
+  touch-action: manipulation;
 }

@@ -3,19 +3,34 @@ import { getPreferences } from '../lib/preferences';
 
 const BGM_SRC = '/audio/reto-bgm.mp3';
 
-/** Reproduce música según la preferencia del perfil (sin botón flotante). */
+/** Música de fondo — se inicia tras interacción o idle para no bloquear la carga. */
 export function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const nodesRef = useRef<{ osc: OscillatorNode[]; gain: GainNode } | null>(null);
   const [on, setOn] = useState(() => getPreferences().music);
   const [useFile, setUseFile] = useState(false);
+  const [booted, setBooted] = useState(false);
 
   useEffect(() => {
+    const boot = () => setBooted(true);
+    window.addEventListener('pointerdown', boot, { once: true, passive: true });
+    window.addEventListener('keydown', boot, { once: true });
+    const t = window.setTimeout(boot, 2800);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('pointerdown', boot);
+      window.removeEventListener('keydown', boot);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!booted) return;
+
     const audio = new Audio(BGM_SRC);
     audio.loop = true;
     audio.volume = 0.32;
-    audio.preload = 'metadata';
+    audio.preload = 'none';
     audioRef.current = audio;
 
     const onReady = () => setUseFile(true);
@@ -34,7 +49,7 @@ export function BackgroundMusic() {
       stopAmbient();
       audioRef.current = null;
     };
-  }, []);
+  }, [booted]);
 
   const stopAmbient = () => {
     nodesRef.current?.osc.forEach((o) => {
@@ -76,6 +91,7 @@ export function BackgroundMusic() {
   };
 
   useEffect(() => {
+    if (!booted) return;
     const audio = audioRef.current;
 
     if (!on) {
@@ -91,7 +107,7 @@ export function BackgroundMusic() {
       audio?.pause();
       startAmbient().catch(() => {});
     }
-  }, [on, useFile]);
+  }, [on, useFile, booted]);
 
   return null;
 }

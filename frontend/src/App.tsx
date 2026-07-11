@@ -1,26 +1,34 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import Hub from './pages/Hub';
 import Login from './pages/Login';
-import Join from './pages/Join';
-import Setup from './pages/Setup';
-import Arena from './pages/Arena';
-import Tienda from './pages/Tienda';
-import Admin from './pages/Admin';
-import WhatsAppAdmin from './pages/WhatsAppAdmin';
-import Eventos from './pages/Eventos';
-import Cofre from './pages/Cofre';
-import Confesion from './pages/Confesion';
-import Chat from './pages/Chat';
-import Perfil from './pages/Perfil';
-import Finale from './pages/Finale';
 import { BackgroundMusic } from './components/BackgroundMusic';
 import { PwaInstallGate } from './components/PwaInstallGate';
 import { SetupGate } from './components/SetupGate';
+import { RouteFallback } from './components/RouteFallback';
+import { SwUpdateToast } from './components/SwUpdateToast';
 import { isSetupDone } from './lib/setup';
+
+const Join = lazy(() => import('./pages/Join'));
+const Setup = lazy(() => import('./pages/Setup'));
+const Hub = lazy(() => import('./pages/Hub'));
+const Arena = lazy(() => import('./pages/Arena'));
+const Tienda = lazy(() => import('./pages/Tienda'));
+const Admin = lazy(() => import('./pages/Admin'));
+const WhatsAppAdmin = lazy(() => import('./pages/WhatsAppAdmin'));
+const Eventos = lazy(() => import('./pages/Eventos'));
+const Cofre = lazy(() => import('./pages/Cofre'));
+const Confesion = lazy(() => import('./pages/Confesion'));
+const Chat = lazy(() => import('./pages/Chat'));
+const Perfil = lazy(() => import('./pages/Perfil'));
+const Finale = lazy(() => import('./pages/Finale'));
+
+function Lazy({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<RouteFallback />}>{children}</Suspense>;
+}
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   if (!localStorage.getItem('token')) return <Navigate to="/login" replace />;
-  return <SetupGate>{children}</SetupGate>;
+  return <SetupGate><Lazy>{children}</Lazy></SetupGate>;
 }
 
 function getUserId(): string | null {
@@ -42,7 +50,7 @@ function AppRoutes() {
       {setupDone && <PwaInstallGate compactBanner={showInstallBanner} />}
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/join/:code" element={<Join />} />
+        <Route path="/join/:code" element={<Lazy><Join /></Lazy>} />
         <Route path="/setup" element={<PrivateRoute><Setup /></PrivateRoute>} />
         <Route path="/" element={<PrivateRoute><Hub /></PrivateRoute>} />
         <Route path="/arena" element={<PrivateRoute><Arena /></PrivateRoute>} />
@@ -65,6 +73,7 @@ export default function App() {
   return (
     <>
       <BackgroundMusic />
+      <SwUpdateToast />
       <AppRoutes />
     </>
   );

@@ -10,10 +10,19 @@ interface BeachVideoBackgroundProps {
 const POSTER = '/wallpapers/beach-poster.jpg';
 const VIDEO = '/wallpapers/beach-720.mp4';
 
+function prefersSaveData(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  if (conn?.saveData) return true;
+  return conn?.effectiveType === 'slow-2g' || conn?.effectiveType === '2g';
+}
+
 export function BeachVideoBackground({ variant = 'full', className = '' }: BeachVideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const [motionOk, setMotionOk] = useState(true);
   const [videoReady, setVideoReady] = useState(false);
+  const [allowVideo, setAllowVideo] = useState(() => !prefersSaveData());
 
   const isHero = variant === 'hero';
 
@@ -30,51 +39,53 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
   }, []);
 
   useEffect(() => {
+    const root = wrapRef.current;
+    if (!root || !allowVideo || !motionOk) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const video = videoRef.current;
+        if (!video) return;
+        if (entry.isIntersecting) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.08, rootMargin: '40px' }
+    );
+
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [allowVideo, motionOk]);
+
+  useEffect(() => {
     const video = videoRef.current;
-    if (!video || !motionOk) return;
+    if (!video || !motionOk || !allowVideo) return;
 
     const play = () => {
-      video.play().catch(() => {
-        /* autoplay bloqueado — poster visible */
-      });
+      if (!document.hidden) video.play().catch(() => {});
     };
 
     if (video.readyState >= 2) play();
     else video.addEventListener('loadeddata', play, { once: true });
 
     return () => video.removeEventListener('loadeddata', play);
-  }, [motionOk]);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !isHero) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!motionOk) return;
-        if (entry.isIntersecting) video.play().catch(() => {});
-        else video.pause();
-      },
-      { threshold: 0.15 }
-    );
-
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, [isHero, motionOk]);
+  }, [motionOk, allowVideo]);
 
   return (
-    <div className={`overflow-hidden pointer-events-none ${className}`} style={wrapStyle} aria-hidden>
+    <div ref={wrapRef} className={`overflow-hidden pointer-events-none ${className}`} style={wrapStyle} aria-hidden>
       <img
         src={POSTER}
         alt=""
         decoding="async"
-        fetchPriority={isHero ? 'high' : 'auto'}
+        fetchPriority={isHero ? 'high' : 'low'}
         loading={isHero ? 'eager' : 'lazy'}
         className="absolute inset-0 w-full h-full object-cover object-center scale-[1.02]"
         style={{ filter: 'saturate(1.08) contrast(1.04)' }}
       />
 
-      {motionOk && (
+      {motionOk && allowVideo && (
         <video
           ref={videoRef}
           className="absolute inset-0 w-full h-full object-cover object-center scale-[1.02] transition-opacity duration-700"
@@ -82,17 +93,13 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
             opacity: videoReady ? 1 : 0,
             filter: 'saturate(1.08) contrast(1.04)'
           }}
-          autoPlay
           muted
           loop
           playsInline
-          preload={isHero ? 'auto' : 'auto'}
+          preload={isHero ? 'metadata' : 'none'}
           poster={POSTER}
           onLoadedData={() => {
             setVideoReady(true);
-            videoRef.current?.play().catch(() => {});
-          }}
-          onCanPlay={() => {
             videoRef.current?.play().catch(() => {});
           }}
         >

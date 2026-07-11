@@ -1,10 +1,12 @@
-import { motion } from 'framer-motion';
 import { FeedItem, ACTION_LABELS } from '../types';
 import { formatDistanceToNow } from '../lib/time';
 import { formatFeedDetail } from '../lib/feedMeta';
 import { Avatar } from './Avatar';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 export function DramaFeed({ items }: { items: FeedItem[] }) {
+  const reducedMotion = useReducedMotion();
+
   if (!items.length) {
     return (
       <div className="text-center py-8 text-white/30 text-sm">
@@ -14,17 +16,14 @@ export function DramaFeed({ items }: { items: FeedItem[] }) {
   }
 
   return (
-    <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide">
+    <div className="space-y-2 max-h-64 overflow-y-auto scrollbar-hide scroll-contain">
       {items.map((item, i) => {
         const detail = formatFeedDetail(item);
-        return (
-          <motion.div
-            key={item.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06]"
-          >
+        const animate = !reducedMotion && i < 6;
+        const cls = 'flex items-center gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] feed-row';
+
+        const inner = (
+          <>
             <Avatar url={item.avatarUrl} emoji={item.avatarEmoji || '😎'} name={item.displayName} size="xs" />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-white/90">
@@ -40,7 +39,21 @@ export function DramaFeed({ items }: { items: FeedItem[] }) {
                 {item.pointsDelta > 0 ? '+' : ''}{item.pointsDelta}
               </span>
             )}
-          </motion.div>
+          </>
+        );
+
+        if (!animate) {
+          return <div key={item.id} className={cls}>{inner}</div>;
+        }
+
+        return (
+          <div
+            key={item.id}
+            className={`${cls} feed-row-in`}
+            style={{ animationDelay: `${i * 40}ms` }}
+          >
+            {inner}
+          </div>
         );
       })}
     </div>
