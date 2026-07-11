@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Lock, Unlock } from 'lucide-react';
+import { Lock, Unlock } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
+import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 import { celebrateChest } from '../lib/celebrate';
@@ -45,9 +46,7 @@ export default function Cofre() {
   return (
     <AppShell>
       <PageContainer>
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-6">
-          <ArrowLeft size={18} /> Hub
-        </button>
+        <PageTopBar onBack={() => navigate('/')} />
 
         <motion.div animate={{ rotate: [0, -3, 3, 0], scale: [1, 1.05, 1] }} transition={{ duration: 4, repeat: Infinity }} className="text-center mb-8">
           <span className="text-8xl block mb-4">{daysLeft <= 1 ? '🔓' : '📦'}</span>

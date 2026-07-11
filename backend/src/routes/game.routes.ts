@@ -598,3 +598,54 @@ gameRouter.delete('/profile/background', authMiddleware, async (req, res) => {
   });
   res.json({ success: true, user: publicUser(user) });
 });
+
+gameRouter.get('/stories', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  const { listStoryGroups } = await import('../lib/stories.js');
+  const users = await listStoryGroups(uid);
+  res.json({ success: true, users });
+});
+
+gameRouter.post('/stories', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  const { dataUrl, caption } = req.body as { dataUrl?: string; caption?: string };
+  if (!dataUrl) return res.status(400).json({ success: false, error: 'Falta la imagen' });
+
+  try {
+    const { createStory, listStoryGroups } = await import('../lib/stories.js');
+    const story = await createStory(uid, dataUrl, caption);
+    const users = await listStoryGroups(uid);
+    res.json({
+      success: true,
+      story: {
+        id: story.id,
+        mediaUrl: story.mediaUrl,
+        caption: story.caption,
+        createdAt: story.createdAt.toISOString(),
+        expiresAt: story.expiresAt.toISOString()
+      },
+      users
+    });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message || 'No se pudo publicar' });
+  }
+});
+
+gameRouter.post('/stories/:id/view', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  const { markStoryViewed } = await import('../lib/stories.js');
+  await markStoryViewed(String(req.params.id), uid);
+  res.json({ success: true });
+});
+
+gameRouter.delete('/stories/:id', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  try {
+    const { deleteStory, listStoryGroups } = await import('../lib/stories.js');
+    await deleteStory(String(req.params.id), uid);
+    const users = await listStoryGroups(uid);
+    res.json({ success: true, users });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message || 'Error' });
+  }
+});

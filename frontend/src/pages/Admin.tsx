@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Shield, Users, Zap, Bell, Eye, Megaphone, Send, MessageCircle, UserCog } from 'lucide-react';
+import { Shield, Users, Zap, Bell, Eye, Megaphone, Send, MessageCircle, UserCog } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
+import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 import { REWARDS } from '../types';
@@ -47,9 +48,7 @@ export default function Admin() {
   return (
     <AppShell>
       <PageContainer>
-        <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-6">
-          <ArrowLeft size={18} /> Hub
-        </button>
+        <PageTopBar onBack={() => navigate('/')} />
 
         <div className="flex items-center gap-3 mb-6">
           <Shield className="text-reto-gold" size={28} />

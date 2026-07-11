@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Trophy, Users } from 'lucide-react';
+import { Trophy, Users } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
+import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { CountdownTimer } from '../components/CountdownTimer';
 import { Avatar } from '../components/Avatar';
@@ -32,9 +33,7 @@ export default function Finale() {
   return (
     <AppShell background="beach">
       <PageContainer>
-        <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-6">
-          <ArrowLeft size={18} /> Hub
-        </button>
+        <PageTopBar onBack={() => navigate('/')} />
 
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center mb-8">
           <Trophy className="mx-auto text-reto-gold mb-3" size={48} />

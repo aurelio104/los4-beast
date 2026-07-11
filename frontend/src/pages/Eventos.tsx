@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, Zap } from 'lucide-react';
+import { Calendar, Zap } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
+import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 import { RetoEvent } from '../types';
@@ -32,9 +33,7 @@ export default function Eventos() {
   return (
     <AppShell>
       <PageContainer>
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-6">
-          <ArrowLeft size={18} /> Hub
-        </button>
+        <PageTopBar onBack={() => navigate('/')} />
 
         <h2 className="text-2xl font-black gradient-text mb-2">Calendario</h2>
         <p className="text-white/40 text-sm mb-6">Eventos cada 10 días hasta el 29 de agosto</p>

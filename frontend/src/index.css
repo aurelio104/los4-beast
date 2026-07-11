@@ -16,12 +16,15 @@
 
 html, body, #root {
   min-height: 100dvh;
+  min-height: 100svh;
   margin: 0;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
+  /* Evita que iOS restaure scroll raro entre pantallas */
+  scroll-behavior: auto;
 }
 
 body {
@@ -31,6 +34,8 @@ body {
   overflow-x: hidden;
   overscroll-behavior-y: none;
   touch-action: manipulation;
+  min-height: 100dvh;
+  min-height: 100svh;
 }
 
 ::selection {
@@ -204,7 +209,11 @@ input:focus, select:focus, textarea:focus {
 }
 
 .pt-safe {
-  padding-top: max(0.5rem, env(safe-area-inset-top));
+  padding-top: max(0.625rem, env(safe-area-inset-top));
+}
+
+.safe-top {
+  padding-top: max(0.625rem, env(safe-area-inset-top));
 }
 
 .app-container {
@@ -215,22 +224,119 @@ input:focus, select:focus, textarea:focus {
 }
 
 .page-shell {
-  padding-top: max(1.25rem, env(safe-area-inset-top));
+  padding-top: 0;
   padding-bottom: max(5.5rem, calc(4rem + env(safe-area-inset-bottom)));
 }
 
 .page-shell--tall {
-  padding-bottom: max(6.5rem, calc(5rem + env(safe-area-inset-bottom)));
+  padding-bottom: max(6rem, calc(4.5rem + env(safe-area-inset-bottom)));
 }
 
 .page-shell--tabbar {
-  padding-bottom: max(7rem, calc(5.5rem + env(safe-area-inset-bottom)));
+  padding-bottom: 0;
+}
+
+.page-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-inline: calc(-1 * max(1rem, env(safe-area-inset-left)));
+  padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
+  padding-top: max(0.625rem, env(safe-area-inset-top));
+  padding-bottom: 0.625rem;
+  margin-bottom: 0.75rem;
+  background: linear-gradient(180deg, rgba(5, 5, 8, 0.94) 0%, rgba(5, 5, 8, 0.72) 70%, transparent 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.page-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.375rem 0;
+  min-height: 2.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.page-back-btn:active {
+  opacity: 0.75;
+}
+
+/* Hub — viewport fijo: scroll solo en el contenido, nav abajo siempre visible */
+.hub-layout {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  height: 100dvh;
+  height: 100svh;
+  max-height: 100dvh;
+  max-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hub-layout__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: max(6rem, calc(5rem + env(safe-area-inset-bottom)));
+}
+
+.hero-section {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 0 1.75rem 1.75rem;
+  margin-inline: calc(-1 * max(1rem, env(safe-area-inset-left)));
+  padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
+  padding-top: max(0.625rem, env(safe-area-inset-top));
+  padding-bottom: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.hub-hero-card {
+  padding: clamp(0.875rem, 3vw, 1.5rem);
+}
+
+.hub-hero-card .countdown-row {
+  gap: clamp(0.25rem, 1.5vw, 0.75rem);
+}
+
+@media (max-height: 740px) {
+  .countdown-unit-box {
+    max-height: 4.25rem;
+  }
+
+  .countdown-unit-digit {
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+  }
+
+  .hub-hero-card {
+    padding: 0.75rem;
+  }
+
+  .hub-hero-tagline {
+    margin-top: 0.75rem !important;
+  }
 }
 
 .page-shell--chat {
-  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-top: 0;
   padding-bottom: max(5rem, calc(3rem + env(safe-area-inset-bottom)));
   min-height: 100dvh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
 }
@@ -286,8 +392,14 @@ input:focus, select:focus, textarea:focus {
   bottom: 0;
   inset-inline: 0;
   z-index: 50;
-  padding: 0.75rem;
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  padding: 0.5rem 0.75rem;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  background: linear-gradient(0deg, rgba(5, 5, 8, 0.88) 0%, rgba(5, 5, 8, 0.55) 65%, transparent 100%);
+  pointer-events: none;
+}
+
+.bottom-nav-bar .bottom-nav-inner {
+  pointer-events: auto;
 }
 
 .bottom-nav-inner {
@@ -311,7 +423,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .toast-above-nav {
-  bottom: max(6.5rem, calc(5.5rem + env(safe-area-inset-bottom))) !important;
+  bottom: max(5.75rem, calc(4.75rem + env(safe-area-inset-bottom))) !important;
 }
 
 .game-light {
@@ -416,6 +528,140 @@ input:focus, select:focus, textarea:focus {
     overflow-x: visible;
     scroll-snap-type: none;
   }
+}
+
+/* Historias — estilo Instagram */
+.story-strip__scroll {
+  display: flex;
+  gap: 0.625rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 0.125rem;
+  margin-inline: -0.25rem;
+  padding-inline: 0.25rem;
+}
+
+.story-strip__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.story-bubble {
+  width: 4.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+}
+
+.story-bubble__ring {
+  position: relative;
+  padding: 2.5px;
+  border-radius: 9999px;
+}
+
+.story-ring--active {
+  background: linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #ffbe0b 100%);
+}
+
+.story-ring--seen {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.story-ring--empty {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.story-bubble__avatar {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  background: #050508;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-bubble__avatar img,
+.story-bubble__avatar span {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.story-bubble__add {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 9999px;
+  background: #8338ec;
+  border: 2px solid #050508;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  pointer-events: none;
+}
+
+.story-bubble__label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  max-width: 4.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.story-viewer__progress-track {
+  height: 2px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+.story-viewer__progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: white;
+  transition: width 0.05s linear;
+}
+
+.story-viewer__header {
+  z-index: 2;
+}
+
+.story-viewer__media {
+  touch-action: manipulation;
+}
+
+.story-viewer__tap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 35%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.story-viewer__tap--left {
+  left: 0;
+}
+
+.story-viewer__tap--right {
+  right: 0;
 }
 
 /* —— Rendimiento PWA / móvil —— */

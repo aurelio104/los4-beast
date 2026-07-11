@@ -21,7 +21,7 @@ export function HubHeader({ displayName, avatarUrl, avatarEmoji, points }: HubHe
     <motion.header
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-5"
+      className="mb-3"
     >
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
+import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { Avatar } from '../components/Avatar';
 import { api } from '../lib/api';
@@ -79,9 +80,7 @@ export default function Chat() {
   return (
     <AppShell>
       <PageContainer variant="chat">
-        <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-4 shrink-0">
-          <ArrowLeft size={18} /> Hub
-        </button>
+        <PageTopBar onBack={() => navigate('/')} />
 
         <h2 className="text-page-title font-black gradient-text mb-1 shrink-0">Chat del grupo</h2>
         <p className="text-white/40 text-sm mb-4">Habla con los miembros del Reto · se actualiza solo</p>

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, MessageSquare } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
+import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 import { celebrateWin } from '../lib/celebrate';
@@ -46,9 +47,7 @@ export default function Confesion() {
   return (
     <AppShell>
       <PageContainer>
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-6">
-          <ArrowLeft size={18} /> Hub
-        </button>
+        <PageTopBar onBack={() => navigate('/')} />
 
         <h2 className="text-2xl font-black gradient-text mb-2">Confession Booth</h2>
         <p className="text-white/40 text-sm mb-6">Anónimo hasta el gran día · +20 Puntos</p>

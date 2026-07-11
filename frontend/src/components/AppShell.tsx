@@ -65,7 +65,7 @@ export function HeroSection({ children, className = '' }: { children: ReactNode;
   }, []);
 
   return (
-    <section className={`relative overflow-hidden rounded-b-[2rem] -mx-4 px-4 pt-2 pb-6 mb-5 ${className}`}>
+    <section className={`hero-section ${className}`}>
       <BackgroundLayer mode={resolved.mode} customUrl={resolved.customUrl} variant="hero" />
       <div className="relative z-10">{children}</div>
     </section>

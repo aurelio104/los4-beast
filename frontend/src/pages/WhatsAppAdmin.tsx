@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import {
   MessageCircle, CheckCircle, RefreshCw, Send, AlertTriangle,
-  Phone, Pause, Play, Wifi, WifiOff, Loader2, History, ArrowLeft
+  Phone, Pause, Play, Wifi, WifiOff, Loader2, History
 } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
+import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 
@@ -147,9 +148,7 @@ export default function WhatsAppAdmin() {
   return (
     <AppShell>
       <PageContainer>
-        <button type="button" onClick={() => navigate('/admin')} className="flex items-center gap-2 text-sm text-white/50 mb-4">
-          <ArrowLeft size={16} /> Admin
-        </button>
+        <PageTopBar onBack={() => navigate('/admin')} backLabel="Admin" />
 
         <h1 className="text-xl font-black gradient-text flex items-center gap-2 mb-1">
           <MessageCircle size={22} className="text-[#25D366]" /> WhatsApp

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
+import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { ActionInfoModal } from '../components/ActionInfoModal';
 import { api } from '../lib/api';
@@ -64,9 +64,10 @@ export default function Arena() {
   return (
     <AppShell>
       <PageContainer>
-        <button onClick={() => game === 'menu' ? navigate('/') : setGame('menu')} className="flex items-center gap-2 text-white/50 mb-6">
-          <ArrowLeft size={18} /> {game === 'menu' ? 'Hub' : 'Arena'}
-        </button>
+        <PageTopBar
+          onBack={() => (game === 'menu' ? navigate('/') : setGame('menu'))}
+          backLabel={game === 'menu' ? 'Hub' : 'Arena'}
+        />
 
         <AnimatePresence mode="wait">
           {game === 'menu' && (

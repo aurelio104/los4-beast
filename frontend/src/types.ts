@@ -41,6 +41,25 @@ export interface Player {
   bio?: string | null;
 }
 
+export interface StoryItem {
+  id: string;
+  mediaUrl: string;
+  caption?: string | null;
+  createdAt: string;
+  expiresAt: string;
+  viewed: boolean;
+}
+
+export interface StoryUserGroup {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  avatarEmoji?: string | null;
+  hasUnseen: boolean;
+  isOwn: boolean;
+  stories: StoryItem[];
+}
+
 export interface RetoEvent {
   cycleIndex: number;
   name: string;

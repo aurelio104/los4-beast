@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft,
   KeyRound,
   Fingerprint,
   Trash2,
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
+import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { PasswordInput } from '../components/PasswordInput';
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
@@ -228,9 +228,7 @@ export default function AdminUsers() {
   return (
     <AppShell>
       <PageContainer>
-        <button type="button" onClick={() => navigate('/admin')} className="flex items-center gap-2 text-white/50 mb-6">
-          <ArrowLeft size={18} /> Panel Admin
-        </button>
+        <PageTopBar onBack={() => navigate('/admin')} backLabel="Panel Admin" />
 
         <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="text-2xl font-black gradient-text">Gestión de usuarios</h2>

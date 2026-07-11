@@ -14,13 +14,16 @@ import { CountdownTimer } from '../components/CountdownTimer';
 import { DramaFeed } from '../components/DramaFeed';
 import { ActionInfoModal } from '../components/ActionInfoModal';
 import { HubHeader } from '../components/HubHeader';
+import { StoryStrip } from '../components/StoryStrip';
+import { StoryViewerModal } from '../components/StoryViewerModal';
+import { StoryCreateModal } from '../components/StoryCreateModal';
 import { QuickChip } from '../components/QuickChip';
 import { RetoLogo } from '../components/RetoLogo';
 import { Avatar } from '../components/Avatar';
 import { VotePanel } from '../components/VotePanel';
 import { api } from '../lib/api';
 import { HUB_ACTION_INFO, HubActionKey } from '../lib/actionInfo';
-import { User as UserType, FeedItem, Player, RetoEvent, PlayerContext } from '../types';
+import { User as UserType, FeedItem, Player, RetoEvent, PlayerContext, StoryUserGroup } from '../types';
 import { celebrateWin, celebrateBetrayal, celebrateCoin } from '../lib/celebrate';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { hydratePushFromServer } from '../hooks/usePushNotifications';
@@ -55,14 +58,24 @@ export default function Hub() {
   const [playerCtx, setPlayerCtx] = useState<PlayerContext | null>(null);
   const [voteTally, setVoteTally] = useState<{ targetId: string; count: number; name: string }[]>([]);
   const [showRadio, setShowRadio] = useState(false);
+  const [storyGroups, setStoryGroups] = useState<StoryUserGroup[]>([]);
+  const [storiesLoading, setStoriesLoading] = useState(true);
+  const [storyViewerId, setStoryViewerId] = useState<string | null>(null);
+  const [showCreateStory, setShowCreateStory] = useState(false);
   const nowPlaying = useNowPlaying();
+
+  const loadStories = useCallback(async () => {
+    const res = await api.stories();
+    if (res.success) setStoryGroups(res.users || []);
+    setStoriesLoading(false);
+  }, []);
 
   const load = useCallback(async () => {
     const stored = localStorage.getItem('user');
     if (!stored) { navigate('/login'); return; }
 
-    const [me, feedRes, playersRes, status, votesRes, bribe] = await Promise.all([
-      api.me(), api.feed(), api.players(), api.gameStatus(), api.votes(), api.bribe()
+    const [me, feedRes, playersRes, status, votesRes, bribe, storiesRes] = await Promise.all([
+      api.me(), api.feed(), api.players(), api.gameStatus(), api.votes(), api.bribe(), api.stories()
     ]);
 
     if (me.success) {
@@ -80,11 +93,14 @@ export default function Hub() {
     if (status.player) setPlayerCtx(status.player);
     if (votesRes.success) setVoteTally(votesRes.tally || []);
     if (bribe.success) setBribeOffer({ ...bribe.offer, alreadyAccepted: bribe.alreadyAccepted });
+    if (storiesRes.success) setStoryGroups(storiesRes.users || []);
+    setStoriesLoading(false);
     setBooting(false);
   }, [navigate]);
 
   useEffect(() => { load(); }, [load]);
   useLivePoll(load, 30000);
+  useLivePoll(loadStories, 45000);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -119,15 +135,17 @@ export default function Hub() {
   if (booting || !user) {
     return (
       <AppShell>
-        <div className="app-container page-shell page-shell--tabbar space-y-4 animate-pulse">
-          <div className="h-36 rounded-3xl bg-white/5" />
-          <div className="grid grid-cols-3 gap-2">
-            {[1, 2, 3, 4, 5, 6].map((n) => (
-              <div key={n} className="h-16 rounded-2xl bg-white/5" />
-            ))}
+        <div className="hub-layout">
+          <div className="hub-layout__scroll app-container space-y-4 animate-pulse">
+            <div className="h-36 rounded-3xl bg-white/5" />
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <div key={n} className="h-16 rounded-2xl bg-white/5" />
+              ))}
+            </div>
+            <div className="h-48 rounded-3xl bg-white/5" />
+            <div className="h-32 rounded-3xl bg-white/5" />
           </div>
-          <div className="h-48 rounded-3xl bg-white/5" />
-          <div className="h-32 rounded-3xl bg-white/5" />
         </div>
       </AppShell>
     );
@@ -210,13 +228,22 @@ export default function Hub() {
 
   return (
     <AppShell>
-        <div className="app-container page-shell page-shell--tabbar">
-        <HeroSection className="pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div className="hub-layout">
+        <div className="hub-layout__scroll app-container">
+        <HeroSection>
           <HubHeader
             displayName={user.displayName}
             avatarUrl={user.avatarUrl}
             avatarEmoji={user.avatarEmoji}
             points={user.points}
+          />
+
+          <StoryStrip
+            currentUser={user}
+            groups={storyGroups}
+            loading={storiesLoading}
+            onOpenCreate={() => setShowCreateStory(true)}
+            onOpenViewer={(userId) => setStoryViewerId(userId)}
           />
 
           {eventActive && currentEvent && (
@@ -233,11 +260,11 @@ export default function Hub() {
             </motion.div>
           )}
 
-          <GlassCard strong glow="pink" className="p-6 bg-black/25 backdrop-blur-2xl">
-            <p className="text-center text-xs uppercase tracking-[0.3em] text-white/60 mb-4">Reto final · 29 Ago</p>
+          <GlassCard strong glow="pink" className="hub-hero-card bg-black/25 backdrop-blur-2xl">
+            <p className="text-center text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] text-white/60 mb-3 sm:mb-4">Reto final · 29 Ago</p>
             <CountdownTimer />
             <motion.p
-              className="text-center text-sm text-white/70 mt-5 italic"
+              className="hub-hero-tagline text-center text-xs sm:text-sm text-white/70 mt-3 sm:mt-4 italic"
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 3, repeat: Infinity }}
             >
@@ -350,6 +377,7 @@ export default function Hub() {
           <div className="flex items-center gap-2 mb-3"><Swords size={16} className="text-reto-pink" /><span className="text-sm font-bold">Feed del Drama</span></div>
           <DramaFeed items={feed} />
         </GlassCard>
+        </div>
 
         <div className="bottom-nav-bar">
           <div className="bottom-nav-inner glass-strong rounded-3xl p-1.5 sm:p-2">
@@ -384,6 +412,30 @@ export default function Hub() {
             onConfirm={confirmInfo}
             confirmLabel={infoConfirmLabels[infoKey]}
             loading={infoKey === 'continue' ? loading === 'continue' : infoKey === 'clemency' ? loading === 'clemency' : false}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCreateStory && (
+          <StoryCreateModal
+            onClose={() => setShowCreateStory(false)}
+            onPublished={(groups, openViewer) => {
+              setStoryGroups(groups);
+              if (openViewer && user) setStoryViewerId(user.id);
+            }}
+          />
+        )}
+        {storyViewerId && storyGroups.some((g) => g.userId === storyViewerId && g.stories.length > 0) && (
+          <StoryViewerModal
+            groups={storyGroups.filter((g) => g.stories.length > 0)}
+            initialUserId={storyViewerId}
+            onClose={() => setStoryViewerId(null)}
+            onGroupsChange={setStoryGroups}
+            onAddStory={() => {
+              setStoryViewerId(null);
+              setShowCreateStory(true);
+            }}
           />
         )}
       </AnimatePresence>

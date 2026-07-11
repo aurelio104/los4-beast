@@ -48,6 +48,8 @@ model User {
   partnerAlliances Alliance[]   @relation("AlliancePartner")
   chestClaims      ChestClaim[]
   radioTracks      CommunityRadioTrack[]
+  stories          Story[]
+  storyViews       StoryView[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -244,4 +246,30 @@ model CommunityRadioTrack {
 
   @@index([isActive, createdAt])
   @@index([userId, createdAt])
+}
+
+model Story {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mediaUrl  String
+  caption   String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  views     StoryView[]
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+}
+
+model StoryView {
+  id       String   @id @default(cuid())
+  storyId  String
+  story    Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  viewerId String
+  viewer   User     @relation(fields: [viewerId], references: [id], onDelete: Cascade)
+  viewedAt DateTime @default(now())
+
+  @@unique([storyId, viewerId])
+  @@index([viewerId])
 }

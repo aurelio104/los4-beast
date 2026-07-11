@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
+import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { PointsBadge } from '../components/PointsBadge';
 import { ActionInfoModal } from '../components/ActionInfoModal';
@@ -49,9 +50,7 @@ export default function Tienda() {
   return (
     <AppShell>
       <PageContainer>
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-4">
-          <ArrowLeft size={18} /> Volver
-        </button>
+        <PageTopBar onBack={() => navigate('/')} backLabel="Volver" />
 
         <div className="flex items-center justify-between mb-6">
           <div>

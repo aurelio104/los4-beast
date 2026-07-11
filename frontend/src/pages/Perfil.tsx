@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, Fingerprint, Loader2, Bell, LogOut, Volume2, Vibrate,
+  Fingerprint, Loader2, Bell, LogOut, Volume2, Vibrate,
   Share2, Trash2, Camera, Save, Lock, UserRound, Image as ImageIcon,
   Video, Sparkles, Music2, MessageCircle
 } from 'lucide-react';
 import { startRegistration } from '@simplewebauthn/browser';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
+import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { Avatar } from '../components/Avatar';
 import { PasswordInput } from '../components/PasswordInput';
@@ -231,9 +232,7 @@ export default function Perfil() {
   return (
     <AppShell>
       <PageContainer variant="tall">
-        <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-6">
-          <ArrowLeft size={18} /> Hub
-        </button>
+        <PageTopBar onBack={() => navigate('/')} />
 
         {/* Foto de perfil */}
         <div className="text-center mb-8">

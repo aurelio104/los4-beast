@@ -87,6 +87,20 @@ export const api = {
     request<{ success: boolean; user?: unknown; error?: string }>('/game/profile/background', { method: 'POST', body: JSON.stringify({ dataUrl }) }),
   deleteBackground: () => request<{ success: boolean; user?: unknown; error?: string }>('/game/profile/background', { method: 'DELETE' }),
 
+  stories: () => request<{ success: boolean; users: import('../types').StoryUserGroup[] }>('/game/stories'),
+  createStory: (dataUrl: string, caption?: string) =>
+    request<{ success: boolean; users?: import('../types').StoryUserGroup[]; error?: string }>('/game/stories', {
+      method: 'POST',
+      body: JSON.stringify({ dataUrl, caption })
+    }),
+  viewStory: (storyId: string) =>
+    request<{ success: boolean }>(`/game/stories/${storyId}/view`, { method: 'POST' }),
+  deleteStory: (storyId: string) =>
+    request<{ success: boolean; users?: import('../types').StoryUserGroup[]; error?: string }>(
+      `/game/stories/${storyId}`,
+      { method: 'DELETE' }
+    ),
+
   whatsappStatus: () => request<{ success: boolean; autoSend: boolean }>('/game/whatsapp/status'),
   whatsappWelcome: () =>
     request<{ success: boolean; whatsapp?: import('./whatsapp').WhatsAppResult; error?: string }>(

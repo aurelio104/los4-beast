@@ -64,3 +64,11 @@ export function saveBackgroundDataUrl(userId: string, dataUrl: string): string {
 export function deleteBackgroundFiles(userId: string) {
   deletePrefixed(`bg-${userId}`);
 }
+
+export function saveStoryDataUrl(storyId: string, dataUrl: string): string {
+  return saveDataUrl(`story-${storyId}`, dataUrl);
+}
+
+export function deleteStoryFiles(storyId: string) {
+  deletePrefixed(`story-${storyId}`);
+}
