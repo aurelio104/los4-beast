@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 import { authMiddleware, requireMaster } from '../middleware/auth.js';
 import { broadcastPush } from '../lib/push.js';
+import { createMemberInvite } from '../lib/invites.js';
 
 export const adminRouter = Router();
 
@@ -30,13 +31,22 @@ adminRouter.get('/dashboard', async (_req, res) => {
   res.json({
     success: true,
     stats: { players, actions, redemptions, confessions, votes, pushSubs },
-    inviteCode: process.env.INVITE_CODE || 'RETO2026',
     challengeDate: process.env.CHALLENGE_DATE || '2026-08-29T20:00:00-04:00',
     redemptions: redemptionsList.map((r) => ({
       ...r,
       userName: userMap[r.userId] || r.userId
     }))
   });
+});
+
+adminRouter.post('/invites', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as Request & { user: { userId: string } }).user.userId;
+    const invite = await createMemberInvite(userId);
+    res.status(201).json({ success: true, invite });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message });
+  }
 });
 
 adminRouter.post('/reveal-confessions', async (_req, res) => {

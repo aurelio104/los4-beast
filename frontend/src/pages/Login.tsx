@@ -133,11 +133,9 @@ export default function Login() {
             </motion.button>
           </form>
 
-          <p className="text-center text-sm text-white/40 mt-6">
-            ¿Nuevo?{' '}
-            <Link to="/join/RETO2026" className="text-reto-pink font-semibold hover:underline">
-              Unirse al reto
-            </Link>
+          <p className="text-center text-sm text-white/40 mt-6 leading-relaxed">
+            ¿Nuevo en el grupo?{' '}
+            <span className="text-white/50">Solo puedes registrarte con un link de invitación de un integrante.</span>
           </p>
         </GlassCard>
       </div>

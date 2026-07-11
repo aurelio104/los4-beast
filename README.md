@@ -21,11 +21,15 @@ npm run dev
 | Usuario | `admin` |
 | Contraseña | `Admin123!` |
 
-## Invitar amigos
+## Invitar integrantes
 
-```
-http://localhost:3011/join/RETO2026
-```
+El registro **solo** funciona con un link personal generado por un miembro:
+
+1. Entra al Hub o Perfil
+2. Pulsa **Invitar amigo**
+3. Comparte el link (un solo uso, válido 14 días)
+
+El admin también puede generar links desde el panel Admin.
 
 ## Push notifications (producción)
 
@@ -81,7 +85,7 @@ Configura `VITE_API_URL` o proxy al backend.
 
 ### Backend (Railway / Fly / Render)
 - Subir carpeta `backend/`
-- Variables: `DATABASE_URL`, `JWT_SECRET`, `VAPID_*`, `CHALLENGE_DATE`, `INVITE_CODE`
+- Variables: `DATABASE_URL`, `JWT_SECRET`, `VAPID_*`, `CHALLENGE_DATE`
 - Puerto `3010`
 
 ---

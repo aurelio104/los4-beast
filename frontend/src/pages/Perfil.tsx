@@ -12,12 +12,11 @@ import { Avatar } from '../components/Avatar';
 import { api } from '../lib/api';
 import { compressImageFile } from '../lib/image';
 import { usePushNotifications } from '../hooks/usePushNotifications';
-import { shareInvite } from '../hooks/useInstallPrompt';
+import { shareMemberInvite } from '../lib/inviteShare';
 import { getPreferences, setPreferences, UserPreferences } from '../lib/preferences';
 import { User, PlayerContext } from '../types';
 
 const EMOJIS = ['😎', '🔥', '👑', '💀', '🤡', '😈', '🦸', '🎭', '🐺', '🦁', '✨', '🌊', '🎯', '💎'];
-const INVITE = 'RETO2026';
 const GENDERS = [
   { id: 'M', label: 'Hombre' },
   { id: 'F', label: 'Mujer' },
@@ -344,12 +343,16 @@ export default function Perfil() {
         <button
           type="button"
           onClick={async () => {
-            await shareInvite(INVITE);
-            flash('Invitación compartida');
+            try {
+              await shareMemberInvite();
+              flash('Invitación lista para compartir');
+            } catch (e) {
+              flash((e as Error).message || 'Error al invitar');
+            }
           }}
           className="w-full glass-btn py-4 rounded-2xl font-semibold mb-3 flex items-center justify-center gap-2"
         >
-          <Share2 size={18} /> Invitar amigos
+          <Share2 size={18} /> Invitar a alguien al grupo
         </button>
 
         <button type="button" onClick={logout} className="w-full py-4 rounded-2xl font-semibold text-reto-red flex items-center justify-center gap-2 border border-reto-red/30">

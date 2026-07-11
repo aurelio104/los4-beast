@@ -1,19 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Copy, Shield, Users, Zap, Bell, Eye, Megaphone, Send } from 'lucide-react';
+import { ArrowLeft, Copy, Shield, Users, Zap, Bell, Eye, Megaphone, Send, UserPlus } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
+import { shareInviteLink } from '../lib/inviteShare';
 import { REWARDS } from '../types';
 
 export default function Admin() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<Record<string, number> | null>(null);
-  const [inviteCode, setInviteCode] = useState('');
+  const [inviteLink, setInviteLink] = useState('');
   const [challengeDate, setChallengeDate] = useState('');
   const [redemptions, setRedemptions] = useState<{ id: string; rewardId: string; cost: number; userName: string; status: string }[]>([]);
   const [copied, setCopied] = useState(false);
+  const [creatingInvite, setCreatingInvite] = useState(false);
   const [toast, setToast] = useState('');
   const [pushTitle, setPushTitle] = useState('🔥 Reto');
   const [pushBody, setPushBody] = useState('¡Entra al Hub y compite!');
@@ -21,7 +23,6 @@ export default function Admin() {
   const load = () => api.adminDashboard().then((r) => {
     if (r.success) {
       setStats(r.stats);
-      setInviteCode(r.inviteCode);
       setChallengeDate(r.challengeDate);
       setRedemptions(r.redemptions as typeof redemptions);
     }
@@ -32,8 +33,6 @@ export default function Admin() {
     if (user.role !== 'MASTER') { navigate('/'); return; }
     load();
   }, [navigate]);
-
-  const inviteLink = `${window.location.origin}/join/${inviteCode}`;
 
   const act = async (label: string, fn: () => Promise<{ success: boolean; sent?: number }>) => {
     const r = await fn();
@@ -46,6 +45,22 @@ export default function Admin() {
     setToast(`Canje → ${status}`);
     load();
     setTimeout(() => setToast(''), 2000);
+  };
+
+  const generateInvite = async () => {
+    setCreatingInvite(true);
+    try {
+      const r = await api.adminCreateInvite();
+      if (!r.success || !r.invite) throw new Error(r.error || 'Error');
+      const url = `${window.location.origin}/join/${r.invite.code}`;
+      setInviteLink(url);
+      setToast('Invitación creada — compártela con un nuevo integrante');
+    } catch (e) {
+      setToast((e as Error).message);
+    } finally {
+      setCreatingInvite(false);
+      setTimeout(() => setToast(''), 3000);
+    }
   };
 
   return (
@@ -80,12 +95,28 @@ export default function Admin() {
         </div>
 
         <GlassCard strong glow="gold" className="p-5 mb-4">
-          <p className="text-sm font-bold mb-2">🔗 Link de invitación</p>
-          <p className="text-xs text-white/50 break-all mb-3">{inviteLink}</p>
-          <button type="button" onClick={() => { navigator.clipboard.writeText(inviteLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-            className="w-full glass-btn py-3 rounded-xl flex items-center justify-center gap-2 font-semibold">
-            <Copy size={18} />{copied ? '¡Copiado!' : 'Copiar link'}
-          </button>
+          <p className="text-sm font-bold mb-1 flex items-center gap-2"><UserPlus size={16} /> Invitar integrante</p>
+          <p className="text-xs text-white/50 mb-3">Cada link es personal, de un solo uso y válido 14 días.</p>
+          {inviteLink && (
+            <p className="text-xs text-white/50 break-all mb-3 p-2 rounded-lg bg-white/5">{inviteLink}</p>
+          )}
+          <div className="flex gap-2">
+            <button type="button" onClick={generateInvite} disabled={creatingInvite}
+              className="flex-1 glass-btn py-3 rounded-xl flex items-center justify-center gap-2 font-semibold">
+              <UserPlus size={18} />{creatingInvite ? '...' : 'Generar link'}
+            </button>
+            {inviteLink && (
+              <button type="button" onClick={async () => {
+                const code = inviteLink.split('/join/')[1] || '';
+                await shareInviteLink(code);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+                className="flex-1 glass-btn py-3 rounded-xl flex items-center justify-center gap-2 font-semibold">
+                <Copy size={18} />{copied ? '¡Copiado!' : 'Compartir'}
+              </button>
+            )}
+          </div>
         </GlassCard>
 
         <GlassCard className="p-5 mb-4 space-y-3">

@@ -25,7 +25,20 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  invite: (code: string) => request<{ valid: boolean; challengeDate: string }>(`/auth/invite/${code}`),
+  invite: (code: string) =>
+    request<{
+      valid: boolean;
+      expired?: boolean;
+      inviterName?: string;
+      inviterEmoji?: string;
+      inviterAvatarUrl?: string;
+      challengeDate: string;
+    }>(`/auth/invite/${code}`),
+  createInvite: () =>
+    request<{ success: boolean; invite?: { code: string; expiresAt: string; inviterName: string }; error?: string }>(
+      '/auth/invites',
+      { method: 'POST' }
+    ),
   join: (body: Record<string, string>) => request<{ success: boolean; token?: string; user?: unknown; error?: string }>('/auth/join', { method: 'POST', body: JSON.stringify(body) }),
   login: (identifier: string, password: string) => request<{ success: boolean; token?: string; user?: unknown; error?: string; needsPasskey?: boolean }>('/auth/login', { method: 'POST', body: JSON.stringify({ identifier, password }) }),
   me: () => request<{ success: boolean; user: unknown }>('/auth/me'),
@@ -89,9 +102,14 @@ export const api = {
   pushTest: () => request<{ success: boolean }>('/push/test', { method: 'POST' }),
   pushBroadcast: (title: string, body: string) => request<{ success: boolean; sent: number }>('/push/broadcast', { method: 'POST', body: JSON.stringify({ title, body }) }),
 
-  adminDashboard: () => request<{ success: boolean; stats: Record<string, number>; inviteCode: string; challengeDate: string; redemptions: unknown[] }>('/admin/dashboard'),
+  adminDashboard: () => request<{ success: boolean; stats: Record<string, number>; challengeDate: string; redemptions: unknown[] }>('/admin/dashboard'),
+  adminCreateInvite: () =>
+    request<{ success: boolean; invite?: { code: string; expiresAt: string; inviterName: string }; error?: string }>(
+      '/admin/invites',
+      { method: 'POST' }
+    ),
   adminRevealConfessions: () => request<{ success: boolean }>('/admin/reveal-confessions', { method: 'POST' }),
   adminNotifyEvent: () => request<{ success: boolean; sent: number }>('/admin/notify-event', { method: 'POST' }),
   adminUpdateRedemption: (id: string, status: string) => request<{ success: boolean }>(`/admin/redemptions/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  adminStats: () => request<{ success: boolean; stats: { players: number; actions: number; redemptions: number }; inviteCode: string; challengeDate: string }>('/auth/admin/stats')
+  adminStats: () => request<{ success: boolean; stats: { players: number; actions: number; redemptions: number }; challengeDate: string }>('/auth/admin/stats')
 };

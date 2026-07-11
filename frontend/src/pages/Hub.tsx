@@ -22,9 +22,8 @@ import { User as UserType, FeedItem, Player, RetoEvent, PlayerContext } from '..
 import { celebrateWin, celebrateBetrayal, celebrateCoin } from '../lib/celebrate';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useLivePoll } from '../hooks/useLivePoll';
-import { useInstallPrompt, shareInvite } from '../hooks/useInstallPrompt';
-
-const INVITE_CODE = 'RETO2026';
+import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { shareMemberInvite } from '../lib/inviteShare';
 
 export default function Hub() {
   const navigate = useNavigate();
@@ -268,9 +267,16 @@ export default function Hub() {
         </GlassCard>
 
         <div className="flex gap-2 mb-4">
-          <button type="button" onClick={async () => { const shared = await shareInvite(INVITE_CODE); showToast(shared ? 'Link compartido 🔗' : 'Link copiado 📋'); }}
+          <button type="button" onClick={async () => {
+            try {
+              const { shared } = await shareMemberInvite();
+              showToast(shared ? 'Invitación compartida 🔗' : 'Link de invitación copiado 📋');
+            } catch (e) {
+              showToast((e as Error).message || 'Error al invitar');
+            }
+          }}
             className="flex-1 glass-btn py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2">
-            <Share2 size={16} /> Invitar amigos
+            <Share2 size={16} /> Invitar amigo
           </button>
           {daysLeft <= 14 && (
             <button type="button" onClick={() => navigate('/finale')} className="flex-1 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-reto-pink to-reto-purple">

@@ -4,13 +4,17 @@ import { motion } from 'framer-motion';
 import { UserPlus, Loader2, Flame } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
+import { Avatar } from '../components/Avatar';
 import { api } from '../lib/api';
-import { User } from '../types';
 
 export default function Join() {
-  const { code = 'RETO2026' } = useParams();
+  const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const [valid, setValid] = useState<boolean | null>(null);
+  const [expired, setExpired] = useState(false);
+  const [inviterName, setInviterName] = useState('');
+  const [inviterEmoji, setInviterEmoji] = useState('😎');
+  const [inviterAvatarUrl, setInviterAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
@@ -23,17 +27,30 @@ export default function Join() {
   });
 
   useEffect(() => {
-    api.invite(code!).then((r) => setValid(r.valid));
+    if (!code) {
+      setValid(false);
+      return;
+    }
+    api.invite(code).then((r) => {
+      setValid(r.valid);
+      setExpired(!!r.expired);
+      if (r.valid) {
+        setInviterName(r.inviterName || 'Un miembro');
+        setInviterEmoji(r.inviterEmoji || '😎');
+        setInviterAvatarUrl(r.inviterAvatarUrl || null);
+      }
+    });
   }, [code]);
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!code) return;
     setLoading(true);
     setError('');
     try {
-      const res = await api.join({ ...form, inviteCode: code! });
+      const res = await api.join({ ...form, inviteCode: code });
       if (!res.success || !res.token) throw new Error(res.error || 'Error al registrarse');
       localStorage.setItem('token', res.token);
       localStorage.setItem('user', JSON.stringify(res.user));
@@ -58,10 +75,15 @@ export default function Join() {
   if (!valid) {
     return (
       <AppShell background="beach">
-        <div className="min-h-dvh flex flex-col items-center justify-center px-4 text-center">
-          <p className="text-2xl mb-4">🚫</p>
-          <p className="text-white/60">Código de invitación inválido</p>
-          <Link to="/login" className="mt-4 text-reto-pink">Ir al login</Link>
+        <div className="min-h-dvh flex flex-col items-center justify-center px-4 text-center max-w-md mx-auto">
+          <p className="text-4xl mb-4">{expired ? '⏳' : '🚫'}</p>
+          <h1 className="text-xl font-black mb-2">Acceso solo por invitación</h1>
+          <p className="text-white/60 text-sm leading-relaxed">
+            {expired
+              ? 'Esta invitación expiró. Pide a un integrante del grupo que te envíe un link nuevo.'
+              : 'Necesitas un link personal de un miembro del Reto. No hay registro público.'}
+          </p>
+          <Link to="/login" className="mt-6 text-reto-pink font-semibold">Ya tengo cuenta → Login</Link>
         </div>
       </AppShell>
     );
@@ -73,7 +95,12 @@ export default function Join() {
         <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-center mb-8">
           <Flame size={40} className="mx-auto text-reto-gold mb-2" />
           <h1 className="text-3xl font-black gradient-text">Únete al Reto</h1>
-          <p className="text-white/40 text-sm mt-1">Código: {code}</p>
+          <div className="flex items-center justify-center gap-2 mt-4 glass-btn px-4 py-2 rounded-full inline-flex">
+            <Avatar url={inviterAvatarUrl} emoji={inviterEmoji} name={inviterName} size="sm" />
+            <p className="text-sm text-white/80">
+              Invitado por <span className="font-bold text-white">{inviterName}</span>
+            </p>
+          </div>
         </motion.div>
 
         <GlassCard strong glow="gold" className="w-full max-w-md p-8 bg-black/30 backdrop-blur-2xl">
@@ -116,7 +143,7 @@ export default function Join() {
               style={{ background: 'linear-gradient(135deg, #ffbe0b, #ff006e)' }}
             >
               {loading ? <Loader2 className="animate-spin" /> : <UserPlus size={20} />}
-              Entrar al Reto
+              Crear cuenta
             </motion.button>
           </form>
           <p className="text-center text-sm text-white/40 mt-4">

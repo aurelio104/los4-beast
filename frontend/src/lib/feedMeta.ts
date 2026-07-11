@@ -5,6 +5,8 @@ export function formatFeedDetail(item: FeedItem): string | null {
   try {
     const meta = JSON.parse(item.metadata) as Record<string, unknown>;
     switch (item.type) {
+      case 'JOIN':
+        return meta.invitedBy ? `Invitado por ${meta.invitedBy}` : null;
       case 'RENEGOTIATE':
         return `"${String(meta.proposal ?? '').slice(0, 120)}"`;
       case 'BRIBE':

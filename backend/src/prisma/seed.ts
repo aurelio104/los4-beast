@@ -26,7 +26,7 @@ async function main() {
   });
 
   console.log('✅ Admin creado:', username, '/', password);
-  console.log('🔗 Invite code:', process.env.INVITE_CODE || 'RETO2026');
+  console.log('ℹ️  Genera invitaciones desde el panel Admin o Perfil');
 }
 
 main()

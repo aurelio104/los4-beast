@@ -50,14 +50,3 @@ export function useInstallPrompt() {
     dismiss
   };
 }
-
-export async function shareInvite(code: string) {
-  const url = `${window.location.origin}/join/${code}`;
-  const text = '🔥 Únete a Reto — 29 de agosto';
-  if (navigator.share) {
-    await navigator.share({ title: 'Reto', text, url });
-    return true;
-  }
-  await navigator.clipboard.writeText(url);
-  return false;
-}

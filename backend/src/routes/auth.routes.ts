@@ -11,6 +11,12 @@ import {
   verifyAuthentication,
   deletePasskeysByUserId
 } from '../lib/webauthn.js';
+import {
+  createMemberInvite,
+  validateInviteCode,
+  consumeInvite,
+  listActiveInvites
+} from '../lib/invites.js';
 
 export const authRouter = Router();
 
@@ -71,15 +77,45 @@ function bearerUserId(req: Request): string | null {
 }
 
 authRouter.get('/invite/:code', async (req: Request, res: Response) => {
-  const valid = req.params.code === (process.env.INVITE_CODE || 'RETO2026');
-  res.json({ success: true, valid, challengeDate: process.env.CHALLENGE_DATE || '2026-08-29T20:00:00-04:00' });
+  const code = String(req.params.code);
+  const result = await validateInviteCode(code);
+  res.json({
+    success: true,
+    valid: result.valid,
+    expired: 'expired' in result ? result.expired : false,
+    inviterName: result.valid ? result.inviterName : undefined,
+    inviterEmoji: result.valid ? result.inviterEmoji : undefined,
+    inviterAvatarUrl: result.valid ? result.inviterAvatarUrl : undefined,
+    expiresAt: result.valid ? result.expiresAt : undefined,
+    challengeDate: process.env.CHALLENGE_DATE || '2026-08-29T20:00:00-04:00'
+  });
+});
+
+authRouter.post('/invites', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as Request & { user: { userId: string } }).user.userId;
+    const invite = await createMemberInvite(userId);
+    res.status(201).json({ success: true, invite });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message || 'Error al crear invitación' });
+  }
+});
+
+authRouter.get('/invites', authMiddleware, async (req: Request, res: Response) => {
+  const userId = (req as Request & { user: { userId: string } }).user.userId;
+  const invites = await listActiveInvites(userId);
+  res.json({ success: true, invites });
 });
 
 authRouter.post('/join', async (req: Request, res: Response) => {
   try {
     const data = joinSchema.parse(req.body);
-    if (data.inviteCode !== (process.env.INVITE_CODE || 'RETO2026')) {
-      return res.status(403).json({ success: false, error: 'Código de invitación inválido' });
+    const inviteCheck = await validateInviteCode(data.inviteCode);
+    if (!inviteCheck.valid) {
+      const msg = 'expired' in inviteCheck && inviteCheck.expired
+        ? 'Esta invitación expiró. Pide una nueva a un miembro del grupo.'
+        : 'Invitación inválida. Solo puedes unirte con un link de un integrante.';
+      return res.status(403).json({ success: false, error: msg });
     }
 
     const existing = await prisma.user.findFirst({
@@ -102,12 +138,14 @@ authRouter.post('/join', async (req: Request, res: Response) => {
       }
     });
 
+    const inviterName = await consumeInvite(data.inviteCode, user.id);
+
     await prisma.gameAction.create({
       data: {
         userId: user.id,
         type: 'JOIN',
         pointsDelta: 50,
-        metadata: JSON.stringify({ displayName: user.displayName })
+        metadata: JSON.stringify({ displayName: user.displayName, invitedBy: inviterName })
       }
     });
 
@@ -241,7 +279,6 @@ authRouter.get('/admin/stats', authMiddleware, requireMaster, async (_req, res) 
   res.json({
     success: true,
     stats: { players, actions, redemptions },
-    inviteCode: process.env.INVITE_CODE || 'RETO2026',
     challengeDate: process.env.CHALLENGE_DATE || '2026-08-29T20:00:00-04:00'
   });
 });
