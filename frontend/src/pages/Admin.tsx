@@ -1,30 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Copy, Shield, Users, Zap, Bell, Eye, Megaphone, Send, UserPlus, MessageCircle, UserCog } from 'lucide-react';
+import { ArrowLeft, Shield, Users, Zap, Bell, Eye, Megaphone, Send, MessageCircle, UserCog } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
-import { shareInviteLink } from '../lib/inviteShare';
-import { openWaMe, WhatsAppResult } from '../lib/whatsapp';
 import { REWARDS } from '../types';
 
 export default function Admin() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<Record<string, number> | null>(null);
-  const [inviteLink, setInviteLink] = useState('');
   const [challengeDate, setChallengeDate] = useState('');
   const [redemptions, setRedemptions] = useState<{ id: string; rewardId: string; cost: number; userName: string; status: string }[]>([]);
-  const [copied, setCopied] = useState(false);
-  const [creatingInvite, setCreatingInvite] = useState(false);
   const [toast, setToast] = useState('');
   const [pushTitle, setPushTitle] = useState('🔥 Reto');
   const [pushBody, setPushBody] = useState('¡Entra al Hub y compite!');
-  const [waInviteName, setWaInviteName] = useState('');
-  const [waInvitePhone, setWaInvitePhone] = useState('');
-  const [waInviting, setWaInviting] = useState(false);
-  const [lastWaInvite, setLastWaInvite] = useState<WhatsAppResult | null>(null);
-  const [lastInviteLink, setLastInviteLink] = useState('');
 
   const load = () => {
     api.adminDashboard().then((r) => {
@@ -51,60 +41,6 @@ export default function Admin() {
     setToast(`Canje → ${status}`);
     load();
     setTimeout(() => setToast(''), 2000);
-  };
-
-  const generateInvite = async () => {
-    setCreatingInvite(true);
-    try {
-      const r = await api.adminCreateInvite();
-      if (!r.success || !r.invite) throw new Error(r.error || 'Error');
-      const url = `${window.location.origin}/join/${r.invite.code}`;
-      setInviteLink(url);
-      setToast('Invitación creada — compártela con un nuevo integrante');
-    } catch (e) {
-      setToast((e as Error).message);
-    } finally {
-      setCreatingInvite(false);
-      setTimeout(() => setToast(''), 3000);
-    }
-  };
-
-  const sendWhatsAppInvite = async () => {
-    if (!waInvitePhone.trim()) {
-      setToast('Indica el WhatsApp del invitado');
-      return;
-    }
-    setWaInviting(true);
-    setLastWaInvite(null);
-    setLastInviteLink('');
-    try {
-      const r = await api.adminInviteWhatsApp({
-        phone: waInvitePhone.trim(),
-        displayName: waInviteName.trim() || undefined
-      });
-      if (!r.success || !r.joinUrl) throw new Error(r.error || 'Error al invitar');
-
-      setLastInviteLink(r.joinUrl);
-
-      if (r.whatsapp) {
-        setLastWaInvite(r.whatsapp);
-        if (r.whatsapp.sent) {
-          setToast('Invitación enviada por WhatsApp — el invitado creará su correo y contraseña');
-          setWaInvitePhone('');
-          setWaInviteName('');
-        } else if (r.whatsapp.waMeUrl) {
-          openWaMe(r.whatsapp.waMeUrl);
-          setToast('Link listo · Abre WhatsApp para enviar la invitación');
-        } else {
-          setToast('Link creado — WhatsApp no conectado, copia el link manualmente');
-        }
-      }
-    } catch (e) {
-      setToast((e as Error).message);
-    } finally {
-      setWaInviting(false);
-      setTimeout(() => setToast(''), 5000);
-    }
   };
 
   return (
@@ -158,88 +94,6 @@ export default function Admin() {
           ))}
         </div>
 
-        <GlassCard strong glow="gold" className="p-5 mb-4">
-          <p className="text-sm font-bold mb-1 flex items-center gap-2"><UserPlus size={16} /> Invitar integrante</p>
-          <p className="text-xs text-white/50 mb-3">Cada link es personal, de un solo uso y válido 14 días.</p>
-          {inviteLink && (
-            <p className="text-xs text-white/50 break-all mb-3 p-2 rounded-lg bg-white/5">{inviteLink}</p>
-          )}
-          <div className="flex gap-2">
-            <button type="button" onClick={generateInvite} disabled={creatingInvite}
-              className="flex-1 glass-btn py-3 rounded-xl flex items-center justify-center gap-2 font-semibold">
-              <UserPlus size={18} />{creatingInvite ? '...' : 'Generar link'}
-            </button>
-            {inviteLink && (
-              <button type="button" onClick={async () => {
-                const code = inviteLink.split('/join/')[1] || '';
-                await shareInviteLink(code);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-              }}
-                className="flex-1 glass-btn py-3 rounded-xl flex items-center justify-center gap-2 font-semibold">
-                <Copy size={18} />{copied ? '¡Copiado!' : 'Compartir'}
-              </button>
-            )}
-          </div>
-        </GlassCard>
-
-        <GlassCard strong glow="gold" className="p-5 mb-4 space-y-3">
-          <p className="text-sm font-bold mb-1 flex items-center gap-2">
-            <MessageCircle size={16} className="text-[#25D366]" /> Invitar por WhatsApp
-          </p>
-          <p className="text-xs text-white/50 leading-relaxed">
-            Envía un link personal por WhatsApp. El invitado abre el link y elige su correo y contraseña al registrarse.
-          </p>
-          <div>
-            <label className="text-xs text-white/40 mb-1 block">Nombre del invitado (opcional)</label>
-            <input value={waInviteName} onChange={(e) => setWaInviteName(e.target.value)} placeholder="Para saludarlo en el mensaje" />
-          </div>
-          <div>
-            <label className="text-xs text-white/40 mb-1 block">WhatsApp del invitado</label>
-            <input
-              value={waInvitePhone}
-              onChange={(e) => setWaInvitePhone(e.target.value)}
-              placeholder="04141234567"
-              inputMode="tel"
-              autoComplete="tel"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={sendWhatsAppInvite}
-            disabled={waInviting || !waInvitePhone.trim()}
-            className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-40"
-            style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
-          >
-            <MessageCircle size={18} />
-            {waInviting ? 'Enviando…' : 'Enviar invitación por WhatsApp'}
-          </button>
-          {lastInviteLink && (
-            <div className="text-xs p-3 rounded-xl bg-white/5 space-y-2">
-              <p className="text-white/50 break-all">{lastInviteLink}</p>
-              <button
-                type="button"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(lastInviteLink);
-                  setToast('Link copiado');
-                }}
-                className="glass-btn w-full py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
-              >
-                <Copy size={14} /> Copiar link
-              </button>
-            </div>
-          )}
-          {lastWaInvite?.waMeUrl && !lastWaInvite.sent && (
-            <button
-              type="button"
-              onClick={() => openWaMe(lastWaInvite.waMeUrl!)}
-              className="w-full glass-btn py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 text-[#25D366]"
-            >
-              <MessageCircle size={16} /> Reenviar por WhatsApp
-            </button>
-          )}
-        </GlassCard>
-
         <GlassCard className="p-5 mb-4 space-y-3">
           <p className="text-sm font-bold flex items-center gap-2"><Send size={16} /> Push personalizado</p>
           <input value={pushTitle} onChange={(e) => setPushTitle(e.target.value)} placeholder="Título" />
@@ -267,7 +121,7 @@ export default function Admin() {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-sm font-semibold">{reward?.emoji} {reward?.title || r.rewardId}</p>
-                    <p className="text-xs text-white/40">{r.userName} · {r.cost} BP</p>
+                    <p className="text-xs text-white/40">{r.userName} · {r.cost} Puntos</p>
                   </div>
                   <span className="text-xs px-2 py-1 rounded-full bg-reto-gold/20 text-reto-gold">{r.status}</span>
                 </div>

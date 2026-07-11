@@ -98,7 +98,7 @@ export default function Tienda() {
                     </div>
                     <div className="text-right">
                       <p className="font-black text-reto-gold tabular-nums">{r.cost}</p>
-                      <p className="text-[10px] text-white/30">BP</p>
+                      <p className="text-[10px] text-white/30">Puntos</p>
                     </div>
                   </div>
                 </GlassCard>
@@ -132,8 +132,8 @@ export default function Tienda() {
               }}
               confirmLabel={
                 user && REWARDS.find((x) => x.id === infoRewardId) && user.points >= REWARDS.find((x) => x.id === infoRewardId)!.cost
-                  ? `Canjear (${REWARDS.find((x) => x.id === infoRewardId)!.cost} BP)`
-                  : 'BP insuficientes'
+                  ? `Canjear (${REWARDS.find((x) => x.id === infoRewardId)!.cost} Puntos)`
+                  : 'Puntos insuficientes'
               }
               disabled={!user || !REWARDS.find((x) => x.id === infoRewardId) || user.points < REWARDS.find((x) => x.id === infoRewardId)!.cost}
             />

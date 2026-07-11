@@ -257,7 +257,7 @@ export default function Perfil() {
             />
           </div>
           <h2 className="text-2xl font-black">{user.displayName}</h2>
-          <p className="text-white/40 text-sm">@{user.username} · {user.points} BP</p>
+          <p className="text-white/40 text-sm">@{user.username} · {user.points} Puntos</p>
           {user.bio && <p className="text-sm text-white/60 mt-2 max-w-xs mx-auto">{user.bio}</p>}
           {alliance && <p className="text-xs text-reto-purple mt-2">🤝 Aliado: {alliance.name}</p>}
           <div className="flex justify-center gap-3 mt-3">

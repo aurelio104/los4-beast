@@ -107,12 +107,12 @@ export const ACTION_LABELS: Record<string, string> = {
 };
 
 export const GAME_LIST = [
-  { id: 'redlight', icon: '🚦', title: 'Red Light', desc: '+80 BP', color: 'pink' as const },
-  { id: 'trivia', icon: '🧠', title: 'Trivia', desc: '+100 BP', color: 'purple' as const },
-  { id: 'ddakji', icon: '🎯', title: 'Ddakji Flip', desc: '+90 BP', color: 'gold' as const },
-  { id: 'glass', icon: '🌉', title: 'Glass Bridge', desc: 'Hasta +200 BP', color: 'cyan' as const },
+  { id: 'redlight', icon: '🚦', title: 'Red Light', desc: '+80 Puntos', color: 'pink' as const },
+  { id: 'trivia', icon: '🧠', title: 'Trivia', desc: '+100 Puntos', color: 'purple' as const },
+  { id: 'ddakji', icon: '🎯', title: 'Ddakji Flip', desc: '+90 Puntos', color: 'gold' as const },
+  { id: 'glass', icon: '🌉', title: 'Glass Bridge', desc: 'Hasta +200 Puntos', color: 'cyan' as const },
   { id: 'honeycomb', icon: '🍯', title: 'Honeycomb', desc: 'Precisión', color: 'gold' as const },
-  { id: 'mystery', icon: '🎁', title: 'Caja Misteriosa', desc: '+120 BP', color: 'pink' as const },
-  { id: 'coin', icon: '🪙', title: 'Coin Flip', desc: 'Apuesta BP', color: 'purple' as const },
+  { id: 'mystery', icon: '🎁', title: 'Caja Misteriosa', desc: '+120 Puntos', color: 'pink' as const },
+  { id: 'coin', icon: '🪙', title: 'Coin Flip', desc: 'Apuesta Puntos', color: 'purple' as const },
   { id: 'tug', icon: '💪', title: 'Tug of War', desc: 'Tap rápido', color: 'cyan' as const }
 ];

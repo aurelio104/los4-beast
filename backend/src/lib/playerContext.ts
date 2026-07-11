@@ -115,8 +115,8 @@ function buildAchievements(points: number, streak: number, counts: Record<string
     { id: 'streak_7', emoji: '💥', title: 'Racha 7 días', unlocked: streak >= 7 },
     { id: 'betrayer', emoji: '💀', title: 'Primera traición', unlocked: (counts.BETRAY ?? 0) >= 1 },
     { id: 'arena', emoji: '🎮', title: 'Guerrero Arena', unlocked: ['RED_LIGHT', 'TRIVIA', 'DDAKJI', 'GLASS_BRIDGE', 'HONEYCOMB', 'MYSTERY_BOX', 'COIN_FLIP', 'TUG_WAR'].some((t) => (counts[t] ?? 0) > 0) },
-    { id: 'bp_500', emoji: '⭐', title: '500 BP', unlocked: points >= 500 },
-    { id: 'bp_1000', emoji: '👑', title: '1000 BP', unlocked: points >= 1000 },
+    { id: 'bp_500', emoji: '⭐', title: '500 Puntos', unlocked: points >= 500 },
+    { id: 'bp_1000', emoji: '👑', title: '1000 Puntos', unlocked: points >= 1000 },
     { id: 'confession', emoji: '🤐', title: 'Confesor', unlocked: (counts.CONFESSION ?? 0) >= 1 }
   ];
   return list;
@@ -131,14 +131,14 @@ export async function getTriviaQuestions() {
 
   const base = [
     { q: '¿Mejor comida para el reto final?', options: ['Burger 🍔', 'Pizza 🍕', 'Arepas'], correct: 0 },
-    { q: '¿Traicionarías por 150 BP?', options: ['Obvio 👀', 'Nunca', 'Depende'], correct: 0 },
+    { q: '¿Traicionarías por 150 Puntos?', options: ['Obvio 👀', 'Nunca', 'Depende'], correct: 0 },
     { q: '¿Reto ideal en grupo?', options: ['Comida', 'Verdad o reto', 'Deporte'], correct: 0 },
     { q: '¿Quién gana el 29 de agosto?', options: ['El más dedicado 🔥', 'El más listo', 'El de suerte'], correct: 0 }
   ];
 
   const dynamic = players.map((p) => ({
     q: `¿${p.nickname || p.displayName} es confiable en una alianza?`,
-    options: ['100% 🤝', 'Jamás 💀', 'Solo por BP'],
+    options: ['100% 🤝', 'Jamás 💀', 'Solo por Puntos'],
     correct: Math.floor(Math.random() * 3)
   }));
 

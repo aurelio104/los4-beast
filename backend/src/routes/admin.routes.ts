@@ -249,7 +249,7 @@ adminRouter.post('/reset-all', async (req: Request, res: Response) => {
 adminRouter.post('/notify-event', async (_req, res) => {
   const result = await broadcastPush({
     title: '⚡ Evento activo',
-    body: 'Nuevo ciclo de 10 días — entra y compite por BP',
+    body: 'Nuevo ciclo de 10 días — entra y compite por Puntos',
     url: '/eventos'
   });
   res.json({ success: true, ...result });

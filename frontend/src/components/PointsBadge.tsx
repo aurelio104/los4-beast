@@ -12,7 +12,7 @@ export function PointsBadge({ points, compact = false }: { points: number; compa
       >
         <Zap size={14} className="text-reto-gold fill-reto-gold shrink-0" />
         <span className="text-sm sm:text-base font-black text-glow-gold tabular-nums">{points.toLocaleString()}</span>
-        <span className="text-[10px] text-white/45 font-medium hidden sm:inline">BP</span>
+        <span className="text-[10px] text-white/45 font-medium hidden sm:inline">Puntos</span>
       </motion.div>
     );
   }
@@ -31,7 +31,7 @@ export function PointsBadge({ points, compact = false }: { points: number; compa
         <Zap size={20} className="text-reto-gold fill-reto-gold" />
       </motion.div>
       <span className="text-lg font-black text-glow-gold tabular-nums">{points.toLocaleString()}</span>
-      <span className="text-xs text-white/50 font-medium">BP</span>
+      <span className="text-xs text-white/50 font-medium">Puntos</span>
     </motion.div>
   );
 }

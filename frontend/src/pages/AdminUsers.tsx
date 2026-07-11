@@ -11,7 +11,9 @@ import {
   MessageCircle,
   Shield,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  UserPlus,
+  Copy
 } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
@@ -19,6 +21,7 @@ import { PasswordInput } from '../components/PasswordInput';
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 import { api } from '../lib/api';
 import { isPasswordOrPinValid, passwordHint } from '../lib/pinPassword';
+import { shareInviteLink } from '../lib/inviteShare';
 import { openWaMe, WhatsAppResult } from '../lib/whatsapp';
 
 type AdminUser = {
@@ -50,7 +53,15 @@ export default function AdminUsers() {
   const [lastWaReset, setLastWaReset] = useState<WhatsAppResult | null>(null);
 
   const [actionUserId, setActionUserId] = useState<string | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState('');
+
+  const [inviteLink, setInviteLink] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [creatingInvite, setCreatingInvite] = useState(false);
+  const [waInviteName, setWaInviteName] = useState('');
+  const [waInvitePhone, setWaInvitePhone] = useState('');
+  const [waInviting, setWaInviting] = useState(false);
+  const [lastWaInvite, setLastWaInvite] = useState<WhatsAppResult | null>(null);
+  const [lastInviteLink, setLastInviteLink] = useState('');
 
   const showToast = (msg: string, ms = 3500) => {
     setToast(msg);
@@ -71,12 +82,61 @@ export default function AdminUsers() {
     load();
   }, [includeInactive]);
 
+  const generateInvite = async () => {
+    setCreatingInvite(true);
+    try {
+      const r = await api.adminCreateInvite();
+      if (!r.success || !r.invite) throw new Error(r.error || 'Error');
+      const url = `${window.location.origin}/join/${r.invite.code}`;
+      setInviteLink(url);
+      showToast('Link personal creado — compártelo con el invitado');
+    } catch (e) {
+      showToast((e as Error).message);
+    } finally {
+      setCreatingInvite(false);
+    }
+  };
+
+  const sendWhatsAppInvite = async () => {
+    if (!waInvitePhone.trim()) {
+      showToast('Indica el WhatsApp del invitado');
+      return;
+    }
+    setWaInviting(true);
+    setLastWaInvite(null);
+    setLastInviteLink('');
+    try {
+      const r = await api.adminInviteWhatsApp({
+        phone: waInvitePhone.trim(),
+        displayName: waInviteName.trim() || undefined
+      });
+      if (!r.success || !r.joinUrl) throw new Error(r.error || 'Error al invitar');
+      setLastInviteLink(r.joinUrl);
+      if (r.whatsapp) {
+        setLastWaInvite(r.whatsapp);
+        if (r.whatsapp.sent) {
+          showToast('Invitación enviada por WhatsApp');
+          setWaInvitePhone('');
+          setWaInviteName('');
+        } else if (r.whatsapp.waMeUrl) {
+          openWaMe(r.whatsapp.waMeUrl);
+          showToast('Abre WhatsApp para enviar la invitación');
+        } else {
+          showToast('Link creado — copia y envía manualmente');
+        }
+      }
+    } catch (e) {
+      showToast((e as Error).message);
+    } finally {
+      setWaInviting(false);
+    }
+  };
+
   const toggleExpand = (id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
     setResetPassword('');
     setResetConfirm('');
     setLastWaReset(null);
-    setDeleteConfirm('');
   };
 
   const resetUserPassword = async (userId: string) => {
@@ -149,18 +209,13 @@ export default function AdminUsers() {
   };
 
   const deleteUser = async (user: AdminUser) => {
-    if (deleteConfirm !== user.username) {
-      showToast(`Escribe @${user.username} para confirmar`);
-      return;
-    }
-    if (!window.confirm(`Eliminar permanentemente a ${user.displayName}? Esta acción no se puede deshacer.`)) return;
+    if (!window.confirm(`¿Eliminar a ${user.displayName}? Se borra la cuenta y todo su progreso.`)) return;
     setActionUserId(user.id);
     try {
       const r = await api.adminDeleteUser(user.id);
       if (!r.success) throw new Error(r.error || 'Error');
       showToast('Usuario eliminado');
       setExpandedId(null);
-      setDeleteConfirm('');
       load();
     } catch (e) {
       showToast((e as Error).message);
@@ -176,10 +231,93 @@ export default function AdminUsers() {
           <ArrowLeft size={18} /> Panel Admin
         </button>
 
-        <div className="flex items-center justify-between gap-3 mb-6">
+        <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="text-2xl font-black gradient-text">Gestión de usuarios</h2>
           <span className="text-xs text-white/40 tabular-nums">{users.length} cuentas</span>
         </div>
+
+        <GlassCard strong glow="gold" className="p-5 mb-4">
+          <p className="text-sm font-bold mb-1 flex items-center gap-2"><UserPlus size={16} /> Invitar · Link personal</p>
+          <p className="text-xs text-white/50 mb-3">Un solo uso · válido 14 días · el invitado elige correo y contraseña.</p>
+          {inviteLink && (
+            <p className="text-xs text-white/50 break-all mb-3 p-2 rounded-lg bg-white/5">{inviteLink}</p>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={generateInvite}
+              disabled={creatingInvite}
+              className="flex-1 glass-btn py-3 rounded-xl flex items-center justify-center gap-2 font-semibold"
+            >
+              <UserPlus size={18} />{creatingInvite ? '...' : 'Generar link'}
+            </button>
+            {inviteLink && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const code = inviteLink.split('/join/')[1] || '';
+                  await shareInviteLink(code);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="flex-1 glass-btn py-3 rounded-xl flex items-center justify-center gap-2 font-semibold"
+              >
+                <Copy size={18} />{copied ? '¡Copiado!' : 'Compartir'}
+              </button>
+            )}
+          </div>
+        </GlassCard>
+
+        <GlassCard strong glow="gold" className="p-5 mb-4 space-y-3">
+          <p className="text-sm font-bold flex items-center gap-2">
+            <MessageCircle size={16} className="text-[#25D366]" /> Invitar por WhatsApp
+          </p>
+          <div>
+            <label className="text-xs text-white/40 mb-1 block">Nombre del invitado (opcional)</label>
+            <input value={waInviteName} onChange={(e) => setWaInviteName(e.target.value)} placeholder="Ej. Omar" />
+          </div>
+          <div>
+            <label className="text-xs text-white/40 mb-1 block">WhatsApp del invitado</label>
+            <input
+              value={waInvitePhone}
+              onChange={(e) => setWaInvitePhone(e.target.value)}
+              placeholder="04141234567"
+              inputMode="tel"
+              autoComplete="tel"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={sendWhatsAppInvite}
+            disabled={waInviting || !waInvitePhone.trim()}
+            className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-40"
+            style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+          >
+            <MessageCircle size={18} />
+            {waInviting ? 'Enviando…' : 'Enviar invitación'}
+          </button>
+          {lastInviteLink && (
+            <button
+              type="button"
+              onClick={async () => {
+                await navigator.clipboard.writeText(lastInviteLink);
+                showToast('Link copiado');
+              }}
+              className="glass-btn w-full py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+            >
+              <Copy size={14} /> Copiar link
+            </button>
+          )}
+          {lastWaInvite?.waMeUrl && !lastWaInvite.sent && (
+            <button
+              type="button"
+              onClick={() => openWaMe(lastWaInvite.waMeUrl!)}
+              className="w-full glass-btn py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 text-[#25D366]"
+            >
+              <MessageCircle size={16} /> Reenviar por WhatsApp
+            </button>
+          )}
+        </GlassCard>
 
         <label className="flex items-center gap-2 text-xs text-white/50 mb-4 cursor-pointer">
           <input
@@ -220,7 +358,7 @@ export default function AdminUsers() {
                     </div>
                     <p className="text-xs text-white/45 truncate">@{u.username} · {u.email}</p>
                     <div className="flex flex-wrap gap-2 mt-1.5 text-[10px] text-white/35">
-                      <span>{u.points ?? 0} BP</span>
+                      <span>{u.points ?? 0} Puntos</span>
                       {u.passkeyRegistered && <span className="text-reto-cyan">Passkey ✓</span>}
                       {u.phone && <span>{u.whatsappOptIn ? 'WA ✓' : 'WA ○'}</span>}
                     </div>
@@ -310,28 +448,15 @@ export default function AdminUsers() {
                               )}
                             </button>
 
-                            <div className="pt-2 border-t border-white/10 space-y-2">
-                              <p className="text-xs font-bold text-reto-red flex items-center gap-1.5">
-                                <Trash2 size={14} /> Eliminar permanentemente
-                              </p>
-                              <p className="text-[11px] text-white/40">
-                                Borra la cuenta y todo su progreso. Escribe <strong>@{u.username}</strong> para confirmar.
-                              </p>
-                              <input
-                                value={deleteConfirm}
-                                onChange={(e) => setDeleteConfirm(e.target.value)}
-                                placeholder={`@${u.username}`}
-                                className="text-sm"
-                              />
-                              <button
-                                type="button"
-                                disabled={busy || deleteConfirm !== u.username}
-                                onClick={() => deleteUser(u)}
-                                className="w-full py-2.5 rounded-xl text-sm font-bold bg-reto-red/20 text-reto-red border border-reto-red/30 disabled:opacity-40"
-                              >
-                                {busy ? 'Eliminando…' : 'Eliminar usuario'}
-                              </button>
-                            </div>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => deleteUser(u)}
+                              className="w-full py-2.5 rounded-xl text-sm font-bold bg-reto-red/20 text-reto-red border border-reto-red/30 flex items-center justify-center gap-2"
+                            >
+                              <Trash2 size={16} />
+                              {busy ? 'Eliminando…' : 'Eliminar usuario'}
+                            </button>
                           </>
                         )}
                       </div>

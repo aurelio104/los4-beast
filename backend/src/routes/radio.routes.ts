@@ -37,7 +37,7 @@ radioRouter.get('/current', async (_req, res) => {
   }
 });
 
-/** Subir archivo de audio → optimiza a MP3 mono 128k (máx. 4 min). +75 BP, 1/día. */
+/** Subir archivo de audio → optimiza a MP3 mono 128k (máx. 4 min). +75 Puntos, 1/día. */
 radioRouter.post('/submit', authMiddleware, upload.single('audio'), async (req: Request, res: Response) => {
   try {
     const title = String(req.body?.title || '').trim();

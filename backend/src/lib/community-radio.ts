@@ -112,7 +112,7 @@ export async function submitRadioFromFile(
   if (cleanTitle.length < 2) throw new Error('Indica el nombre de la canción');
 
   if (await playedMiniGameToday(userId, 'RADIO_DJ')) {
-    throw new Error('Ya pusiste música hoy — mañana puedes de nuevo (+75 BP)');
+    throw new Error('Ya pusiste música hoy — mañana puedes de nuevo (+75 Puntos)');
   }
 
   ensureRadioDir();
@@ -142,7 +142,7 @@ export async function submitRadioFromYoutube(userId: string, title: string, yout
   if (!isValidYoutubeUrl(youtubeUrl)) throw new Error('Link de YouTube inválido');
 
   if (await playedMiniGameToday(userId, 'RADIO_DJ')) {
-    throw new Error('Ya pusiste música hoy — mañana puedes de nuevo (+75 BP)');
+    throw new Error('Ya pusiste música hoy — mañana puedes de nuevo (+75 Puntos)');
   }
 
   const base = path.join(os.tmpdir(), `reto-yt-${userId}-${Date.now()}`);

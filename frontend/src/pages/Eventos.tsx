@@ -93,7 +93,7 @@ export default function Eventos() {
         <GlassCard className="p-5 mt-6 flex items-start gap-3">
           <Calendar size={20} className="text-reto-cyan shrink-0 mt-0.5" />
           <p className="text-sm text-white/60">
-            Cada evento dura ~10 días. Completa mini-juegos, abre el cofre y acumula BP para el gran reto del <strong className="text-white">29 de agosto</strong>.
+            Cada evento dura ~10 días. Completa mini-juegos, abre el cofre y acumula Puntos para el gran reto del <strong className="text-white">29 de agosto</strong>.
           </p>
         </GlassCard>
       </div>

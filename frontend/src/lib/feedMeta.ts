@@ -27,7 +27,7 @@ export function formatFeedDetail(item: FeedItem): string | null {
       case 'RADIO_DJ':
         return meta.title ? `"${String(meta.title).slice(0, 80)}"` : null;
       case 'COIN_FLIP':
-        return meta.won ? `Ganó apuesta (${meta.bet} BP)` : `Perdió apuesta (${meta.bet} BP)`;
+        return meta.won ? `Ganó apuesta (${meta.bet} Puntos)` : `Perdió apuesta (${meta.bet} Puntos)`;
       default:
         return null;
     }

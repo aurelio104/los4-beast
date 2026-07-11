@@ -53,11 +53,11 @@ export default function Finale() {
               {ctx.teamStats.map((t) => (
                 <div key={t.gender} className="flex items-center justify-between">
                   <span className="text-sm font-semibold">{GENDER_LABEL[t.gender] || t.gender}</span>
-                  <span className="text-reto-gold font-black tabular-nums">{t.totalPoints} BP</span>
+                  <span className="text-reto-gold font-black tabular-nums">{t.totalPoints} Puntos</span>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-white/40 mt-4">El equipo con menos BP elige el castigo del otro 🍕🍔</p>
+            <p className="text-xs text-white/40 mt-4">El equipo con menos Puntos elige el castigo del otro 🍕🍔</p>
           </GlassCard>
         )}
 
@@ -68,7 +68,7 @@ export default function Finale() {
               <span className="w-6 shrink-0">{i === 0 ? '👑' : `${i + 1}.`}</span>
               <Avatar url={p.avatarUrl} emoji={p.avatarEmoji} name={p.displayName} size="xs" />
               <span className="flex-1 text-sm truncate">{p.nickname || p.displayName}</span>
-              <span className="text-xs font-bold text-reto-gold">{p.points} BP</span>
+              <span className="text-xs font-bold text-reto-gold">{p.points} Puntos</span>
             </div>
           ))}
         </GlassCard>

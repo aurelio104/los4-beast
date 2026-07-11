@@ -30,7 +30,7 @@ export default function Cofre() {
     const res = await api.claimChest();
     if (res.success) {
       celebrateChest();
-      setToast(`📦 ${res.clue} · +${res.points ?? 100} BP`);
+      setToast(`📦 ${res.clue} · +${res.points ?? 100} Puntos`);
       await load();
     } else {
       setToast(res.error || 'Error');

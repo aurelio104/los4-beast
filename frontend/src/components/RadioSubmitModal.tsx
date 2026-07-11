@@ -57,7 +57,7 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
       const res = await api.submitRadio(form);
       if (!res.success) throw new Error(res.error || 'No se pudo subir');
 
-      const pts = res.gained ? ` +${res.gained} BP` : '';
+      const pts = res.gained ? ` +${res.gained} Puntos` : '';
       onSuccess?.(`🎵 ¡Tu tema suena para todos!${pts}`);
       window.dispatchEvent(new CustomEvent('reto-radio-updated'));
       close();
@@ -93,7 +93,7 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
                     <Radio size={20} className="text-reto-cyan" /> DJ del Reto
                   </p>
                   <p className="text-xs text-white/50 mt-1 leading-relaxed">
-                    Sube audio o un link de YouTube. Se optimiza a MP3 ligero — todos la escuchan al abrir la app. <strong className="text-reto-gold">+75 BP</strong> · 1 vez al día.
+                    Sube audio o un link de YouTube. Se optimiza a MP3 ligero — todos la escuchan al abrir la app. <strong className="text-reto-gold">+75 Puntos</strong> · 1 vez al día.
                   </p>
                 </div>
                 <button type="button" onClick={close} className="glass-btn p-2 rounded-xl" aria-label="Cerrar">

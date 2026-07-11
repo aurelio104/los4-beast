@@ -17,7 +17,7 @@ type GameId = typeof GAME_LIST[number]['id'] | 'menu';
 const FALLBACK_TRIVIA: TriviaQuestion[] = [
   { q: '¿Quién llega más tarde siempre?', options: ['El del grupo', 'Nadie', 'Todos'], correct: 0 },
   { q: '¿Mejor comida para el reto?', options: ['Burger', 'Pizza', 'Arepas'], correct: 0 },
-  { q: '¿Traicionarías por 150 BP?', options: ['Obvio 👀', 'Nunca', 'Depende'], correct: 0 },
+  { q: '¿Traicionarías por 150 Puntos?', options: ['Obvio 👀', 'Nunca', 'Depende'], correct: 0 },
   { q: '¿Reto ideal en grupo?', options: ['Comida', 'Verdad o reto', 'Deporte'], correct: 0 }
 ];
 
@@ -36,7 +36,7 @@ export default function Arena() {
 
   const showResult = (points: number, msg?: string) => {
     celebrateWin(points);
-    setToast(msg || `${points >= 0 ? '+' : ''}${points} BP`);
+    setToast(msg || `${points >= 0 ? '+' : ''}${points} Puntos`);
     setTimeout(() => { setToast(''); setGame('menu'); }, 2500);
   };
 
@@ -96,7 +96,7 @@ export default function Arena() {
           {game === 'glass' && <GlassBridgeGame onFinish={(s) => run(() => api.glassBridge(s))} onBack={() => setGame('menu')} />}
           {game === 'honeycomb' && <HoneycombGame onFinish={(p) => run(() => api.honeycomb(p))} onBack={() => setGame('menu')} />}
           {game === 'mystery' && <MysteryBoxGame onFinish={(i) => run(() => api.mysteryBox(i))} onBack={() => setGame('menu')} />}
-          {game === 'coin' && <CoinFlipGame onFinish={(c, b) => run(() => api.coinFlip(c, b), (r) => r.won ? `¡${r.result}! +${r.points} BP` : `${r.result} — ${r.points} BP`)} onBack={() => setGame('menu')} />}
+          {game === 'coin' && <CoinFlipGame onFinish={(c, b) => run(() => api.coinFlip(c, b), (r) => r.won ? `¡${r.result}! +${r.points} Puntos` : `${r.result} — ${r.points} Puntos`)} onBack={() => setGame('menu')} />}
           {game === 'tug' && <TugWarGame onFinish={(t) => run(() => api.tugWar(t))} onBack={() => setGame('menu')} />}
         </AnimatePresence>
 
@@ -342,7 +342,7 @@ function CoinFlipGame({ onFinish, onBack }: { onFinish: (c: string, b: number) =
   return (
     <GlassCard strong className="p-6 text-center">
       <motion.div animate={{ rotateY: spinning ? 720 : 0 }} transition={{ duration: 1.5 }} className="text-7xl mb-6">🪙</motion.div>
-      <p className="text-sm text-white/50 mb-4">Apuesta: {bet} BP</p>
+      <p className="text-sm text-white/50 mb-4">Apuesta: {bet} Puntos</p>
       <input type="range" min={20} max={200} step={10} value={bet} onChange={(e) => setBet(+e.target.value)} className="w-full mb-6" />
       <div className="flex gap-3">
         <button onClick={() => flip('heads')} className="flex-1 glass-btn py-4 rounded-xl font-bold">Cara</button>

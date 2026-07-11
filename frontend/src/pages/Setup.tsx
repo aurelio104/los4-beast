@@ -261,7 +261,7 @@ export default function Setup() {
               <motion.div key="s2" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} className="space-y-3 py-1">
                 <p className="text-sm font-bold text-center mb-2">Experiencia inmersiva</p>
                 {toggleRow('Música de fondo', 'Ambiente playa en loop', <Music2 size={20} />, musicOn, setMusicOn)}
-                {toggleRow('Sonidos', 'Efectos al ganar BP', <Volume2 size={20} />, soundOn, setSoundOn)}
+                {toggleRow('Sonidos', 'Efectos al ganar Puntos', <Volume2 size={20} />, soundOn, setSoundOn)}
                 {toggleRow('Vibración', 'Feedback táctil', <Vibrate size={20} />, hapticsOn, setHapticsOn)}
                 <button type="button" onClick={activateExperience} className="w-full mt-4 py-4 rounded-2xl font-bold flex items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #06d6a0, #8338ec)' }}>
                   Guardar y continuar <ChevronRight size={18} />

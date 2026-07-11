@@ -92,7 +92,7 @@ export async function broadcastPush(payload: { title: string; body: string; url?
 export async function notifyEventReminder() {
   return broadcastPush({
     title: '🔥 Evento activo',
-    body: 'Tienes 48h para jugar y ganar BP. ¡Entra ya!',
+    body: 'Tienes 48h para jugar y ganar Puntos. ¡Entra ya!',
     url: '/eventos'
   });
 }
@@ -100,7 +100,7 @@ export async function notifyEventReminder() {
 export async function notifyDailyContinue() {
   return broadcastPush({
     title: '¿Sigues en el juego?',
-    body: 'Toca Continuar y gana +10 BP hoy',
+    body: 'Toca Continuar y gana +10 Puntos hoy',
     url: '/'
   });
 }

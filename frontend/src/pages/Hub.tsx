@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   CircleCheck, Handshake, HeartCrack, Skull, Gift, Swords, Trophy, ShoppingBag,
   Settings, Gamepad2, DollarSign, Vote, Users, MessageSquare, MessagesSquare,
-  Calendar, Package, User, Zap, Crosshair, Share2, Music2
+  Calendar, Package, User, Zap, Crosshair, Music2
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AppShell, HeroSection } from '../components/AppShell';
@@ -26,7 +26,6 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import { hydratePushFromServer } from '../hooks/usePushNotifications';
 import { useLivePoll } from '../hooks/useLivePoll';
 import { useNotifications } from '../components/NotificationProvider';
-import { shareMemberInvite } from '../lib/inviteShare';
 import { RadioSubmitModal } from '../components/RadioSubmitModal';
 import { useNowPlaying } from '../components/BackgroundMusic';
 
@@ -107,7 +106,7 @@ export default function Hub() {
           if (key === 'betray') celebrateBetrayal();
           else if (key === 'bribe') celebrateCoin();
           else celebrateWin(pts);
-          showToast(`${pts >= 0 ? '+' : ''}${pts} BP 🔥`);
+          showToast(`${pts >= 0 ? '+' : ''}${pts} Puntos 🔥`);
           onSuccess?.(res);
         } else showToast(res.message || res.penalty || '¡Hecho!');
         await load();
@@ -191,7 +190,7 @@ export default function Hub() {
   };
 
   const infoConfirmLabels: Partial<Record<HubActionKey, string>> = {
-    continue: 'Confirmar hoy (+10 BP)',
+    continue: 'Confirmar hoy (+10 Puntos)',
     clemency: 'Pedir clemencia',
     renegotiate: 'Escribir propuesta',
     betray: 'Elegir objetivo',
@@ -259,23 +258,9 @@ export default function Hub() {
             onClick={() => openInfo('cofre')}
           />
           <QuickChip
-            icon={Share2}
-            label="Invitar"
-            sublabel="Link personal"
-            accent="cyan"
-            onClick={async () => {
-              try {
-                const { shared } = await shareMemberInvite();
-                showToast(shared ? 'Invitación compartida' : 'Link copiado');
-              } catch (e) {
-                showToast((e as Error).message || 'Error al invitar');
-              }
-            }}
-          />
-          <QuickChip
             icon={Music2}
             label="DJ Reto"
-            sublabel={nowPlaying ? nowPlaying.title.slice(0, 18) : '+75 BP'}
+            sublabel={nowPlaying ? nowPlaying.title.slice(0, 18) : '+75 Puntos'}
             accent="pink"
             onClick={() => setShowRadio(true)}
           />
@@ -319,11 +304,11 @@ export default function Hub() {
 
         <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-3 px-0.5">Acciones</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-4">
-          <GlassButton icon={CircleCheck} label="Continuar" sublabel={playerCtx?.continuedToday ? 'Hecho hoy ✓' : '+10 BP'} variant="success" loading={loading === 'continue'} showInfoHint badge={playerCtx ? !playerCtx.continuedToday : undefined} onClick={() => openInfo('continue')} />
+          <GlassButton icon={CircleCheck} label="Continuar" sublabel={playerCtx?.continuedToday ? 'Hecho hoy ✓' : '+10 Puntos'} variant="success" loading={loading === 'continue'} showInfoHint badge={playerCtx ? !playerCtx.continuedToday : undefined} onClick={() => openInfo('continue')} />
           <GlassButton icon={HeartCrack} label="Clemencia" sublabel="1×/10 días" variant="gold" loading={loading === 'clemency'} showInfoHint onClick={() => openInfo('clemency')} />
           <GlassButton icon={Handshake} label="Renegociar" showInfoHint onClick={() => openInfo('renegotiate')} />
-          <GlassButton icon={Skull} label="Traicionar" sublabel="+150 BP" variant="danger" showInfoHint pulse onClick={() => openInfo('betray')} />
-          <GlassButton icon={DollarSign} label="Soborno" sublabel={bribeOffer ? `${bribeOffer.points} BP` : '...'} variant="gold" showInfoHint badge={playerCtx && !playerCtx.bribeAccepted && !bribeOffer?.alreadyAccepted ? true : undefined} onClick={() => openInfo('bribe')} />
+          <GlassButton icon={Skull} label="Traicionar" sublabel="+150 Puntos" variant="danger" showInfoHint pulse onClick={() => openInfo('betray')} />
+          <GlassButton icon={DollarSign} label="Soborno" sublabel={bribeOffer ? `${bribeOffer.points} Puntos` : '...'} variant="gold" showInfoHint badge={playerCtx && !playerCtx.bribeAccepted && !bribeOffer?.alreadyAccepted ? true : undefined} onClick={() => openInfo('bribe')} />
           <GlassButton icon={Vote} label="Votar" sublabel="Eliminar" showInfoHint badge={playerCtx ? !playerCtx.hasVoted : undefined} onClick={() => openInfo('vote')} />
           <GlassButton icon={Users} label="Alianza" sublabel={playerCtx?.alliance ? playerCtx.alliance.name : 'Secreto'} showInfoHint onClick={() => openInfo('alliance')} />
           <GlassButton icon={Crosshair} label="Desafío 1v1" showInfoHint onClick={() => openInfo('challenge')} />
@@ -354,7 +339,7 @@ export default function Hub() {
               <span className="w-6 text-center shrink-0">{i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
               <Avatar url={p.avatarUrl} emoji={p.avatarEmoji} name={p.displayName} size="xs" />
               <span className="flex-1 text-sm truncate">{p.nickname || p.displayName}</span>
-              <span className="text-xs font-bold text-reto-gold">{p.points} BP</span>
+              <span className="text-xs font-bold text-reto-gold">{p.points} Puntos</span>
             </motion.div>
           ))}
         </GlassCard>
@@ -419,7 +404,7 @@ export default function Hub() {
         )}
         {showBetray && (
           <Modal onClose={() => setShowBetray(false)} title="💀 Traicionar">
-            <p className="text-sm text-white/60 mb-4">Anónimo · +150 BP</p>
+            <p className="text-sm text-white/60 mb-4">Anónimo · +150 Puntos</p>
             {players.filter((p) => p.id !== user.id).map((p) => (
               <button key={p.id} className="w-full glass-btn py-3 rounded-xl text-sm font-semibold mb-2 flex items-center gap-3 px-4" onClick={async () => {
                 await action('betray', () => api.betray(p.id)); setShowBetray(false);
@@ -445,7 +430,7 @@ export default function Hub() {
         )}
         {showAlliance && (
           <Modal onClose={() => setShowAlliance(false)} title="🤝 Alianza secreta">
-            <p className="text-sm text-white/60 mb-4">Pacto de este ciclo (+25 BP)</p>
+            <p className="text-sm text-white/60 mb-4">Pacto de este ciclo (+25 Puntos)</p>
             {players.filter((p) => p.id !== user.id).map((p) => (
               <button key={p.id} className="w-full glass-btn py-3 rounded-xl text-sm font-semibold mb-2 flex items-center gap-3 px-4" onClick={async () => {
                 await action('ally', () => api.alliance(p.id)); setShowAlliance(false);
@@ -477,7 +462,7 @@ export default function Hub() {
               <p className="text-white/60">Ya aceptaste el soborno de este ciclo.</p>
             ) : (
               <>
-                <motion.p animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="text-4xl font-black text-glow-gold text-center my-4">+{bribeOffer.points} BP</motion.p>
+                <motion.p animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="text-4xl font-black text-glow-gold text-center my-4">+{bribeOffer.points} Puntos</motion.p>
                 <p className="text-sm text-reto-red text-center mb-4">Penalización: {bribeOffer.penalty}</p>
                 <button className="w-full py-4 rounded-2xl font-bold" style={{ background: 'linear-gradient(135deg,#ffbe0b,#ff006e)' }}
                   onClick={async () => { await action('bribe', api.acceptBribe); setShowBribe(false); }}>Aceptar soborno</button>

@@ -50,14 +50,14 @@ export default function Confesion() {
         </button>
 
         <h2 className="text-2xl font-black gradient-text mb-2">Confession Booth</h2>
-        <p className="text-white/40 text-sm mb-6">Anónimo hasta el gran día · +20 BP</p>
+        <p className="text-white/40 text-sm mb-6">Anónimo hasta el gran día · +20 Puntos</p>
 
         <GlassCard strong glow="pink" className="p-5 mb-6">
           <textarea rows={4} placeholder="Algo que quieras decir al grupo..." value={message} onChange={(e) => setMessage(e.target.value)} maxLength={500} />
           <motion.button whileTap={{ scale: 0.98 }} onClick={submit}
             className="w-full mt-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
             style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}>
-            <MessageSquare size={18} /> Confesar (+20 BP)
+            <MessageSquare size={18} /> Confesar (+20 Puntos)
           </motion.button>
         </GlassCard>
 
