@@ -1,6 +1,6 @@
 export type WhatsAppResult = {
   sent: boolean;
-  via: 'twilio' | 'link' | 'skipped';
+  via: 'baileys' | 'link' | 'skipped';
   waMeUrl?: string;
   error?: string;
 };

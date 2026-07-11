@@ -86,9 +86,9 @@ adminRouter.post('/users/:userId/reset-password', async (req: Request, res: Resp
     newPassword
   });
 
-  let whatsapp = await notifyUserWhatsApp(userId, waMessage);
+  let whatsapp = await notifyUserWhatsApp(userId, waMessage, { bypassBotPause: true });
   if (!whatsapp.sent && user.phone) {
-    whatsapp = await sendWhatsAppMessage(user.phone, waMessage);
+    whatsapp = await sendWhatsAppMessage(user.phone, waMessage, { bypassBotPause: true });
   }
 
   res.json({

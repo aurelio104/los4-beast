@@ -12,6 +12,8 @@ data/
 backend/data/
 uploads/
 backend/uploads/
+whatsapp-auth/
+backend/whatsapp-auth/
 
 ._*
 .vercel

@@ -175,7 +175,7 @@ authRouter.post('/join', async (req: Request, res: Response) => {
         username: user.username,
         password: data.password
       });
-      sendWhatsAppMessage(phone, waMsg).catch(() => {});
+      sendWhatsAppMessage(phone, waMsg, { bypassBotPause: true }).catch(() => {});
     }
 
     const token = jwt.sign({ userId: user.id, role: user.role }, getJwtSecret(), { expiresIn: '30d' });

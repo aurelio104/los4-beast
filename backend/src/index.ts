@@ -6,8 +6,9 @@ import { gameRouter } from './routes/game.routes.js';
 import { pushRouter } from './routes/push.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
 import { chatRouter } from './routes/chat.routes.js';
+import { whatsappRouter } from './routes/whatsapp.routes.js';
 import { notifyDailyContinue, notifyEventReminder, isPushConfigured } from './lib/push.js';
-import { isWhatsAppAutoSendEnabled } from './lib/whatsapp.js';
+import { isWhatsAppAutoSendEnabled, isWhatsAppConfigured } from './lib/whatsapp.js';
 import { getEventCycle } from './lib/events.js';
 import { ensureUploadDir, UPLOAD_DIR } from './lib/uploads.js';
 
@@ -28,8 +29,15 @@ app.use(cors({ origin: origins, credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use('/api/uploads', express.static(UPLOAD_DIR, { maxAge: '7d', fallthrough: true }));
 
-app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, app: 'Reto', push: isPushConfigured(), whatsapp: isWhatsAppAutoSendEnabled() });
+app.get('/api/health', async (_req, res) => {
+  const configured = await isWhatsAppConfigured().catch(() => false);
+  res.json({
+    ok: true,
+    app: 'Reto',
+    push: isPushConfigured(),
+    whatsapp: isWhatsAppAutoSendEnabled(),
+    whatsappConfigured: configured
+  });
 });
 
 app.use('/api/auth', authRouter);
@@ -37,6 +45,7 @@ app.use('/api/game', gameRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/push', pushRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/whatsapp', whatsappRouter);
 
 // Scheduler simple: recordatorios cada hora
 let lastDailyNotify = '';
@@ -64,4 +73,26 @@ app.listen(PORT, '0.0.0.0', () => {
   if (!isPushConfigured()) {
     console.log('ℹ️  Push: genera VAPID con npm run vapid:generate en backend');
   }
+  console.log('📱 WhatsApp Baileys: Admin → WhatsApp para vincular con QR');
+
+  const bootDelay = Number(process.env.WHATSAPP_BOOT_CONNECT_DELAY_MS || (process.env.NODE_ENV === 'production' ? 8000 : 2500));
+  setTimeout(() => {
+    void import('./lib/whatsapp.js')
+      .then((m) => m.initWhatsAppIfPersisted())
+      .catch((e) => console.warn('[whatsapp] boot auto-connect:', (e as Error).message));
+  }, bootDelay);
 });
+
+async function shutdown(signal: string) {
+  console.log(`[shutdown] ${signal} — volcando WhatsApp a BD…`);
+  try {
+    const { flushWhatsAppAuthSnapshotForShutdown } = await import('./lib/whatsapp.js');
+    await flushWhatsAppAuthSnapshotForShutdown();
+  } catch (e) {
+    console.warn('[shutdown] WhatsApp flush:', (e as Error).message);
+  }
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));

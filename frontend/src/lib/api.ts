@@ -99,6 +99,16 @@ export const api = {
       { method: 'POST' }
     ),
 
+  whatsappAdminStatus: () => request<Record<string, unknown>>('/whatsapp/status'),
+  whatsappConnect: () => request<{ message: string }>('/whatsapp/connect', { method: 'POST' }),
+  whatsappClean: () => request<{ ok: boolean; message?: string }>('/whatsapp/clean', { method: 'POST' }),
+  whatsappBotPause: (paused: boolean) =>
+    request<{ ok: boolean; message: string }>('/whatsapp/bot-pause', { method: 'POST', body: JSON.stringify({ paused }) }),
+  whatsappSend: (phoneNumber: string, message: string) =>
+    request<{ success: boolean; error?: string }>('/whatsapp/send', { method: 'POST', body: JSON.stringify({ phoneNumber, message }) }),
+  whatsappMessages: () => request<unknown[]>('/whatsapp/messages'),
+  whatsappTemplatesSeed: () => request<{ message: string }>('/whatsapp/templates/seed', { method: 'POST' }),
+
   chatMessages: (after?: string) =>
     request<{ success: boolean; messages: unknown[] }>(`/chat/messages${after ? `?after=${encodeURIComponent(after)}` : ''}`),
   chatSend: (body: string) =>

@@ -541,7 +541,8 @@ gameRouter.post('/whatsapp/test', authMiddleware, async (req, res) => {
 gameRouter.get('/whatsapp/status', authMiddleware, async (_req, res) => {
   res.json({
     success: true,
-    autoSend: isWhatsAppAutoSendEnabled()
+    autoSend: isWhatsAppAutoSendEnabled(),
+    connected: isWhatsAppAutoSendEnabled()
   });
 });
 

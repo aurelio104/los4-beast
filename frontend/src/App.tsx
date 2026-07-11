@@ -6,6 +6,7 @@ import Setup from './pages/Setup';
 import Arena from './pages/Arena';
 import Tienda from './pages/Tienda';
 import Admin from './pages/Admin';
+import WhatsAppAdmin from './pages/WhatsAppAdmin';
 import Eventos from './pages/Eventos';
 import Cofre from './pages/Cofre';
 import Confesion from './pages/Confesion';
@@ -53,6 +54,7 @@ function AppRoutes() {
         <Route path="/perfil" element={<PrivateRoute><Perfil /></PrivateRoute>} />
         <Route path="/finale" element={<PrivateRoute><Finale /></PrivateRoute>} />
         <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
+        <Route path="/admin/whatsapp" element={<PrivateRoute><WhatsAppAdmin /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

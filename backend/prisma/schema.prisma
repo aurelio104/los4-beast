@@ -182,3 +182,45 @@ model ChestClaim {
 
   @@unique([userId, cycleIndex])
 }
+
+model WhatsAppSession {
+  id            String    @id @default(cuid())
+  sessionId     String    @unique @default("main")
+  isConnected   Boolean   @default(false)
+  phoneNumber   String?
+  lastConnected DateTime?
+  qrCode        String?
+  qrExpiry      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model WhatsAppTemplate {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  code      String   @unique
+  subject   String
+  content   String
+  variables String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WhatsAppMessage {
+  id           String    @id @default(cuid())
+  phoneNumber  String
+  templateCode String?
+  message      String
+  status       String    @default("PENDING")
+  errorMessage String?
+  messageId    String?
+  sentAt       DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+model WhatsAppAuthArchive {
+  id        String   @id @default("main")
+  data      Bytes
+  updatedAt DateTime @updatedAt
+}

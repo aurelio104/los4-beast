@@ -132,6 +132,15 @@ export default function Admin() {
           <h2 className="text-2xl font-black gradient-text">Panel Admin</h2>
         </div>
 
+        <button
+          type="button"
+          onClick={() => navigate('/admin/whatsapp')}
+          className="w-full mb-4 py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
+          style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+        >
+          <MessageCircle size={20} /> WhatsApp — conectar y gestionar
+        </button>
+
         <div className="grid grid-cols-3 gap-2 mb-6">
           {[
             { icon: Users, label: 'Jugadores', key: 'players' },

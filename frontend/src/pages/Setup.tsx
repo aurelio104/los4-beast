@@ -302,9 +302,9 @@ export default function Setup() {
                   </span>
                 </button>
                 {waAutoSend ? (
-                  <p className="text-[11px] text-white/40 text-center">Envío automático activo en el servidor</p>
+                  <p className="text-[11px] text-white/40 text-center">WhatsApp del Reto conectado — envío automático activo</p>
                 ) : (
-                  <p className="text-[11px] text-white/40 text-center">Sin Twilio: se abrirá WhatsApp para confirmar el primer mensaje</p>
+                  <p className="text-[11px] text-white/40 text-center">El admin debe vincular WhatsApp en Admin → WhatsApp (QR). Si no, se abrirá wa.me.</p>
                 )}
                 {whatsappDone && (
                   <p className="text-reto-cyan text-sm flex items-center justify-center gap-1"><CircleCheck size={16} /> WhatsApp configurado</p>

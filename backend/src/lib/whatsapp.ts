@@ -1,18 +1,39 @@
 import { prisma } from './prisma.js';
 import { normalizePhone } from './phone.js';
+import {
+  getConnectionStatus,
+  initWhatsApp,
+  initWhatsAppIfPersisted,
+  flushWhatsAppAuthSnapshotForShutdown,
+  sendWhatsAppMessage as sendViaBaileys,
+  disconnectWhatsApp,
+  getQRCode,
+  cleanWhatsAppCredentials,
+  isPhoneOnWhatsApp,
+  type SendWhatsAppOptions
+} from './whatsapp-baileys.js';
 
-const APP_URL = process.env.APP_PUBLIC_URL || 'https://los4-beast.vercel.app';
+export {
+  getConnectionStatus,
+  initWhatsApp,
+  initWhatsAppIfPersisted,
+  flushWhatsAppAuthSnapshotForShutdown,
+  disconnectWhatsApp,
+  getQRCode,
+  cleanWhatsAppCredentials,
+  isPhoneOnWhatsApp
+};
+
+const APP_URL = process.env.APP_PUBLIC_URL || process.env.FRONTEND_URL || 'https://los4-beast.vercel.app';
 
 export type WhatsAppSendResult = {
   sent: boolean;
-  via: 'twilio' | 'link' | 'skipped';
+  via: 'baileys' | 'link' | 'skipped';
   waMeUrl?: string;
   error?: string;
+  messageId?: string;
+  skipped?: boolean;
 };
-
-function twilioConfigured() {
-  return !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_WHATSAPP_FROM);
-}
 
 export function buildWaMeUrl(phone: string, text: string): string {
   const normalized = normalizePhone(phone);
@@ -21,50 +42,46 @@ export function buildWaMeUrl(phone: string, text: string): string {
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
 }
 
-async function sendViaTwilio(to: string, body: string): Promise<{ ok: boolean; error?: string }> {
-  const sid = process.env.TWILIO_ACCOUNT_SID!;
-  const token = process.env.TWILIO_AUTH_TOKEN!;
-  const from = process.env.TWILIO_WHATSAPP_FROM!;
-
-  const toWa = to.startsWith('whatsapp:') ? to : `whatsapp:${normalizePhone(to) || to}`;
-  const fromWa = from.startsWith('whatsapp:') ? from : `whatsapp:${from}`;
-
-  const params = new URLSearchParams({ From: fromWa, To: toWa, Body: body });
-  const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}`,
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: params.toString()
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    return { ok: false, error: err.slice(0, 200) };
+function toResult(
+  phone: string,
+  body: string,
+  r: { success: boolean; messageId?: string; error?: string; skipped?: boolean }
+): WhatsAppSendResult {
+  if (r.success) {
+    return { sent: true, via: 'baileys', messageId: r.messageId };
   }
-  return { ok: true };
-}
-
-export async function sendWhatsAppMessage(phone: string, body: string): Promise<WhatsAppSendResult> {
-  const normalized = normalizePhone(phone);
-  if (!normalized) return { sent: false, via: 'skipped', error: 'Teléfono inválido' };
-
-  if (twilioConfigured()) {
-    const r = await sendViaTwilio(normalized, body);
-    if (r.ok) return { sent: true, via: 'twilio' };
+  if (r.skipped) {
+    return { sent: false, via: 'skipped', skipped: true, error: r.error };
+  }
+  const connected = getConnectionStatus().isConnected;
+  if (!connected) {
     return {
       sent: false,
       via: 'link',
-      waMeUrl: buildWaMeUrl(normalized, body),
-      error: r.error
+      waMeUrl: buildWaMeUrl(phone, body),
+      error: r.error || 'WhatsApp no conectado — vincula desde Admin → WhatsApp'
     };
   }
-
-  return { sent: false, via: 'link', waMeUrl: buildWaMeUrl(normalized, body) };
+  return { sent: false, via: 'link', waMeUrl: buildWaMeUrl(phone, body), error: r.error };
 }
 
-export async function notifyUserWhatsApp(userId: string, body: string): Promise<WhatsAppSendResult> {
+export async function sendWhatsAppMessage(
+  phone: string,
+  body: string,
+  opts?: SendWhatsAppOptions
+): Promise<WhatsAppSendResult> {
+  const normalized = normalizePhone(phone);
+  if (!normalized) return { sent: false, via: 'skipped', error: 'Teléfono inválido' };
+
+  const r = await sendViaBaileys(normalized, body, opts);
+  return toResult(normalized, body, r);
+}
+
+export async function notifyUserWhatsApp(
+  userId: string,
+  body: string,
+  opts?: SendWhatsAppOptions
+): Promise<WhatsAppSendResult> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { phone: true, whatsappOptIn: true }
@@ -72,7 +89,7 @@ export async function notifyUserWhatsApp(userId: string, body: string): Promise<
   if (!user?.whatsappOptIn || !user.phone) {
     return { sent: false, via: 'skipped', error: 'WhatsApp no activado' };
   }
-  return sendWhatsAppMessage(user.phone, body);
+  return sendWhatsAppMessage(user.phone, body, opts);
 }
 
 export function buildJoinCredentialsMessage(opts: {
@@ -127,6 +144,12 @@ export function buildChangeAlertMessage(title: string, body: string, url?: strin
   return `📢 *Reto* — ${title}\n\n${body}\n\n🔗 ${link}`;
 }
 
-export function isWhatsAppAutoSendEnabled() {
-  return twilioConfigured();
+export function isWhatsAppAutoSendEnabled(): boolean {
+  return getConnectionStatus().isConnected;
+}
+
+export async function isWhatsAppConfigured(): Promise<boolean> {
+  if (getConnectionStatus().isConnected) return true;
+  const { hasWhatsAppAuthArchive } = await import('./whatsapp-auth-archive.js');
+  return hasWhatsAppAuthArchive().catch(() => false);
 }
