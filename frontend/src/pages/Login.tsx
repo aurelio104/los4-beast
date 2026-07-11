@@ -3,11 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Fingerprint, KeyRound, Loader2 } from 'lucide-react';
 import { RetoLogo } from '../components/RetoLogo';
-import { startAuthentication, startRegistration } from '@simplewebauthn/browser';
+import { startAuthentication } from '@simplewebauthn/browser';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 import { User } from '../types';
+import { isSetupDone } from '../lib/setup';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -17,26 +18,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
 
-  const finishLogin = (token: string, user: User, needsPasskey?: boolean) => {
+  const finishLogin = (token: string, user: User) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
-    if (needsPasskey) {
-      setupPasskey(token);
-    } else {
-      navigate('/', { replace: true });
-    }
-  };
-
-  const setupPasskey = async (token: string) => {
-    try {
-      const options = await api.passkeyRegisterOptions();
-      if (!options.challenge) { navigate('/', { replace: true }); return; }
-      const credential = await startRegistration({ optionsJSON: options });
-      await api.passkeyRegister(credential);
-    } catch {
-      /* skip */
-    }
-    navigate('/', { replace: true });
+    navigate(isSetupDone(user.id) ? '/' : '/setup', { replace: true });
   };
 
   const handlePasskey = async () => {
@@ -62,7 +47,7 @@ export default function Login() {
     try {
       const res = await api.login(identifier, password);
       if (!res.success || !res.token) throw new Error(res.error || 'Login fallido');
-      finishLogin(res.token, res.user as User, res.needsPasskey);
+      finishLogin(res.token, res.user as User);
     } catch (e) {
       setError((e as Error).message);
     } finally {

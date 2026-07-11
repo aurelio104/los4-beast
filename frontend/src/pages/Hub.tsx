@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   CircleCheck, Handshake, HeartCrack, Skull, Gift, Swords, Trophy, ShoppingBag,
   Settings, Gamepad2, DollarSign, Vote, Users, MessageSquare, MessagesSquare,
-  Calendar, Package, User, Zap, Bell, Crosshair, Share2
+  Calendar, Package, User, Zap, Crosshair, Share2
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AppShell, HeroSection } from '../components/AppShell';
@@ -203,8 +203,6 @@ export default function Hub() {
             avatarUrl={user.avatarUrl}
             avatarEmoji={user.avatarEmoji}
             points={user.points}
-            showNotifications={!push.subscribed && push.supported}
-            onNotifications={() => openInfo('notificaciones')}
           />
 
           {eventActive && currentEvent && (
@@ -237,16 +235,6 @@ export default function Hub() {
 
         {/* Accesos rápidos — scroll horizontal en móvil */}
         <div className="hub-quick-strip mb-4">
-          {!push.subscribed && push.supported && (
-            <QuickChip
-              icon={Bell}
-              label="Alertas"
-              sublabel="Activar push"
-              accent="gold"
-              highlight
-              onClick={() => openInfo('notificaciones')}
-            />
-          )}
           <QuickChip
             icon={Package}
             label="Cofre"

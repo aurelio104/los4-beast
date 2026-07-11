@@ -3,11 +3,10 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   UserPlus, Loader2, Camera, ChevronRight, ChevronLeft,
-  Fingerprint, Lock, UserRound, Sparkles, CircleCheck, Check,
-  Hourglass, Ban, ArrowRight, Flame
+  Lock, UserRound, Sparkles, CircleCheck, Check,
+  Hourglass, Ban, ArrowRight
 } from 'lucide-react';
 import { RetoLogo } from '../components/RetoLogo';
-import { startRegistration } from '@simplewebauthn/browser';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
 import { Avatar } from '../components/Avatar';
@@ -19,9 +18,9 @@ import { syncBgFromUser } from '../lib/preferences';
 import { User } from '../types';
 
 const EMOJIS = ['😎', '🔥', '👑', '💀', '🤡', '😈', '🦸', '🎭', '🐺', '🦁', '✨', '🌊'];
-const STEPS = ['Datos', 'Foto', 'Contraseña', 'Passkey', '¡Listo!'];
+const STEPS = ['Datos', 'Foto', 'Contraseña', '¡Listo!'];
 
-type Step = 0 | 1 | 2 | 3 | 4;
+type Step = 0 | 1 | 2 | 3;
 
 export default function Join() {
   const { code } = useParams<{ code: string }>();
@@ -50,8 +49,6 @@ export default function Join() {
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [passkeyDone, setPasskeyDone] = useState(false);
-  const [passkeySkipped, setPasskeySkipped] = useState(false);
 
   useEffect(() => {
     if (!code) { setValid(false); return; }
@@ -119,28 +116,6 @@ export default function Join() {
     return user;
   };
 
-  const setupPasskey = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const options = await api.passkeyRegisterOptions();
-      if (!options.challenge) throw new Error(options.error || 'Passkey no disponible en este dispositivo');
-      const cred = await startRegistration({ optionsJSON: options });
-      const reg = await api.passkeyRegister(cred);
-      if (!reg.success) throw new Error(reg.error || 'No se pudo guardar la Passkey');
-      const me = await api.me();
-      if (me.success) {
-        localStorage.setItem('user', JSON.stringify(me.user));
-      }
-      setPasskeyDone(true);
-      setStep(4);
-    } catch (e) {
-      setError((e as Error).message || 'Error al configurar Passkey');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const next = async () => {
     setError('');
     const err = validateStep();
@@ -159,7 +134,7 @@ export default function Join() {
       return;
     }
 
-    if (step < 4) setStep((step + 1) as Step);
+    if (step < 3) setStep((step + 1) as Step);
   };
 
   const back = () => {
@@ -323,57 +298,21 @@ export default function Join() {
             )}
 
             {step === 3 && (
-              <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5 text-center py-4">
-                <Fingerprint size={48} className="mx-auto text-reto-purple" />
-                <div>
-                  <p className="text-lg font-black mb-2">Configura tu Passkey</p>
-                  <p className="text-sm text-white/55 leading-relaxed">
-                    Usa Face ID, huella o PIN del dispositivo para entrar sin contraseña la próxima vez.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={setupPasskey}
-                  disabled={loading}
-                  className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 glass-strong"
-                >
-                  {loading ? <Loader2 className="animate-spin" /> : <Fingerprint size={22} />}
-                  {loading ? 'Configurando…' : 'Activar Passkey'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setPasskeySkipped(true); setStep(4); }}
-                  className="text-xs text-white/40 underline"
-                >
-                  Configurar después en Perfil
-                </button>
-              </motion.div>
-            )}
-
-            {step === 4 && (
-              <motion.div key="s4" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-5 text-center py-6">
+              <motion.div key="s3" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-5 text-center py-6">
                 <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
                   <Sparkles size={48} className="mx-auto text-reto-gold" />
                 </motion.div>
-                <h2 className="text-2xl font-black gradient-text">¡Bienvenido al Reto!</h2>
-                <p className="text-sm text-white/60 flex flex-wrap items-center justify-center gap-1.5">
-                  {passkeyDone ? (
-                    <span className="inline-flex items-center gap-1"><CircleCheck size={14} className="text-reto-cyan" /> Passkey guardada</span>
-                  ) : passkeySkipped ? (
-                    'Puedes activar Passkey en Perfil'
-                  ) : (
-                    'Todo listo'
-                  )}
-                  <span className="text-white/30">·</span>
-                  <span className="inline-flex items-center gap-1">29 de agosto te espera <Flame size={14} className="text-reto-gold" /></span>
+                <h2 className="text-2xl font-black gradient-text">¡Cuenta creada!</h2>
+                <p className="text-sm text-white/60 leading-relaxed">
+                  Ahora configura notificaciones, música y passkey en el siguiente paso.
                 </p>
                 <button
                   type="button"
-                  onClick={() => navigate('/', { replace: true })}
+                  onClick={() => navigate('/setup', { replace: true })}
                   className="w-full py-4 rounded-2xl font-bold inline-flex items-center justify-center gap-2"
                   style={{ background: 'linear-gradient(135deg, #ffbe0b, #ff006e)' }}
                 >
-                  Entrar al Reto <ArrowRight size={18} />
+                  Configurar Reto <ArrowRight size={18} />
                 </button>
               </motion.div>
             )}

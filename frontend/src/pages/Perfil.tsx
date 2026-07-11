@@ -419,9 +419,10 @@ export default function Perfil() {
           </div>
         </GlassCard>
 
-        {/* Preferencias */}
+        {/* Configuración */}
         <GlassCard className="p-5 mb-4 space-y-3">
-          <p className="text-xs uppercase tracking-widest text-white/40">Experiencia</p>
+          <p className="text-xs uppercase tracking-widest text-white/40">Configuración</p>
+          <p className="text-[11px] text-white/35 -mt-1 mb-1">Música, sonidos, notificaciones y passkey</p>
           <button type="button" onClick={() => togglePref('music')} className="w-full flex items-center justify-between py-2">
             <span className="flex items-center gap-2 text-sm"><Music2 size={16} /> Música de fondo</span>
             <span className="text-xs text-reto-cyan">{prefs.music ? 'ON' : 'OFF'}</span>

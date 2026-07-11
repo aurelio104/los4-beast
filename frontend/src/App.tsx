@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Hub from './pages/Hub';
 import Login from './pages/Login';
 import Join from './pages/Join';
+import Setup from './pages/Setup';
 import Arena from './pages/Arena';
 import Tienda from './pages/Tienda';
 import Admin from './pages/Admin';
@@ -13,22 +14,35 @@ import Perfil from './pages/Perfil';
 import Finale from './pages/Finale';
 import { BackgroundMusic } from './components/BackgroundMusic';
 import { PwaInstallGate } from './components/PwaInstallGate';
+import { SetupGate } from './components/SetupGate';
+import { isSetupDone } from './lib/setup';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   if (!localStorage.getItem('token')) return <Navigate to="/login" replace />;
-  return <>{children}</>;
+  return <SetupGate>{children}</SetupGate>;
+}
+
+function getUserId(): string | null {
+  try {
+    const raw = localStorage.getItem('user');
+    return raw ? (JSON.parse(raw).id as string) : null;
+  } catch {
+    return null;
+  }
 }
 
 function AppRoutes() {
   const location = useLocation();
-  const showInstallBanner = location.pathname === '/';
+  const setupDone = isSetupDone(getUserId());
+  const showInstallBanner = setupDone && location.pathname === '/';
 
   return (
     <>
-      <PwaInstallGate compactBanner={showInstallBanner} />
+      {setupDone && <PwaInstallGate compactBanner={showInstallBanner} />}
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/join/:code" element={<Join />} />
+        <Route path="/setup" element={<PrivateRoute><Setup /></PrivateRoute>} />
         <Route path="/" element={<PrivateRoute><Hub /></PrivateRoute>} />
         <Route path="/arena" element={<PrivateRoute><Arena /></PrivateRoute>} />
         <Route path="/tienda" element={<PrivateRoute><Tienda /></PrivateRoute>} />

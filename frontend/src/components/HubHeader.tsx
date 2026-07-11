@@ -1,9 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Bell } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { RetoLogo } from './RetoLogo';
-import { MusicToggle } from './MusicToggle';
 import { PointsBadge } from './PointsBadge';
 
 type HubHeaderProps = {
@@ -11,18 +9,9 @@ type HubHeaderProps = {
   avatarUrl?: string | null;
   avatarEmoji?: string;
   points: number;
-  showNotifications?: boolean;
-  onNotifications?: () => void;
 };
 
-export function HubHeader({
-  displayName,
-  avatarUrl,
-  avatarEmoji,
-  points,
-  showNotifications,
-  onNotifications
-}: HubHeaderProps) {
+export function HubHeader({ displayName, avatarUrl, avatarEmoji, points }: HubHeaderProps) {
   const navigate = useNavigate();
 
   return (
@@ -32,7 +21,6 @@ export function HubHeader({
       className="mb-5"
     >
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        {/* Identidad */}
         <button
           type="button"
           onClick={() => navigate('/perfil')}
@@ -47,23 +35,7 @@ export function HubHeader({
             <p className="text-[11px] sm:text-xs text-white/55 truncate">{displayName}</p>
           </div>
         </button>
-
-        {/* Acciones rápidas — alineadas a la derecha */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <MusicToggle size="sm" />
-          {showNotifications && onNotifications && (
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              onClick={onNotifications}
-              aria-label="Activar notificaciones"
-              className="p-2 rounded-xl glass-btn text-reto-gold ring-1 ring-reto-gold/25 shrink-0"
-            >
-              <Bell size={16} strokeWidth={2} />
-            </motion.button>
-          )}
-          <PointsBadge points={points} compact />
-        </div>
+        <PointsBadge points={points} compact />
       </div>
     </motion.header>
   );
