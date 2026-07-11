@@ -1,0 +1,25 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
+import { OfflineBanner } from './components/OfflineBanner';
+import { useOnlineStatus } from './hooks/useOnlineStatus';
+import './index.css';
+
+function Root() {
+  const online = useOnlineStatus();
+  return (
+    <>
+      <OfflineBanner online={online} />
+      <App />
+    </>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <BrowserRouter>
+      <Root />
+    </BrowserRouter>
+  </StrictMode>
+);

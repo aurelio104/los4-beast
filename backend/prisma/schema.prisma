@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  username          String   @unique
+  email             String   @unique
+  passwordHash      String
+  role              String   @default("PLAYER")
+  isActive          Boolean  @default(true)
+  passkeyRegistered Boolean  @default(false)
+
+  displayName String
+  nickname    String?
+  gender      String  @default("OTHER")
+  avatarEmoji String  @default("😎")
+
+  beastPoints     Int       @default(0)
+  lastContinuedAt DateTime?
+  clemencyUsedAt  DateTime?
+  bribeAcceptedCycle Int?
+
+  passkeys         Passkey[]
+  actions          GameAction[]
+  pushSubscription PushSubscription?
+  confessions      Confession[]
+  votesCast        Vote[]       @relation("VotesCast")
+  votesReceived    Vote[]       @relation("VotesReceived")
+  alliances        Alliance[]   @relation("AllianceUser")
+  partnerAlliances Alliance[]   @relation("AlliancePartner")
+  chestClaims      ChestClaim[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WebAuthnChallenge {
+  id        String   @id @default(cuid())
+  challenge String   @unique
+  userId    String?
+  type      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([challenge])
+}
+
+model Passkey {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String    @unique
+  publicKey    String
+  counter      BigInt    @default(0)
+  deviceName   String?
+  isActive     Boolean   @default(true)
+  lastUsed     DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+model GameAction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  pointsDelta Int      @default(0)
+  metadata    String?
+  isAnonymous Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId, type, createdAt])
+}
+
+model AppConfig {
+  id    String @id @default("main")
+  key   String @unique
+  value String
+}
+
+model Redemption {
+  id        String   @id @default(cuid())
+  userId    String
+  rewardId  String
+  cost      Int
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+}
+
+model Confession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String
+  revealed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Vote {
+  id         String   @id @default(cuid())
+  voterId    String
+  voter      User     @relation("VotesCast", fields: [voterId], references: [id], onDelete: Cascade)
+  targetId   String
+  target     User     @relation("VotesReceived", fields: [targetId], references: [id], onDelete: Cascade)
+  cycleIndex Int
+  voteType   String
+  createdAt  DateTime @default(now())
+
+  @@unique([voterId, cycleIndex, voteType])
+}
+
+model Alliance {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation("AllianceUser", fields: [userId], references: [id], onDelete: Cascade)
+  partnerId  String
+  partner    User     @relation("AlliancePartner", fields: [partnerId], references: [id], onDelete: Cascade)
+  cycleIndex Int
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, cycleIndex])
+}
+
+model ChestClaim {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cycleIndex Int
+  clue       String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, cycleIndex])
+}

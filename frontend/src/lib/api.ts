@@ -1,0 +1,81 @@
+import type { PlayerContext, TriviaQuestion } from '../types';
+
+const API = '/api';
+
+function getToken() {
+  return localStorage.getItem('token');
+}
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>)
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${API}${path}`, { ...options, headers, credentials: 'include' });
+  const data = await res.json();
+  if (res.status === 401 && !path.includes('/login') && !path.includes('/join')) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  }
+  return data as T;
+}
+
+export const api = {
+  invite: (code: string) => request<{ valid: boolean; challengeDate: string }>(`/auth/invite/${code}`),
+  join: (body: Record<string, string>) => request<{ success: boolean; token?: string; user?: unknown; error?: string }>('/auth/join', { method: 'POST', body: JSON.stringify(body) }),
+  login: (identifier: string, password: string) => request<{ success: boolean; token?: string; user?: unknown; error?: string; needsPasskey?: boolean }>('/auth/login', { method: 'POST', body: JSON.stringify({ identifier, password }) }),
+  me: () => request<{ success: boolean; user: unknown }>('/auth/me'),
+  passkeyChallenge: () => fetch(`${API}/auth/webauthn/challenge`).then((r) => r.json()),
+  passkeyVerify: (body: unknown) => request<{ success: boolean; token?: string; user?: unknown; error?: string }>('/auth/webauthn/verify', { method: 'POST', body: JSON.stringify(body) }),
+  passkeyRegisterOptions: () => fetch(`${API}/auth/webauthn/register-options`, { headers: { Authorization: `Bearer ${getToken()}` } }).then((r) => r.json()),
+  passkeyRegister: (body: unknown) => fetch(`${API}/auth/webauthn/register`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` }, body: JSON.stringify(body) }).then((r) => r.json()),
+  passkeyDelete: () => request<{ success: boolean }>('/auth/webauthn/passkey', { method: 'DELETE' }),
+  players: () => request<{ success: boolean; players: unknown[] }>('/auth/players'),
+
+  gameStatus: () => request<{ success: boolean; cycleIndex: number; nextEventAt: string; daysUntilChallenge: number; event: unknown; isEventActive: boolean; hoursUntilNext: number; player: PlayerContext }>('/game/status'),
+  triviaQuestions: () => request<{ success: boolean; questions: TriviaQuestion[] }>('/game/trivia/questions'),
+  events: () => request<{ success: boolean; events: unknown[]; current: unknown }>('/game/events'),
+  feed: () => request<{ success: boolean; feed: unknown[] }>('/game/feed'),
+  continue: () => request<{ success: boolean; beastPoints: number; gained?: number; points?: number; alreadyDone?: boolean; error?: string }>('/game/continue', { method: 'POST' }),
+  clemency: () => request<{ success: boolean; beastPoints: number; error?: string }>('/game/clemency', { method: 'POST' }),
+  betray: (targetId: string) => request<{ success: boolean; beastPoints: number; gained?: number; points?: number; error?: string }>('/game/betray', { method: 'POST', body: JSON.stringify({ targetId }) }),
+  renegotiate: (proposal: string) => request<{ success: boolean; message?: string; error?: string }>('/game/renegotiate', { method: 'POST', body: JSON.stringify({ proposal }) }),
+  bribe: () => request<{ success: boolean; offer: { points: number; penalty: string }; alreadyAccepted: boolean }>('/game/bribe'),
+  acceptBribe: () => request<{ success: boolean; beastPoints: number; gained?: number; points?: number; penalty?: string; error?: string }>('/game/bribe/accept', { method: 'POST' }),
+  vote: (targetId: string, voteType?: string) => request<{ success: boolean; beastPoints: number; error?: string }>('/game/vote', { method: 'POST', body: JSON.stringify({ targetId, voteType }) }),
+  votes: () => request<{ success: boolean; tally: { targetId: string; count: number; name: string }[] }>('/game/votes'),
+  alliance: (partnerId: string) => request<{ success: boolean; beastPoints: number; points?: number; error?: string }>('/game/alliance', { method: 'POST', body: JSON.stringify({ partnerId }) }),
+  getAlliance: () => request<{ success: boolean; alliance: unknown }>('/game/alliance'),
+  confession: (message: string) => request<{ success: boolean; error?: string }>('/game/confession', { method: 'POST', body: JSON.stringify({ message }) }),
+  confessions: () => request<{ success: boolean; confessions: unknown[] }>('/game/confessions'),
+  chest: () => request<{ success: boolean; clues: { cycleIndex: number; clue: string }[]; canClaim: boolean; daysUntilChallenge: number }>('/game/chest'),
+  claimChest: () => request<{ success: boolean; clue?: string; beastPoints: number; points?: number; gained?: number; error?: string }>('/game/chest/claim', { method: 'POST' }),
+  redeem: (rewardId: string, cost: number) => request<{ success: boolean; beastPoints: number; error?: string }>('/game/redeem', { method: 'POST', body: JSON.stringify({ rewardId, cost }) }),
+  updateProfile: (data: { nickname?: string; avatarEmoji?: string }) => request<{ success: boolean; user: unknown }>('/game/profile', { method: 'PATCH', body: JSON.stringify(data) }),
+
+  redLight: (survived: boolean) => request<{ success: boolean; beastPoints: number; points: number; error?: string }>('/game/minigame/red-light', { method: 'POST', body: JSON.stringify({ survived }) }),
+  trivia: (correct: boolean) => request<{ success: boolean; beastPoints: number; points: number; error?: string }>('/game/minigame/trivia', { method: 'POST', body: JSON.stringify({ correct }) }),
+  ddakji: (won: boolean) => request<{ success: boolean; beastPoints: number; points: number; error?: string }>('/game/minigame/ddakji', { method: 'POST', body: JSON.stringify({ won }) }),
+  glassBridge: (steps: number) => request<{ success: boolean; beastPoints: number; points: number; error?: string }>('/game/minigame/glass-bridge', { method: 'POST', body: JSON.stringify({ steps }) }),
+  honeycomb: (precision: number) => request<{ success: boolean; beastPoints: number; points: number; error?: string }>('/game/minigame/honeycomb', { method: 'POST', body: JSON.stringify({ precision }) }),
+  mysteryBox: (boxIndex: number) => request<{ success: boolean; beastPoints: number; points: number; error?: string }>('/game/minigame/mystery-box', { method: 'POST', body: JSON.stringify({ boxIndex }) }),
+  coinFlip: (choice: string, bet: number) => request<{ success: boolean; beastPoints: number; points: number; won?: boolean; result?: string; error?: string }>('/game/minigame/coin-flip', { method: 'POST', body: JSON.stringify({ choice, bet }) }),
+  tugWar: (taps: number) => request<{ success: boolean; beastPoints: number; points: number; error?: string }>('/game/minigame/tug-war', { method: 'POST', body: JSON.stringify({ taps }) }),
+  challenge1v1: (opponentId: string, won: boolean) => request<{ success: boolean; beastPoints: number; points: number; error?: string }>('/game/minigame/challenge', { method: 'POST', body: JSON.stringify({ opponentId, won }) }),
+
+  pushVapidPublic: () => request<{ success: boolean; publicKey?: string; error?: string }>('/push/vapid-public'),
+  pushSubscribe: (body: { endpoint: string; keys: { p256dh: string; auth: string } }) => request<{ success: boolean }>('/push/subscribe', { method: 'POST', body: JSON.stringify(body) }),
+  pushUnsubscribe: () => request<{ success: boolean }>('/push/unsubscribe', { method: 'POST' }),
+  pushTest: () => request<{ success: boolean }>('/push/test', { method: 'POST' }),
+  pushBroadcast: (title: string, body: string) => request<{ success: boolean; sent: number }>('/push/broadcast', { method: 'POST', body: JSON.stringify({ title, body }) }),
+
+  adminDashboard: () => request<{ success: boolean; stats: Record<string, number>; inviteCode: string; challengeDate: string; redemptions: unknown[] }>('/admin/dashboard'),
+  adminRevealConfessions: () => request<{ success: boolean }>('/admin/reveal-confessions', { method: 'POST' }),
+  adminNotifyEvent: () => request<{ success: boolean; sent: number }>('/admin/notify-event', { method: 'POST' }),
+  adminUpdateRedemption: (id: string, status: string) => request<{ success: boolean }>(`/admin/redemptions/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  adminStats: () => request<{ success: boolean; stats: { players: number; actions: number; redemptions: number }; inviteCode: string; challengeDate: string }>('/auth/admin/stats')
+};

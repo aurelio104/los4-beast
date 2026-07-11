@@ -1,0 +1,33 @@
+import { FeedItem } from '../types';
+
+export function formatFeedDetail(item: FeedItem): string | null {
+  if (!item.metadata) return null;
+  try {
+    const meta = JSON.parse(item.metadata) as Record<string, unknown>;
+    switch (item.type) {
+      case 'RENEGOTIATE':
+        return `"${String(meta.proposal ?? '').slice(0, 120)}"`;
+      case 'BRIBE':
+        return `Penalización: ${meta.penalty ?? '?'}`;
+      case 'BETRAY':
+      case 'BETRAY_VICTIM':
+        return meta.targetId ? 'Objetivo seleccionado 👀' : null;
+      case 'ALLIANCE':
+        return 'Pacto secreto formado 🤫';
+      case 'VOTE':
+        return 'Voto registrado 🗳️';
+      case 'CHEST':
+        return meta.clue ? String(meta.clue) : null;
+      case 'CHALLENGE_1V1':
+        return meta.won ? 'Ganó el duelo ⚔️' : 'Perdió el duelo 😵';
+      case 'REDEEM':
+        return `Canje: ${meta.rewardId ?? 'premio'}`;
+      case 'COIN_FLIP':
+        return meta.won ? `Ganó apuesta (${meta.bet} BP)` : `Perdió apuesta (${meta.bet} BP)`;
+      default:
+        return null;
+    }
+  } catch {
+    return null;
+  }
+}

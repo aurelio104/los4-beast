@@ -1,0 +1,17 @@
+node_modules/
+dist/
+backend/dist/
+frontend/dist/
+.env
+backend/.env
+backend/*.db
+backend/*.db-journal
+backend/prisma/*.db
+backend/prisma/*.db-journal
+*.log
+.DS_Store
+._*
+.vercel
+.koyeb
+.idea
+.vscode

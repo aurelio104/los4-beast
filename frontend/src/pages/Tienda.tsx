@@ -1,0 +1,145 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Sparkles } from 'lucide-react';
+import { AppShell } from '../components/AppShell';
+import { GlassCard } from '../components/GlassCard';
+import { PointsBadge } from '../components/PointsBadge';
+import { ActionInfoModal } from '../components/ActionInfoModal';
+import { api } from '../lib/api';
+import { REWARDS, User } from '../types';
+import { REWARD_INFO } from '../lib/actionInfo';
+import { celebrateWin } from '../lib/celebrate';
+
+export default function Tienda() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [toast, setToast] = useState('');
+  const [infoRewardId, setInfoRewardId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('user');
+    if (!stored) { navigate('/login'); return; }
+    setUser(JSON.parse(stored));
+    api.me().then((r) => {
+      if (r.success) {
+        setUser(r.user as User);
+        localStorage.setItem('user', JSON.stringify(r.user));
+      }
+    });
+  }, []);
+
+  const redeem = async (rewardId: string, cost: number) => {
+    const res = await api.redeem(rewardId, cost);
+    if (res.success) {
+      celebrateWin(-cost);
+      setToast('¡Canjeado! Se entrega el 29 de agosto 🎉');
+      const u = { ...user!, beastPoints: res.beastPoints };
+      setUser(u);
+      localStorage.setItem('user', JSON.stringify(u));
+    } else {
+      setToast(res.error || 'Error');
+    }
+    setTimeout(() => setToast(''), 3000);
+  };
+
+  if (!user) return null;
+
+  return (
+    <AppShell>
+      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
+        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-4">
+          <ArrowLeft size={18} /> Volver
+        </button>
+
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-black gradient-text">Tienda Beast</h2>
+            <p className="text-xs text-white/40">Premios sociales · bajo costo</p>
+          </div>
+          <PointsBadge points={user.beastPoints} />
+        </div>
+
+        <GlassCard glow="gold" className="p-4 mb-6">
+          <p className="text-sm text-white/70">
+            🎯 Los canjes se <strong className="text-beast-gold">entregan en persona</strong> el 29 de agosto.
+            La idea es reunirse y compartir — nada caro, puro drama amistoso.
+          </p>
+        </GlassCard>
+
+        <div className="space-y-4">
+          {REWARDS.map((r, i) => {
+            const canAfford = user.beastPoints >= r.cost;
+            return (
+              <motion.div
+                key={r.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08 }}
+              >
+                <GlassCard
+                  className={`p-5 relative ${canAfford ? 'cursor-pointer' : 'opacity-50'}`}
+                  glow={canAfford ? 'pink' : undefined}
+                  whileHover={canAfford ? { scale: 1.02 } : {}}
+                  onClick={() => setInfoRewardId(r.id)}
+                >
+                  <span className="absolute top-3 right-3 w-5 h-5 rounded-full bg-white/10 text-[10px] font-bold text-white/50 flex items-center justify-center">i</span>
+                  <div className="flex items-center gap-4">
+                    <motion.span
+                      className="text-4xl"
+                      animate={{ rotate: [0, 10, -10, 0] }}
+                      transition={{ duration: 3, repeat: Infinity, delay: i * 0.5 }}
+                    >
+                      {r.emoji}
+                    </motion.span>
+                    <div className="flex-1">
+                      <p className="font-bold">{r.title}</p>
+                      <p className="text-xs text-white/50">{r.desc}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-black text-beast-gold tabular-nums">{r.cost}</p>
+                      <p className="text-[10px] text-white/30">BP</p>
+                    </div>
+                  </div>
+                </GlassCard>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl font-semibold z-50 flex items-center gap-2"
+          >
+            <Sparkles size={16} className="text-beast-gold" />
+            {toast}
+          </motion.div>
+        )}
+
+        <AnimatePresence>
+          {infoRewardId && REWARD_INFO[infoRewardId] && (
+            <ActionInfoModal
+              info={REWARD_INFO[infoRewardId]}
+              onClose={() => setInfoRewardId(null)}
+              onConfirm={() => {
+                const reward = REWARDS.find((x) => x.id === infoRewardId);
+                if (reward && user && user.beastPoints >= reward.cost) {
+                  redeem(reward.id, reward.cost);
+                }
+                setInfoRewardId(null);
+              }}
+              confirmLabel={
+                user && REWARDS.find((x) => x.id === infoRewardId) && user.beastPoints >= REWARDS.find((x) => x.id === infoRewardId)!.cost
+                  ? `Canjear (${REWARDS.find((x) => x.id === infoRewardId)!.cost} BP)`
+                  : 'BP insuficientes'
+              }
+              disabled={!user || !REWARDS.find((x) => x.id === infoRewardId) || user.beastPoints < REWARDS.find((x) => x.id === infoRewardId)!.cost}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    </AppShell>
+  );
+}
