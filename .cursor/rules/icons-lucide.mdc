@@ -1,0 +1,13 @@
+---
+description: Todos los iconos de UI deben ser Lucide React de última generación
+alwaysApply: true
+---
+
+# Iconos — Lucide última generación
+
+- **Única librería de iconos de UI:** `lucide-react` (mantener siempre la última versión estable).
+- **Prohibido** usar emojis, caracteres (✓ → ❌), SVG sueltos o otras librerías (`react-icons`, Heroicons, Font Awesome, etc.) como iconos de interfaz.
+- Importar iconos con nombre moderno de Lucide v1+ (p. ej. `CircleCheck` en lugar de `CheckCircle2` cuando aplique; preferir nombres canónicos actuales).
+- Tipado: `import type { LucideIcon } from 'lucide-react'`.
+- Excepción: emojis solo como **contenido de usuario** (avatarEmoji, reacciones de chat), nunca como chrome de UI (botones, steps, estados vacíos, nav).
+- **Logo de marca:** usar `RetoLogo` (`/logoR.png`) en login, join, hub y prompts PWA — no sustituir por iconos genéricos.

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Fingerprint, KeyRound, Loader2, Flame } from 'lucide-react';
+import { Fingerprint, KeyRound, Loader2 } from 'lucide-react';
+import { RetoLogo } from '../components/RetoLogo';
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
@@ -71,20 +72,15 @@ export default function Login() {
 
   return (
     <AppShell background="beach">
-      <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-12">
+      <div className="min-h-dvh flex flex-col items-center justify-center px-[max(1rem,env(safe-area-inset-left))] py-12 pb-[max(3rem,env(safe-area-inset-bottom))]">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200 }}
           className="mb-8 text-center"
         >
-          <motion.div
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 4, repeat: Infinity }}
-          >
-            <Flame size={48} className="mx-auto text-reto-pink mb-3" />
-          </motion.div>
-          <h1 className="text-4xl font-black gradient-text text-glow">Reto</h1>
+          <RetoLogo size="hero" animate glow className="mx-auto mb-3" />
+          <h1 className="text-[clamp(1.75rem,6vw,2.5rem)] font-black gradient-text text-glow">Reto</h1>
           <p className="text-white/40 text-sm mt-1 tracking-widest uppercase">29 agosto 2026</p>
         </motion.div>
 

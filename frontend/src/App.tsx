@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Hub from './pages/Hub';
 import Login from './pages/Login';
 import Join from './pages/Join';
@@ -12,16 +12,20 @@ import Chat from './pages/Chat';
 import Perfil from './pages/Perfil';
 import Finale from './pages/Finale';
 import { BackgroundMusic } from './components/BackgroundMusic';
+import { PwaInstallGate } from './components/PwaInstallGate';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   if (!localStorage.getItem('token')) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
-export default function App() {
+function AppRoutes() {
+  const location = useLocation();
+  const showInstallBanner = location.pathname === '/';
+
   return (
     <>
-      <BackgroundMusic />
+      <PwaInstallGate compactBanner={showInstallBanner} />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/join/:code" element={<Join />} />
@@ -37,6 +41,15 @@ export default function App() {
         <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <>
+      <BackgroundMusic />
+      <AppRoutes />
     </>
   );
 }

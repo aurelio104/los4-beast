@@ -1,32 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  CheckCircle2, Handshake, HeartCrack, Skull, Gift, Swords, Trophy, ShoppingBag,
-  Settings, Flame, Gamepad2, DollarSign, Vote, Users, MessageSquare, MessagesSquare,
+  CircleCheck, Handshake, HeartCrack, Skull, Gift, Swords, Trophy, ShoppingBag,
+  Settings, Gamepad2, DollarSign, Vote, Users, MessageSquare, MessagesSquare,
   Calendar, Package, User, Zap, Bell, Crosshair, Share2
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { AppShell, HeroSection } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
 import { GlassButton } from '../components/GlassButton';
 import { CountdownTimer } from '../components/CountdownTimer';
-import { PointsBadge } from '../components/PointsBadge';
 import { DramaFeed } from '../components/DramaFeed';
 import { ActionInfoModal } from '../components/ActionInfoModal';
-import { InstallBanner } from '../components/InstallBanner';
-import { VotePanel } from '../components/VotePanel';
+import { HubHeader } from '../components/HubHeader';
+import { QuickChip } from '../components/QuickChip';
+import { RetoLogo } from '../components/RetoLogo';
 import { Avatar } from '../components/Avatar';
+import { VotePanel } from '../components/VotePanel';
 import { api } from '../lib/api';
 import { HUB_ACTION_INFO, HubActionKey } from '../lib/actionInfo';
 import { User as UserType, FeedItem, Player, RetoEvent, PlayerContext } from '../types';
 import { celebrateWin, celebrateBetrayal, celebrateCoin } from '../lib/celebrate';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useLivePoll } from '../hooks/useLivePoll';
-import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { shareMemberInvite } from '../lib/inviteShare';
 
 export default function Hub() {
   const navigate = useNavigate();
+  const location = useLocation();
   const push = usePushNotifications();
   const [user, setUser] = useState<UserType | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);
@@ -47,7 +49,6 @@ export default function Hub() {
   const [infoKey, setInfoKey] = useState<HubActionKey | null>(null);
   const [playerCtx, setPlayerCtx] = useState<PlayerContext | null>(null);
   const [voteTally, setVoteTally] = useState<{ targetId: string; count: number; name: string }[]>([]);
-  const install = useInstallPrompt();
 
   const load = useCallback(async () => {
     const stored = localStorage.getItem('user');
@@ -184,21 +185,16 @@ export default function Hub() {
 
   return (
     <AppShell>
-      <div className="max-w-lg mx-auto px-4 pb-28">
-        <HeroSection className="pt-6">
-          <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Avatar url={user.avatarUrl} emoji={user.avatarEmoji} name={user.displayName} size="md" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <Flame className="text-reto-pink" size={20} />
-                  <h1 className="text-lg font-black gradient-text text-glow">Reto</h1>
-                </div>
-                <p className="text-xs text-white/60">{user.displayName}</p>
-              </div>
-            </div>
-            <PointsBadge points={user.points} />
-          </motion.header>
+      <div className="app-container pb-[max(7rem,calc(5.5rem+env(safe-area-inset-bottom)))]">
+        <HeroSection className="pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <HubHeader
+            displayName={user.displayName}
+            avatarUrl={user.avatarUrl}
+            avatarEmoji={user.avatarEmoji}
+            points={user.points}
+            showNotifications={!push.subscribed && push.supported}
+            onNotifications={() => openInfo('notificaciones')}
+          />
 
           {eventActive && currentEvent && (
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} onClick={() => openInfo('evento-activo')} className="mb-4">
@@ -227,9 +223,51 @@ export default function Hub() {
           </GlassCard>
         </HeroSection>
 
-        {install.canInstall && (
-          <InstallBanner onInstall={install.install} onDismiss={install.dismiss} />
-        )}
+
+        {/* Accesos rápidos — scroll horizontal en móvil */}
+        <div className="hub-quick-strip mb-4">
+          {!push.subscribed && push.supported && (
+            <QuickChip
+              icon={Bell}
+              label="Alertas"
+              sublabel="Activar push"
+              accent="gold"
+              highlight
+              onClick={() => openInfo('notificaciones')}
+            />
+          )}
+          <QuickChip
+            icon={Package}
+            label="Cofre"
+            sublabel={playerCtx?.canClaimChest ? '¡Listo!' : `${daysLeft} días`}
+            accent="gold"
+            highlight={!!playerCtx?.canClaimChest}
+            onClick={() => openInfo('cofre')}
+          />
+          <QuickChip
+            icon={Share2}
+            label="Invitar"
+            sublabel="Link personal"
+            accent="cyan"
+            onClick={async () => {
+              try {
+                const { shared } = await shareMemberInvite();
+                showToast(shared ? 'Invitación compartida' : 'Link copiado');
+              } catch (e) {
+                showToast((e as Error).message || 'Error al invitar');
+              }
+            }}
+          />
+          {daysLeft <= 14 && (
+            <QuickChip
+              icon={Trophy}
+              label="Gran Final"
+              sublabel="Ver equipos"
+              accent="pink"
+              onClick={() => navigate('/finale')}
+            />
+          )}
+        </div>
 
         {playerCtx?.featuredGame && eventActive && (
           <GlassCard glow="cyan" className="p-4 mb-4 cursor-pointer flex items-center gap-3" onClick={() => navigate(`/arena?game=${playerCtx.featuredGame}`)}>
@@ -251,40 +289,6 @@ export default function Hub() {
           </GlassCard>
         )}
 
-        {!push.subscribed && push.supported && (
-          <GlassCard className="p-3 mb-4 flex items-center justify-between cursor-pointer" onClick={() => openInfo('notificaciones')}>
-            <span className="text-sm flex items-center gap-2"><Bell size={16} className="text-reto-gold" /> Activar notificaciones</span>
-            <span className="text-xs text-reto-cyan">→</span>
-          </GlassCard>
-        )}
-
-        <GlassCard glow="gold" className="p-4 mb-4 flex items-center gap-4 cursor-pointer" onClick={() => openInfo('cofre')}>
-          <motion.span animate={{ rotate: [0, -5, 5, 0] }} transition={{ repeat: Infinity, duration: 4 }} className="text-4xl">📦</motion.span>
-          <div className="flex-1">
-            <p className="font-bold text-sm">Cofre {playerCtx?.canClaimChest && <span className="text-reto-pink ml-1">· ¡Listo!</span>}</p>
-            <p className="text-xs text-white/50">{daysLeft} días · toca para pistas</p>
-          </div>
-        </GlassCard>
-
-        <div className="flex gap-2 mb-4">
-          <button type="button" onClick={async () => {
-            try {
-              const { shared } = await shareMemberInvite();
-              showToast(shared ? 'Invitación compartida 🔗' : 'Link de invitación copiado 📋');
-            } catch (e) {
-              showToast((e as Error).message || 'Error al invitar');
-            }
-          }}
-            className="flex-1 glass-btn py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2">
-            <Share2 size={16} /> Invitar amigo
-          </button>
-          {daysLeft <= 14 && (
-            <button type="button" onClick={() => navigate('/finale')} className="flex-1 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-reto-pink to-reto-purple">
-              🏆 Gran Final
-            </button>
-          )}
-        </div>
-
         {playerCtx && playerCtx.streak > 0 && (
           <GlassCard className="p-3 mb-4 flex items-center justify-between">
             <span className="text-sm font-bold">🔥 Racha diaria</span>
@@ -292,9 +296,9 @@ export default function Hub() {
           </GlassCard>
         )}
 
-        <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-3">Acciones</p>
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <GlassButton icon={CheckCircle2} label="Continuar" sublabel={playerCtx?.continuedToday ? 'Hecho hoy ✓' : '+10 BP'} variant="success" loading={loading === 'continue'} showInfoHint badge={playerCtx ? !playerCtx.continuedToday : undefined} onClick={() => openInfo('continue')} />
+        <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-3 px-0.5">Acciones</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-4">
+          <GlassButton icon={CircleCheck} label="Continuar" sublabel={playerCtx?.continuedToday ? 'Hecho hoy ✓' : '+10 BP'} variant="success" loading={loading === 'continue'} showInfoHint badge={playerCtx ? !playerCtx.continuedToday : undefined} onClick={() => openInfo('continue')} />
           <GlassButton icon={HeartCrack} label="Clemencia" sublabel="1×/10 días" variant="gold" loading={loading === 'clemency'} showInfoHint onClick={() => openInfo('clemency')} />
           <GlassButton icon={Handshake} label="Renegociar" showInfoHint onClick={() => openInfo('renegotiate')} />
           <GlassButton icon={Skull} label="Traicionar" sublabel="+150 BP" variant="danger" showInfoHint pulse onClick={() => openInfo('betray')} />
@@ -339,20 +343,27 @@ export default function Hub() {
           <DramaFeed items={feed} />
         </GlassCard>
 
-        <div className="fixed bottom-0 inset-x-0 z-50 p-4 pb-safe">
-          <div className="max-w-lg mx-auto glass-strong rounded-3xl p-2 flex justify-around">
-            {[
-              { icon: Flame, path: '/', active: true },
+        <div className="fixed bottom-0 inset-x-0 z-50 p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="app-container !px-0 max-w-lg mx-auto glass-strong rounded-3xl p-1.5 sm:p-2 flex justify-around">
+            {([
+              { path: '/', active: true, logo: true as const },
               { icon: Gamepad2, path: '/arena' },
               { icon: Package, path: '/cofre' },
               { icon: Gift, path: '/tienda' },
               { icon: User, path: '/perfil' },
               ...(user.role === 'MASTER' ? [{ icon: Settings, path: '/admin' }] : [])
-            ].map(({ icon: Icon, path, active }) => (
-              <button key={path} onClick={() => navigate(path)} className={`p-3 rounded-2xl ${active ? 'bg-white/10' : ''}`}>
-                <Icon size={20} className={path === '/admin' ? 'text-reto-gold' : active ? 'text-white' : 'text-white/50'} />
-              </button>
-            ))}
+            ] as Array<{ path: string; active?: boolean; logo: true } | { path: string; active?: boolean; icon: LucideIcon }>).map((item) => {
+              const active = location.pathname === item.path || ('active' in item && item.active);
+              return (
+                <button key={item.path} onClick={() => navigate(item.path)} className={`p-2.5 sm:p-3 rounded-2xl ${active ? 'bg-white/10' : ''}`}>
+                  {'logo' in item ? (
+                    <RetoLogo size="xs" className={active ? '' : 'opacity-50'} />
+                  ) : (
+                    (() => { const Icon = item.icon; return <Icon size={20} className={item.path === '/admin' ? 'text-reto-gold' : active ? 'text-white' : 'text-white/50'} />; })()
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

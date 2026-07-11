@@ -199,3 +199,43 @@ input:focus, select:focus, textarea:focus {
 .pt-safe {
   padding-top: max(0.5rem, env(safe-area-inset-top));
 }
+
+.app-container {
+  width: 100%;
+  max-width: 32rem;
+  margin-inline: auto;
+  padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
+}
+
+@media (min-width: 640px) {
+  .app-container {
+    padding-inline: 1.25rem;
+  }
+}
+
+/* Hub — tira de accesos rápidos responsive */
+.hub-quick-strip {
+  display: flex;
+  gap: 0.625rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 0.25rem;
+  margin-inline: -0.25rem;
+  padding-inline: 0.25rem;
+}
+
+.hub-quick-strip::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .hub-quick-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    overflow-x: visible;
+    scroll-snap-type: none;
+  }
+}

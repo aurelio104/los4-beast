@@ -1,0 +1,12 @@
+---
+description: Prohibido usar "Beast" en cualquier parte del proyecto — solo Reto
+alwaysApply: true
+---
+
+# Marca: solo Reto, nunca Beast
+
+- **Prohibido** escribir `Beast`, `beast`, `BEAST`, `Beast Points`, `Beast Games`, `Beast Protocol` o variantes en código, UI, textos, commits, docs, manifests, notificaciones push, seeds, variables de entorno, nombres de archivos o comentarios.
+- La marca oficial es **Reto**. Puntos: **BP** (Reto Points), no "Beast Points".
+- Campos de datos: `points`, nunca `beastPoints`.
+- RP WebAuthn, título HTML, manifest PWA, notificaciones: **Reto**.
+- Si encuentras "Beast" en código legacy, reemplázalo inmediatamente por Reto o BP según contexto.

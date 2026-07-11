@@ -11,7 +11,7 @@
     "@simplewebauthn/browser": "^13.3.0",
     "canvas-confetti": "^1.9.3",
     "framer-motion": "^12.23.12",
-    "lucide-react": "^0.469.0",
+    "lucide-react": "^1.24.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.3"
