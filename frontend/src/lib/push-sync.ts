@@ -58,3 +58,28 @@ export async function ensurePushPersisted(user?: { id?: string; pushOptIn?: bool
   if (Notification.permission !== 'granted') return false;
   return syncPushSubscription();
 }
+
+/** Carga pushOptIn del servidor y re-sincroniza la suscripción en todo el sistema. */
+export async function refreshUserPushState(): Promise<boolean> {
+  try {
+    const me = await api.me();
+    if (!me.success || !me.user) return false;
+
+    const base = me.user as { id: string; pushOptIn?: boolean };
+    if (!base.id) return false;
+
+    localStorage.setItem('user', JSON.stringify(base));
+
+    const status = await api.pushStatus().catch(() => null);
+    const user = {
+      ...base,
+      pushOptIn: base.pushOptIn === true || status?.pushOptIn === true
+    };
+    if (user.pushOptIn) setPushOptIn(user.id, true);
+
+    await ensurePushPersisted(user);
+    return shouldKeepPushActive(user);
+  } catch {
+    return false;
+  }
+}

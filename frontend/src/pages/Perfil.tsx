@@ -13,7 +13,7 @@ import { Avatar } from '../components/Avatar';
 import { PasswordInput } from '../components/PasswordInput';
 import { api } from '../lib/api';
 import { compressImageFile } from '../lib/image';
-import { usePushNotifications } from '../hooks/usePushNotifications';
+import { usePushNotifications, refreshUserPushState } from '../hooks/usePushNotifications';
 import { shareMemberInvite } from '../lib/inviteShare';
 import {
   BgMode,
@@ -84,8 +84,12 @@ export default function Perfil() {
     const stored = localStorage.getItem('user');
     if (!stored) { navigate('/login'); return; }
     applyUser(JSON.parse(stored) as User);
-    api.me().then((r) => {
-      if (r.success) applyUser(r.user as User);
+    api.me().then(async (r) => {
+      if (r.success) {
+        applyUser(r.user as User);
+        await refreshUserPushState();
+        void push.refresh();
+      }
     });
     api.gameStatus().then((r) => {
       if (r.player?.alliance) setAlliance(r.player.alliance);
@@ -500,7 +504,14 @@ export default function Perfil() {
               </div>
               <button
                 type="button"
-                onClick={() => (push.subscribed ? push.unsubscribe() : push.subscribe())}
+                onClick={async () => {
+                  if (push.subscribed) await push.unsubscribe();
+                  else await push.subscribe();
+                  await refreshUserPushState();
+                  const me = await api.me();
+                  if (me.success && me.user) applyUser(me.user as User);
+                  void push.refresh();
+                }}
                 disabled={push.loading}
                 className="glass-btn px-4 py-2 rounded-xl text-sm font-semibold"
               >

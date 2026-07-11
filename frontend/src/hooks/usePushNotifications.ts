@@ -3,6 +3,7 @@ import { api } from '../lib/api';
 import {
   ensurePushPersisted,
   getPushOptIn,
+  refreshUserPushState,
   setPushOptIn,
   shouldKeepPushActive,
   syncPushSubscription
@@ -66,6 +67,10 @@ export function usePushNotifications() {
       if (user.id) setPushOptIn(user.id, true);
       patchStoredUser({ pushOptIn: true });
 
+      await api.me().then((me) => {
+        if (me.success && me.user) localStorage.setItem('user', JSON.stringify(me.user));
+      });
+
       await api.pushTest();
       setSubscribed(true);
 
@@ -96,6 +101,10 @@ export function usePushNotifications() {
       if (user.id) setPushOptIn(user.id, false);
       patchStoredUser({ pushOptIn: false });
 
+      await api.me().then((me) => {
+        if (me.success && me.user) localStorage.setItem('user', JSON.stringify(me.user));
+      });
+
       setSubscribed(false);
       return true;
     } catch {
@@ -118,3 +127,5 @@ export async function hydratePushFromServer(user: { id: string; pushOptIn?: bool
   }
   await ensurePushPersisted(user);
 }
+
+export { refreshUserPushState };

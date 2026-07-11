@@ -13,7 +13,7 @@ import { api } from '../lib/api';
 import { setPreferences } from '../lib/preferences';
 import { markSetupDone } from '../lib/setup';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
-import { usePushNotifications } from '../hooks/usePushNotifications';
+import { usePushNotifications, refreshUserPushState } from '../hooks/usePushNotifications';
 import { User } from '../types';
 
 import { openWaMe, whatsAppResultLabel, WhatsAppResult } from '../lib/whatsapp';
@@ -49,10 +49,22 @@ export default function Setup() {
     if (u.whatsappOptIn) setWhatsappDone(true);
     setWhatsappOptIn(u.whatsappOptIn ?? true);
     api.whatsappStatus().then((r) => { if (r.success) setWaAutoSend(r.autoSend); });
+    void refreshUserPushState().then(() => push.refresh());
   }, [navigate]);
 
-  const finish = () => {
+  useEffect(() => {
+    if (step !== 1) return;
+    void refreshUserPushState().then((active) => {
+      void push.refresh();
+      if (active && user) {
+        setUser({ ...user, pushOptIn: true });
+      }
+    });
+  }, [step]);
+
+  const finish = async () => {
     if (!user) return;
+    await refreshUserPushState();
     markSetupDone(user.id);
     navigate('/', { replace: true });
   };
@@ -213,10 +225,26 @@ export default function Setup() {
                   <p className="text-lg font-black mb-2">Activar notificaciones</p>
                   <p className="text-sm text-white/55 leading-relaxed">Eventos del reto, votaciones, drama del grupo y alertas del 29 de agosto.</p>
                 </div>
-                {push.subscribed ? (
-                  <p className="text-reto-cyan text-sm flex items-center justify-center gap-1"><CircleCheck size={16} /> Notificaciones activas</p>
+                {push.subscribed || user.pushOptIn ? (
+                  <p className="text-reto-cyan text-sm flex items-center justify-center gap-1"><CircleCheck size={16} /> Notificaciones activas en todo el sistema</p>
                 ) : push.supported ? (
-                  <button type="button" disabled={push.loading} onClick={async () => { await push.subscribe(); }} className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}>
+                  <button
+                    type="button"
+                    disabled={push.loading}
+                    onClick={async () => {
+                      const ok = await push.subscribe();
+                      if (ok) {
+                        await refreshUserPushState();
+                        const me = await api.me();
+                        if (me.success && me.user) {
+                          setUser(me.user as User);
+                          localStorage.setItem('user', JSON.stringify(me.user));
+                        }
+                      }
+                    }}
+                    className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
+                    style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
+                  >
                     {push.loading ? <Loader2 className="animate-spin" /> : <Bell size={20} />}
                     Activar notificaciones
                   </button>
@@ -224,7 +252,7 @@ export default function Setup() {
                   <p className="text-xs text-white/40">No disponibles en este navegador</p>
                 )}
                 <button type="button" onClick={() => setStep(2)} className="w-full glass-btn py-3 rounded-xl font-semibold">
-                  {push.subscribed ? 'Continuar' : 'Ahora no'} <ChevronRight size={16} className="inline ml-1" />
+                  {push.subscribed || user.pushOptIn ? 'Continuar' : 'Ahora no'} <ChevronRight size={16} className="inline ml-1" />
                 </button>
               </motion.div>
             )}
