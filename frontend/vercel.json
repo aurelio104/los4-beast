@@ -6,6 +6,10 @@
     {
       "source": "/api/(.*)",
       "destination": "https://los4-game-aurelio104-6f5cac3b.koyeb.app/api/$1"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
