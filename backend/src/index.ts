@@ -71,7 +71,9 @@ setInterval(async () => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🔥 Reto backend → port ${PORT}`);
   if (!isPushConfigured()) {
-    console.log('ℹ️  Push: genera VAPID con npm run vapid:generate en backend');
+    console.log('ℹ️  Push: genera VAPID con pnpm -C backend vapid:generate');
+  } else {
+    console.log('✅ Push notifications configuradas (VAPID)');
   }
   console.log('📱 WhatsApp Baileys: Admin → WhatsApp para vincular con QR');
 

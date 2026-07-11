@@ -7,7 +7,9 @@ export const pushRouter = Router();
 
 pushRouter.get('/vapid-public', (_req, res) => {
   const key = getVapidPublicKey();
-  if (!key) return res.status(503).json({ success: false, error: 'Push no configurado' });
+  if (!key) {
+    return res.json({ success: false, error: 'Push no configurado en el servidor' });
+  }
   res.json({ success: true, publicKey: key });
 });
 
