@@ -243,15 +243,14 @@ export default function Perfil() {
               disabled={uploadingPhoto}
               onClick={() => photoRef.current?.click()}
               className="absolute -bottom-1 -right-1 glass-strong rounded-full p-2.5 border border-white/20"
-              aria-label="Cambiar foto de perfil"
+              aria-label="Elegir foto de la galería"
             >
               {uploadingPhoto ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} className="text-reto-cyan" />}
             </button>
             <input
               ref={photoRef}
               type="file"
-              accept="image/*"
-              capture="user"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
               className="hidden"
               onChange={(e) => onPickPhoto(e.target.files?.[0])}
             />
@@ -262,7 +261,7 @@ export default function Perfil() {
           {alliance && <p className="text-xs text-reto-purple mt-2">🤝 Aliado: {alliance.name}</p>}
           <div className="flex justify-center gap-3 mt-3">
             <button type="button" onClick={() => photoRef.current?.click()} className="text-xs text-reto-cyan underline">
-              {user.avatarUrl ? 'Cambiar foto' : 'Subir foto'}
+              {user.avatarUrl ? 'Cambiar desde galería' : 'Elegir de galería'}
             </button>
             {user.avatarUrl && (
               <button type="button" onClick={removePhoto} className="text-xs text-reto-red underline">

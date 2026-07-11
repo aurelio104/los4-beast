@@ -263,9 +263,15 @@ export default function Join() {
                   <button type="button" onClick={() => photoRef.current?.click()} className="absolute -bottom-1 -right-1 glass-strong rounded-full p-2.5">
                     <Camera size={16} className="text-reto-cyan" />
                   </button>
-                  <input ref={photoRef} type="file" accept="image/*" capture="user" className="hidden" onChange={(e) => onPickPhoto(e.target.files?.[0])} />
+                  <input
+                    ref={photoRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+                    className="hidden"
+                    onChange={(e) => onPickPhoto(e.target.files?.[0])}
+                  />
                 </div>
-                <p className="text-xs text-white/45">Sube una foto o elige un emoji</p>
+                <p className="text-xs text-white/45">Elige una foto de tu galería o usa un emoji</p>
                 <div className="flex flex-wrap justify-center gap-2">
                   {EMOJIS.map((e) => (
                     <button
