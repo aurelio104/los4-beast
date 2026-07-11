@@ -5,17 +5,47 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-    <link rel="preload" as="image" href="/logoR.png" fetchpriority="high" />
-    <link rel="preload" as="image" href="/wallpapers/beach-poster.jpg" fetchpriority="low" />
     <meta name="apple-mobile-web-app-title" content="Reto" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#0d0a18" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Reto</title>
+    <style>
+      #boot-splash {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: #050508;
+      }
+      #boot-splash img {
+        width: 4.5rem;
+        height: 4.5rem;
+        opacity: 0.9;
+      }
+      #boot-splash .bar {
+        width: 7rem;
+        height: 0.25rem;
+        border-radius: 9999px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+        animation: boot-pulse 1.2s ease-in-out infinite;
+      }
+      @keyframes boot-pulse {
+        0%, 100% { opacity: 0.35; }
+        50% { opacity: 1; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot-splash" aria-hidden="true">
+        <img src="/logoR.png" alt="" width="72" height="72" fetchpriority="high" decoding="async" />
+        <div class="bar"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

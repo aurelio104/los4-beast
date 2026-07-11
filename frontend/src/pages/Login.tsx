@@ -23,6 +23,7 @@ export default function Login() {
   const finishLogin = (token: string, user: User) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
+    void hydratePushFromServer(user);
     navigate(isSetupDone(user.id) ? '/' : '/setup', { replace: true });
   };
 
