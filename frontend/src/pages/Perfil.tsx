@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft, Fingerprint, Loader2, Bell, LogOut, Volume2, Vibrate,
   Share2, Trash2, Camera, Save, Lock, UserRound, Image as ImageIcon,
-  Video, Sparkles, Music2
+  Video, Sparkles, Music2, MessageCircle
 } from 'lucide-react';
 import { startRegistration } from '@simplewebauthn/browser';
 import { AppShell } from '../components/AppShell';
@@ -23,6 +23,7 @@ import {
   UserPreferences
 } from '../lib/preferences';
 import { User, PlayerContext } from '../types';
+import { openWaMe } from '../lib/whatsapp';
 
 const EMOJIS = ['😎', '🔥', '👑', '💀', '🤡', '😈', '🦸', '🎭', '🐺', '🦁', '✨', '🌊', '🎯', '💎'];
 const GENDERS = [
@@ -49,6 +50,9 @@ export default function Perfil() {
   const [gender, setGender] = useState('OTHER');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [whatsappOptIn, setWhatsappOptIn] = useState(false);
+  const [waTesting, setWaTesting] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingBg, setUploadingBg] = useState(false);
@@ -64,6 +68,8 @@ export default function Perfil() {
     setNickname(u.nickname || '');
     setBio(u.bio || '');
     setGender(u.gender || 'OTHER');
+    setPhone(u.phone ? u.phone.replace(/^\+58/, '0') : '');
+    setWhatsappOptIn(!!u.whatsappOptIn);
     localStorage.setItem('user', JSON.stringify(u));
     syncBgFromUser(u.bgMode, u.bgUrl);
     setPrefs(getPreferences());
@@ -89,11 +95,13 @@ export default function Perfil() {
   const save = async () => {
     setSaving(true);
     try {
-      const payload: Record<string, string> = {
+      const payload: Record<string, string | boolean> = {
         displayName: displayName.trim(),
         nickname: nickname.trim(),
         bio: bio.trim(),
-        gender
+        gender,
+        phone: phone.trim(),
+        whatsappOptIn: whatsappOptIn && !!phone.trim()
       };
       if (newPassword) {
         payload.currentPassword = currentPassword;
@@ -423,7 +431,7 @@ export default function Perfil() {
         {/* Configuración */}
         <GlassCard className="p-5 mb-4 space-y-3">
           <p className="text-xs uppercase tracking-widest text-white/40">Configuración</p>
-          <p className="text-[11px] text-white/35 -mt-1 mb-1">Música, sonidos, notificaciones y passkey</p>
+          <p className="text-[11px] text-white/35 -mt-1 mb-1">Música, sonidos, notificaciones, WhatsApp y passkey</p>
           <button type="button" onClick={() => togglePref('music')} className="w-full flex items-center justify-between py-2">
             <span className="flex items-center gap-2 text-sm"><Music2 size={16} /> Música de fondo</span>
             <span className="text-xs text-reto-cyan">{prefs.music ? 'ON' : 'OFF'}</span>
@@ -440,6 +448,47 @@ export default function Perfil() {
             <span className="text-sm">Reducir animaciones</span>
             <span className="text-xs text-reto-cyan">{prefs.reducedMotion ? 'ON' : 'OFF'}</span>
           </button>
+        </GlassCard>
+
+        <GlassCard glow="cyan" className="p-5 mb-4 space-y-3">
+          <p className="text-xs uppercase tracking-widest text-white/40 flex items-center gap-2">
+            <MessageCircle size={14} className="text-[#25D366]" /> WhatsApp
+          </p>
+          <div>
+            <label className="text-xs text-white/40 mb-1 block">Número</label>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="04141234567" inputMode="tel" autoComplete="tel" />
+          </div>
+          <button
+            type="button"
+            onClick={() => setWhatsappOptIn(!whatsappOptIn)}
+            className="w-full flex items-center justify-between py-2"
+          >
+            <span className="flex items-center gap-2 text-sm">Alertas por WhatsApp</span>
+            <span className="text-xs text-reto-cyan">{whatsappOptIn && phone.trim() ? 'ON' : 'OFF'}</span>
+          </button>
+          <p className="text-[11px] text-white/35">Contraseñas, credenciales y cambios del reto. Guarda con el botón de arriba.</p>
+          {user.whatsappOptIn && (
+            <button
+              type="button"
+              disabled={waTesting}
+              onClick={async () => {
+                setWaTesting(true);
+                try {
+                  const r = await api.whatsappTest();
+                  if (r.whatsapp?.sent) flash('Mensaje de prueba enviado ✓');
+                  else if (r.whatsapp?.waMeUrl) {
+                    openWaMe(r.whatsapp.waMeUrl);
+                    flash('Abre WhatsApp para enviar la prueba');
+                  } else flash(r.error || 'No se pudo enviar');
+                } finally {
+                  setWaTesting(false);
+                }
+              }}
+              className="glass-btn w-full py-2 rounded-xl text-sm font-semibold"
+            >
+              {waTesting ? 'Enviando…' : 'Enviar prueba'}
+            </button>
+          )}
         </GlassCard>
 
         {push.supported && (

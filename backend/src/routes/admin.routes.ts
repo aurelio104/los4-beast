@@ -5,6 +5,11 @@ import { authMiddleware, requireMaster } from '../middleware/auth.js';
 import { broadcastPush } from '../lib/push.js';
 import { createMemberInvite } from '../lib/invites.js';
 import { resetGameToZero } from '../lib/resetGame.js';
+import {
+  buildPasswordResetMessage,
+  sendWhatsAppMessage,
+  notifyUserWhatsApp
+} from '../lib/whatsapp.js';
 
 export const adminRouter = Router();
 
@@ -50,7 +55,9 @@ adminRouter.get('/users', async (_req, res) => {
       email: true,
       displayName: true,
       nickname: true,
-      role: true
+      role: true,
+      phone: true,
+      whatsappOptIn: true
     },
     orderBy: [{ role: 'asc' }, { displayName: 'asc' }]
   });
@@ -73,13 +80,27 @@ adminRouter.post('/users/:userId/reset-password', async (req: Request, res: Resp
   const passwordHash = await bcrypt.hash(newPassword, 10);
   await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
 
+  const waMessage = buildPasswordResetMessage({
+    displayName: user.displayName,
+    username: user.username,
+    newPassword
+  });
+
+  let whatsapp = await notifyUserWhatsApp(userId, waMessage);
+  if (!whatsapp.sent && user.phone) {
+    whatsapp = await sendWhatsAppMessage(user.phone, waMessage);
+  }
+
   res.json({
     success: true,
     user: {
       id: user.id,
       username: user.username,
-      displayName: user.displayName
-    }
+      displayName: user.displayName,
+      phone: user.phone,
+      whatsappOptIn: user.whatsappOptIn
+    },
+    whatsapp
   });
 });
 

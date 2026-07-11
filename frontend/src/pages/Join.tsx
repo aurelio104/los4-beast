@@ -44,7 +44,8 @@ export default function Join() {
     displayName: '',
     nickname: '',
     gender: 'OTHER',
-    avatarEmoji: '😎'
+    avatarEmoji: '😎',
+    phone: ''
   });
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
@@ -231,6 +232,17 @@ export default function Join() {
                 <div>
                   <label className="text-xs text-white/40 mb-1 block">Email</label>
                   <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required autoComplete="email" />
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 mb-1 block">WhatsApp (opcional)</label>
+                  <input
+                    value={form.phone}
+                    onChange={(e) => set('phone', e.target.value)}
+                    placeholder="04141234567"
+                    inputMode="tel"
+                    autoComplete="tel"
+                  />
+                  <p className="text-[10px] text-white/35 mt-1">Te enviaremos tus credenciales y alertas del reto</p>
                 </div>
               </motion.div>
             )}

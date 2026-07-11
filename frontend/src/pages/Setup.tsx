@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell, Download, Fingerprint, Loader2, Music2, Volume2, Vibrate,
-  Check, ChevronRight, Share, Sparkles, ArrowRight, CircleCheck
+  Check, ChevronRight, Share, Sparkles, ArrowRight, CircleCheck, MessageCircle
 } from 'lucide-react';
 import { startRegistration } from '@simplewebauthn/browser';
 import { AppShell } from '../components/AppShell';
@@ -16,8 +16,10 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { User } from '../types';
 
-const STEPS = ['Instalar', 'Alertas', 'Experiencia', 'Passkey', '¡Listo!'];
-type Step = 0 | 1 | 2 | 3 | 4;
+import { openWaMe, whatsAppResultLabel, WhatsAppResult } from '../lib/whatsapp';
+
+const STEPS = ['Instalar', 'Alertas', 'Experiencia', 'Passkey', 'WhatsApp', '¡Listo!'];
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 export default function Setup() {
   const navigate = useNavigate();
@@ -31,6 +33,11 @@ export default function Setup() {
   const [soundOn, setSoundOn] = useState(true);
   const [hapticsOn, setHapticsOn] = useState(true);
   const [passkeyDone, setPasskeyDone] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [whatsappOptIn, setWhatsappOptIn] = useState(true);
+  const [whatsappDone, setWhatsappDone] = useState(false);
+  const [waAutoSend, setWaAutoSend] = useState(false);
+  const [lastWaResult, setLastWaResult] = useState<WhatsAppResult | null>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem('user');
@@ -38,6 +45,10 @@ export default function Setup() {
     const u = JSON.parse(raw) as User;
     setUser(u);
     if (u.hasPasskey) setPasskeyDone(true);
+    if (u.phone) setPhone(u.phone.replace(/^\+58/, '0'));
+    if (u.whatsappOptIn) setWhatsappDone(true);
+    setWhatsappOptIn(u.whatsappOptIn ?? true);
+    api.whatsappStatus().then((r) => { if (r.success) setWaAutoSend(r.autoSend); });
   }, [navigate]);
 
   const finish = () => {
@@ -67,6 +78,41 @@ export default function Setup() {
       }
       setPasskeyDone(true);
       setStep(4);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveWhatsApp = async (sendWelcome: boolean) => {
+    setLoading(true);
+    setError('');
+    setLastWaResult(null);
+    try {
+      if (whatsappOptIn && !phone.trim()) {
+        throw new Error('Indica tu número de WhatsApp');
+      }
+      const res = await api.updateProfile({
+        phone: phone.trim() || '',
+        whatsappOptIn: whatsappOptIn && !!phone.trim()
+      });
+      if (!res.success) throw new Error(res.error || 'No se pudo guardar');
+
+      const me = res.user as User;
+      localStorage.setItem('user', JSON.stringify(me));
+      setUser(me);
+
+      if (sendWelcome && whatsappOptIn && phone.trim()) {
+        const wa = await api.whatsappWelcome();
+        if (wa.whatsapp) {
+          setLastWaResult(wa.whatsapp);
+          if (!wa.whatsapp.sent && wa.whatsapp.waMeUrl) openWaMe(wa.whatsapp.waMeUrl);
+        }
+      }
+
+      setWhatsappDone(!!me.whatsappOptIn);
+      setStep(5);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -222,7 +268,65 @@ export default function Setup() {
             )}
 
             {step === 4 && (
-              <motion.div key="s4" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="space-y-5 text-center py-4">
+              <motion.div key="s4" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} className="space-y-5 py-2">
+                <div className="text-center">
+                  <MessageCircle size={44} className="mx-auto text-[#25D366]" strokeWidth={1.75} />
+                  <p className="text-lg font-black mb-2 mt-3">WhatsApp</p>
+                  <p className="text-sm text-white/55 leading-relaxed">
+                    Recibe contraseñas, credenciales y alertas del reto directo en tu chat.
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs text-white/40 mb-1 block">Número WhatsApp</label>
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="04141234567"
+                    inputMode="tel"
+                    autoComplete="tel"
+                  />
+                  <p className="text-[10px] text-white/35 mt-1">Venezuela +58 por defecto si omites el código</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setWhatsappOptIn(!whatsappOptIn)}
+                  className={`w-full flex items-center gap-3 p-4 rounded-2xl text-left transition-all ${whatsappOptIn ? 'glass-strong ring-1 ring-[#25D366]/40' : 'glass-btn'}`}
+                >
+                  <MessageCircle size={20} className={whatsappOptIn ? 'text-[#25D366]' : 'text-white/40'} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold">Alertas por WhatsApp</p>
+                    <p className="text-xs text-white/45">Cambios de contraseña y notificaciones</p>
+                  </div>
+                  <span className={`text-xs font-bold px-2 py-1 rounded-lg ${whatsappOptIn ? 'bg-[#25D366]/20 text-[#25D366]' : 'bg-white/5 text-white/35'}`}>
+                    {whatsappOptIn ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+                {waAutoSend ? (
+                  <p className="text-[11px] text-white/40 text-center">Envío automático activo en el servidor</p>
+                ) : (
+                  <p className="text-[11px] text-white/40 text-center">Sin Twilio: se abrirá WhatsApp para confirmar el primer mensaje</p>
+                )}
+                {whatsappDone && (
+                  <p className="text-reto-cyan text-sm flex items-center justify-center gap-1"><CircleCheck size={16} /> WhatsApp configurado</p>
+                )}
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => saveWhatsApp(true)}
+                  className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
+                  style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+                >
+                  {loading ? <Loader2 className="animate-spin" /> : <MessageCircle size={20} />}
+                  {whatsappOptIn && phone.trim() ? 'Activar y continuar' : 'Continuar sin WhatsApp'}
+                </button>
+                <button type="button" onClick={() => setStep(5)} className="text-xs text-white/40 underline w-full">
+                  Configurar después en Perfil
+                </button>
+              </motion.div>
+            )}
+
+            {step === 5 && (
+              <motion.div key="s5" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="space-y-5 text-center py-4">
                 <Sparkles size={44} className="mx-auto text-reto-gold" />
                 <h2 className="text-xl font-black gradient-text">¡Todo configurado!</h2>
                 <p className="text-sm text-white/55">Puedes cambiar todo esto cuando quieras en <strong>Perfil → Configuración</strong>.</p>
@@ -234,9 +338,14 @@ export default function Setup() {
           </AnimatePresence>
 
           {error && <p className="text-reto-red text-sm mt-4">{error}</p>}
+          {lastWaResult && !lastWaResult.sent && lastWaResult.waMeUrl && (
+            <button type="button" onClick={() => openWaMe(lastWaResult.waMeUrl!)} className="text-xs text-[#25D366] mt-2 underline w-full">
+              {whatsAppResultLabel(lastWaResult)}
+            </button>
+          )}
         </GlassCard>
 
-        {step > 0 && step < 4 && (
+        {step > 0 && step < 5 && (
           <button type="button" onClick={() => setStep((step - 1) as Step)} className="mt-4 text-xs text-white/35 mx-auto block">
             ← Paso anterior
           </button>

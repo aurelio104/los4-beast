@@ -77,6 +77,8 @@ export const api = {
     bgMode?: string;
     currentPassword?: string;
     newPassword?: string;
+    phone?: string;
+    whatsappOptIn?: boolean;
   }) => request<{ success: boolean; user?: unknown; error?: string }>('/game/profile', { method: 'PATCH', body: JSON.stringify(data) }),
   uploadAvatar: (dataUrl: string) =>
     request<{ success: boolean; user?: unknown; error?: string }>('/game/profile/avatar', { method: 'POST', body: JSON.stringify({ dataUrl }) }),
@@ -84,6 +86,18 @@ export const api = {
   uploadBackground: (dataUrl: string) =>
     request<{ success: boolean; user?: unknown; error?: string }>('/game/profile/background', { method: 'POST', body: JSON.stringify({ dataUrl }) }),
   deleteBackground: () => request<{ success: boolean; user?: unknown; error?: string }>('/game/profile/background', { method: 'DELETE' }),
+
+  whatsappStatus: () => request<{ success: boolean; autoSend: boolean }>('/game/whatsapp/status'),
+  whatsappWelcome: () =>
+    request<{ success: boolean; whatsapp?: import('./whatsapp').WhatsAppResult; error?: string }>(
+      '/game/whatsapp/welcome',
+      { method: 'POST' }
+    ),
+  whatsappTest: () =>
+    request<{ success: boolean; whatsapp?: import('./whatsapp').WhatsAppResult; error?: string }>(
+      '/game/whatsapp/test',
+      { method: 'POST' }
+    ),
 
   chatMessages: (after?: string) =>
     request<{ success: boolean; messages: unknown[] }>(`/chat/messages${after ? `?after=${encodeURIComponent(after)}` : ''}`),
@@ -116,13 +130,25 @@ export const api = {
   adminNotifyEvent: () => request<{ success: boolean; sent: number }>('/admin/notify-event', { method: 'POST' }),
   adminUpdateRedemption: (id: string, status: string) => request<{ success: boolean }>(`/admin/redemptions/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   adminUsers: () =>
-    request<{ success: boolean; users: { id: string; username: string; email: string; displayName: string; nickname: string | null; role: string }[] }>(
-      '/admin/users'
-    ),
+    request<{
+      success: boolean;
+      users: {
+        id: string;
+        username: string;
+        email: string;
+        displayName: string;
+        nickname: string | null;
+        role: string;
+        phone?: string | null;
+        whatsappOptIn?: boolean;
+      }[];
+    }>('/admin/users'),
   adminResetPassword: (userId: string, newPassword: string) =>
-    request<{ success: boolean; user?: { id: string; username: string; displayName: string }; error?: string }>(
-      `/admin/users/${userId}/reset-password`,
-      { method: 'POST', body: JSON.stringify({ newPassword }) }
-    ),
+    request<{
+      success: boolean;
+      user?: { id: string; username: string; displayName: string; phone?: string | null; whatsappOptIn?: boolean };
+      whatsapp?: import('./whatsapp').WhatsAppResult;
+      error?: string;
+    }>(`/admin/users/${userId}/reset-password`, { method: 'POST', body: JSON.stringify({ newPassword }) }),
   adminStats: () => request<{ success: boolean; stats: { players: number; actions: number; redemptions: number }; challengeDate: string }>('/auth/admin/stats')
 };

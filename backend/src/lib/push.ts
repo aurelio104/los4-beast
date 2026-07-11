@@ -18,34 +18,66 @@ export function getVapidPublicKey() {
 }
 
 export async function sendPushToUser(userId: string, payload: { title: string; body: string; url?: string }) {
-  if (!isPushConfigured()) return { sent: 0 };
-  const sub = await prisma.pushSubscription.findUnique({ where: { userId } });
-  if (!sub) return { sent: 0 };
-
-  try {
-    await webpush.sendNotification(
-      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-      JSON.stringify(payload)
-    );
-    return { sent: 1 };
-  } catch (e) {
-    const err = e as { statusCode?: number };
-    if (err.statusCode === 410 || err.statusCode === 404) {
-      await prisma.pushSubscription.delete({ where: { userId } }).catch(() => {});
+  let pushSent = 0;
+  if (isPushConfigured()) {
+    const sub = await prisma.pushSubscription.findUnique({ where: { userId } });
+    if (sub) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          JSON.stringify(payload)
+        );
+        pushSent = 1;
+      } catch (e) {
+        const err = e as { statusCode?: number };
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await prisma.pushSubscription.delete({ where: { userId } }).catch(() => {});
+        }
+      }
     }
-    return { sent: 0, error: String(e) };
   }
+
+  const { buildChangeAlertMessage, notifyUserWhatsApp } = await import('./whatsapp.js');
+  const wa = await notifyUserWhatsApp(userId, buildChangeAlertMessage(payload.title, payload.body, payload.url));
+
+  return { sent: pushSent, whatsapp: wa };
 }
 
 export async function broadcastPush(payload: { title: string; body: string; url?: string }) {
-  if (!isPushConfigured()) return { sent: 0, total: 0 };
+  const { buildChangeAlertMessage, sendWhatsAppMessage } = await import('./whatsapp.js');
+  const msg = buildChangeAlertMessage(payload.title, payload.body, payload.url);
+
   const subs = await prisma.pushSubscription.findMany();
+  const notifiedWa = new Set<string>();
   let sent = 0;
+  let waSent = 0;
+
   for (const sub of subs) {
     const r = await sendPushToUser(sub.userId, payload);
     sent += r.sent;
+    if (r.whatsapp?.sent) {
+      waSent++;
+      notifiedWa.add(sub.userId);
+    }
   }
-  return { sent, total: subs.length };
+
+  const waOnly = await prisma.user.findMany({
+    where: {
+      whatsappOptIn: true,
+      phone: { not: null },
+      isActive: true,
+      ...(notifiedWa.size ? { id: { notIn: [...notifiedWa] } } : {})
+    },
+    select: { phone: true }
+  });
+
+  for (const u of waOnly) {
+    if (!u.phone) continue;
+    const r = await sendWhatsAppMessage(u.phone, msg);
+    if (r.sent) waSent++;
+  }
+
+  return { sent, total: subs.length, whatsappSent: waSent };
 }
 
 export async function notifyEventReminder() {

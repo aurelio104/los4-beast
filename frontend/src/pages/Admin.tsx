@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Copy, Shield, Users, Zap, Bell, Eye, Megaphone, Send, UserPlus, KeyRound } from 'lucide-react';
+import { ArrowLeft, Copy, Shield, Users, Zap, Bell, Eye, Megaphone, Send, UserPlus, KeyRound, MessageCircle } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
 import { PasswordInput } from '../components/PasswordInput';
@@ -9,6 +9,7 @@ import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 import { api } from '../lib/api';
 import { isPasswordStrongEnough } from '../lib/passwordStrength';
 import { shareInviteLink } from '../lib/inviteShare';
+import { openWaMe, WhatsAppResult } from '../lib/whatsapp';
 import { REWARDS } from '../types';
 
 export default function Admin() {
@@ -22,11 +23,21 @@ export default function Admin() {
   const [toast, setToast] = useState('');
   const [pushTitle, setPushTitle] = useState('🔥 Reto');
   const [pushBody, setPushBody] = useState('¡Entra al Hub y compite!');
-  const [adminUsers, setAdminUsers] = useState<{ id: string; username: string; email: string; displayName: string; nickname: string | null; role: string }[]>([]);
+  const [adminUsers, setAdminUsers] = useState<{
+    id: string;
+    username: string;
+    email: string;
+    displayName: string;
+    nickname: string | null;
+    role: string;
+    phone?: string | null;
+    whatsappOptIn?: boolean;
+  }[]>([]);
   const [resetUserId, setResetUserId] = useState('');
   const [resetPassword, setResetPassword] = useState('');
   const [resetConfirm, setResetConfirm] = useState('');
   const [resetting, setResetting] = useState(false);
+  const [lastWaReset, setLastWaReset] = useState<WhatsAppResult | null>(null);
 
   const load = () => {
     api.adminDashboard().then((r) => {
@@ -81,13 +92,26 @@ export default function Admin() {
     if (!isPasswordStrongEnough(resetPassword)) { setToast('Contraseña no suficientemente segura'); return; }
     if (resetPassword !== resetConfirm) { setToast('Las contraseñas no coinciden'); return; }
     setResetting(true);
+    setLastWaReset(null);
     try {
       const r = await api.adminResetPassword(resetUserId, resetPassword);
       if (!r.success) throw new Error(r.error || 'Error al resetear');
       const name = r.user?.displayName || r.user?.username || 'Usuario';
       setResetPassword('');
       setResetConfirm('');
-      setToast(`Contraseña actualizada para ${name}`);
+      if (r.whatsapp) {
+        setLastWaReset(r.whatsapp);
+        if (!r.whatsapp.sent && r.whatsapp.waMeUrl) {
+          openWaMe(r.whatsapp.waMeUrl);
+          setToast(`Contraseña actualizada · Abre WhatsApp para enviar a ${name}`);
+        } else if (r.whatsapp.sent) {
+          setToast(`Contraseña actualizada y enviada por WhatsApp a ${name}`);
+        } else {
+          setToast(`Contraseña actualizada para ${name} (sin WhatsApp)`);
+        }
+      } else {
+        setToast(`Contraseña actualizada para ${name}`);
+      }
     } catch (e) {
       setToast((e as Error).message);
     } finally {
@@ -154,14 +178,14 @@ export default function Admin() {
 
         <GlassCard glow="pink" className="p-5 mb-4 space-y-3">
           <p className="text-sm font-bold flex items-center gap-2"><KeyRound size={16} /> Restablecer contraseña</p>
-          <p className="text-xs text-white/50">Si alguien olvidó su contraseña, asígnale una nueva y compártela por privado.</p>
+          <p className="text-xs text-white/50">Si alguien olvidó su contraseña, asígnale una nueva. Se reenvía automáticamente por WhatsApp si tiene número.</p>
           <div>
             <label className="text-xs text-white/40 mb-1 block">Usuario</label>
-            <select value={resetUserId} onChange={(e) => setResetUserId(e.target.value)}>
+            <select value={resetUserId} onChange={(e) => { setResetUserId(e.target.value); setLastWaReset(null); }}>
               <option value="">Seleccionar…</option>
               {adminUsers.map((u) => (
                 <option key={u.id} value={u.id}>
-                  {u.displayName} (@{u.username}){u.role === 'MASTER' ? ' · Admin' : ''}
+                  {u.displayName} (@{u.username}){u.role === 'MASTER' ? ' · Admin' : ''}{u.phone ? ` · ${u.whatsappOptIn ? 'WA ✓' : 'WA ○'}` : ''}
                 </option>
               ))}
             </select>
@@ -184,6 +208,15 @@ export default function Admin() {
           >
             {resetting ? 'Guardando…' : 'Actualizar contraseña'}
           </button>
+          {lastWaReset?.waMeUrl && !lastWaReset.sent && (
+            <button
+              type="button"
+              onClick={() => openWaMe(lastWaReset.waMeUrl!)}
+              className="w-full glass-btn py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 text-[#25D366]"
+            >
+              <MessageCircle size={16} /> Reenviar credenciales por WhatsApp
+            </button>
+          )}
         </GlassCard>
 
         <GlassCard className="p-5 mb-4 space-y-3">

@@ -7,6 +7,7 @@ import { pushRouter } from './routes/push.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
 import { chatRouter } from './routes/chat.routes.js';
 import { notifyDailyContinue, notifyEventReminder, isPushConfigured } from './lib/push.js';
+import { isWhatsAppAutoSendEnabled } from './lib/whatsapp.js';
 import { getEventCycle } from './lib/events.js';
 import { ensureUploadDir, UPLOAD_DIR } from './lib/uploads.js';
 
@@ -28,7 +29,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use('/api/uploads', express.static(UPLOAD_DIR, { maxAge: '7d', fallthrough: true }));
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, app: 'Reto', push: isPushConfigured() });
+  res.json({ ok: true, app: 'Reto', push: isPushConfigured(), whatsapp: isWhatsAppAutoSendEnabled() });
 });
 
 app.use('/api/auth', authRouter);

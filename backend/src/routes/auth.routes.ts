@@ -17,6 +17,8 @@ import {
   consumeInvite,
   listActiveInvites
 } from '../lib/invites.js';
+import { normalizePhone } from '../lib/phone.js';
+import { buildJoinCredentialsMessage, sendWhatsAppMessage } from '../lib/whatsapp.js';
 
 export const authRouter = Router();
 
@@ -32,7 +34,8 @@ const joinSchema = z.object({
   password: z.string().min(8),
   displayName: z.string().min(2).max(50),
   nickname: z.string().max(30).optional(),
-  gender: z.enum(['M', 'F', 'OTHER']).default('OTHER')
+  gender: z.enum(['M', 'F', 'OTHER']).default('OTHER'),
+  phone: z.string().max(20).optional()
 });
 
 function sanitizeUser(user: {
@@ -50,6 +53,8 @@ function sanitizeUser(user: {
   bio?: string | null;
   bgMode?: string | null;
   bgUrl?: string | null;
+  phone?: string | null;
+  whatsappOptIn?: boolean;
 }) {
   return {
     id: user.id,
@@ -65,6 +70,8 @@ function sanitizeUser(user: {
     bio: user.bio ?? null,
     bgMode: user.bgMode ?? 'beach',
     bgUrl: user.bgUrl ?? null,
+    phone: user.phone ?? null,
+    whatsappOptIn: user.whatsappOptIn ?? false,
     hasPasskey: user.passkeyRegistered
   };
 }
@@ -130,6 +137,8 @@ authRouter.post('/join', async (req: Request, res: Response) => {
     }
 
     const passwordHash = await bcrypt.hash(data.password, 10);
+    const phone = data.phone ? normalizePhone(data.phone) : null;
+
     const user = await prisma.user.create({
       data: {
         username: data.username,
@@ -138,6 +147,8 @@ authRouter.post('/join', async (req: Request, res: Response) => {
         displayName: data.displayName,
         nickname: data.nickname,
         gender: data.gender,
+        phone,
+        whatsappOptIn: !!phone,
         role: 'PLAYER'
       }
     });
@@ -157,6 +168,15 @@ authRouter.post('/join', async (req: Request, res: Response) => {
       where: { id: user.id },
       data: { points: { increment: 50 } }
     });
+
+    if (phone) {
+      const waMsg = buildJoinCredentialsMessage({
+        displayName: user.displayName,
+        username: user.username,
+        password: data.password
+      });
+      sendWhatsAppMessage(phone, waMsg).catch(() => {});
+    }
 
     const token = jwt.sign({ userId: user.id, role: user.role }, getJwtSecret(), { expiresIn: '30d' });
     res.status(201).json({ success: true, token, user: sanitizeUser(user), needsPasskey: !user.passkeyRegistered });

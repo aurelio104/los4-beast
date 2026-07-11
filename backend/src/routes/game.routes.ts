@@ -4,6 +4,14 @@ import { authMiddleware } from '../middleware/auth.js';
 import { CHEST_CLUES, EVENTS, getBribeOffer, getEventCycle } from '../lib/events.js';
 import { awardPoints, playedMiniGameToday } from '../lib/points.js';
 import { getPlayerContext, getTriviaQuestions } from '../lib/playerContext.js';
+import { normalizePhone } from '../lib/phone.js';
+import {
+  buildWelcomeMessage,
+  buildChangeAlertMessage,
+  notifyUserWhatsApp,
+  sendWhatsAppMessage,
+  isWhatsAppAutoSendEnabled
+} from '../lib/whatsapp.js';
 
 export const gameRouter = Router();
 
@@ -370,11 +378,18 @@ gameRouter.patch('/profile', authMiddleware, async (req, res) => {
     bio?: string;
     avatarEmoji?: string;
     bgMode?: string;
+    phone?: string;
+    whatsappOptIn?: boolean;
     currentPassword?: string;
     newPassword?: string;
   };
 
+  const current = await prisma.user.findUnique({ where: { id: uid } });
+  if (!current) return res.status(404).json({ success: false, error: 'No encontrado' });
+
   const data: Record<string, unknown> = {};
+  let passwordChanged = false;
+  let whatsappWelcome = false;
 
   if (body.nickname !== undefined) {
     const nick = String(body.nickname).trim().slice(0, 30);
@@ -404,6 +419,28 @@ gameRouter.patch('/profile', authMiddleware, async (req, res) => {
     data.bgMode = body.bgMode;
   }
 
+  if (body.phone !== undefined) {
+    const trimmed = String(body.phone).trim();
+    if (!trimmed) {
+      data.phone = null;
+      data.whatsappOptIn = false;
+    } else {
+      const normalized = normalizePhone(trimmed);
+      if (!normalized) return res.status(400).json({ success: false, error: 'Teléfono inválido (ej. 04141234567)' });
+      data.phone = normalized;
+    }
+  }
+
+  if (body.whatsappOptIn !== undefined) {
+    const optIn = !!body.whatsappOptIn;
+    const phoneForOpt = (data.phone as string | null | undefined) ?? current.phone;
+    if (optIn && !phoneForOpt) {
+      return res.status(400).json({ success: false, error: 'Indica tu número de WhatsApp primero' });
+    }
+    data.whatsappOptIn = optIn;
+    if (optIn && !current.whatsappOptIn) whatsappWelcome = true;
+  }
+
   if (body.newPassword) {
     if (!body.currentPassword) {
       return res.status(400).json({ success: false, error: 'Indica tu contraseña actual' });
@@ -411,15 +448,29 @@ gameRouter.patch('/profile', authMiddleware, async (req, res) => {
     if (body.newPassword.length < 8) {
       return res.status(400).json({ success: false, error: 'Nueva contraseña: mínimo 8 caracteres' });
     }
-    const current = await prisma.user.findUnique({ where: { id: uid } });
-    if (!current) return res.status(404).json({ success: false, error: 'No encontrado' });
     const bcrypt = await import('bcryptjs');
     const ok = await bcrypt.compare(body.currentPassword, current.passwordHash);
     if (!ok) return res.status(400).json({ success: false, error: 'Contraseña actual incorrecta' });
     data.passwordHash = await bcrypt.hash(body.newPassword, 10);
+    passwordChanged = true;
   }
 
   const user = await prisma.user.update({ where: { id: uid }, data });
+
+  if (whatsappWelcome) {
+    const msg = buildWelcomeMessage({ displayName: user.displayName, username: user.username });
+    await notifyUserWhatsApp(uid, msg).catch(() => {});
+  }
+
+  if (passwordChanged) {
+    const msg = buildChangeAlertMessage(
+      'Contraseña actualizada',
+      'Cambiaste tu contraseña de acceso. Si no fuiste tú, avisa al admin de inmediato.',
+      '/login'
+    );
+    await notifyUserWhatsApp(uid, msg).catch(() => {});
+  }
+
   res.json({ success: true, user: publicUser(user) });
 });
 
@@ -438,6 +489,8 @@ function publicUser(user: {
   bgMode: string;
   bgUrl: string | null;
   passkeyRegistered: boolean;
+  phone?: string | null;
+  whatsappOptIn?: boolean;
 }) {
   return {
     id: user.id,
@@ -453,9 +506,44 @@ function publicUser(user: {
     bio: user.bio,
     bgMode: user.bgMode || 'beach',
     bgUrl: user.bgUrl,
+    phone: user.phone ?? null,
+    whatsappOptIn: user.whatsappOptIn ?? false,
     hasPasskey: user.passkeyRegistered
   };
 }
+
+gameRouter.post('/whatsapp/welcome', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  const user = await prisma.user.findUnique({ where: { id: uid } });
+  if (!user?.whatsappOptIn || !user.phone) {
+    return res.status(400).json({ success: false, error: 'Activa WhatsApp con un número válido' });
+  }
+  const msg = buildWelcomeMessage({ displayName: user.displayName, username: user.username });
+  const whatsapp = await sendWhatsAppMessage(user.phone, msg);
+  res.json({ success: true, whatsapp });
+});
+
+gameRouter.post('/whatsapp/test', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  const user = await prisma.user.findUnique({ where: { id: uid } });
+  if (!user?.whatsappOptIn || !user.phone) {
+    return res.status(400).json({ success: false, error: 'Activa WhatsApp con un número válido' });
+  }
+  const msg = buildChangeAlertMessage(
+    'Prueba de WhatsApp',
+    'Si ves esto, las alertas del Reto llegarán a tu WhatsApp.',
+    '/'
+  );
+  const whatsapp = await sendWhatsAppMessage(user.phone, msg);
+  res.json({ success: true, whatsapp });
+});
+
+gameRouter.get('/whatsapp/status', authMiddleware, async (_req, res) => {
+  res.json({
+    success: true,
+    autoSend: isWhatsAppAutoSendEnabled()
+  });
+});
 
 gameRouter.post('/profile/avatar', authMiddleware, async (req, res) => {
   const uid = userId(req);

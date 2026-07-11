@@ -24,6 +24,8 @@ model User {
   bio         String?
   bgMode      String  @default("beach")
   bgUrl       String?
+  phone       String?
+  whatsappOptIn Boolean @default(false)
   invitedById String?
   invitedBy   User?   @relation("UserInvites", fields: [invitedById], references: [id], onDelete: SetNull)
   invitees    User[]  @relation("UserInvites")

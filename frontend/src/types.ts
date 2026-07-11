@@ -12,6 +12,8 @@ export interface User {
   bio?: string | null;
   bgMode?: 'beach' | 'celosia' | 'orbs' | 'custom' | string;
   bgUrl?: string | null;
+  phone?: string | null;
+  whatsappOptIn?: boolean;
   hasPasskey: boolean;
 }
 
