@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Send } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
+import { Avatar } from '../components/Avatar';
 import { api } from '../lib/api';
 import { useLivePoll } from '../hooks/useLivePoll';
 
@@ -12,7 +13,7 @@ interface ChatMsg {
   body: string;
   createdAt: string;
   isOwn: boolean;
-  user: { id: string; name: string; emoji: string };
+  user: { id: string; name: string; emoji: string; avatarUrl?: string | null };
 }
 
 export default function Chat() {
@@ -101,8 +102,9 @@ export default function Chat() {
                   }`}
                 >
                   {!m.isOwn && (
-                    <p className="text-[11px] text-white/50 mb-1">
-                      {m.user.emoji} {m.user.name}
+                    <p className="text-[11px] text-white/50 mb-1 flex items-center gap-1.5">
+                      <Avatar url={m.user.avatarUrl} emoji={m.user.emoji} name={m.user.name} size="xs" className="!w-5 !h-5 !text-[10px]" />
+                      {m.user.name}
                     </p>
                   )}
                   <p className="text-sm text-white/95 whitespace-pre-wrap break-words">{m.body}</p>

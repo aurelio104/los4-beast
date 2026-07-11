@@ -50,7 +50,7 @@ export async function getPlayerContext(userId: string) {
     computeStreak(userId),
     prisma.alliance.findUnique({
       where: { userId_cycleIndex: { userId, cycleIndex: cycle.cycleIndex } },
-      include: { partner: { select: { id: true, displayName: true, nickname: true, avatarEmoji: true } } }
+      include: { partner: { select: { id: true, displayName: true, nickname: true, avatarEmoji: true, avatarUrl: true } } }
     }),
     prisma.vote.findUnique({
       where: { voterId_cycleIndex_voteType: { voterId: userId, cycleIndex: cycle.cycleIndex, voteType: 'ELIMINATE' } }
@@ -93,7 +93,8 @@ export async function getPlayerContext(userId: string) {
       ? {
           partnerId: alliance.partnerId,
           name: alliance.partner.nickname || alliance.partner.displayName,
-          emoji: alliance.partner.avatarEmoji
+          emoji: alliance.partner.avatarEmoji,
+          avatarUrl: alliance.partner.avatarUrl
         }
       : null,
     hasVoted: !!vote,

@@ -32,7 +32,7 @@ gameRouter.get('/feed', authMiddleware, async (_req, res) => {
   const actions = await prisma.gameAction.findMany({
     take: 40,
     orderBy: { createdAt: 'desc' },
-    include: { user: { select: { displayName: true, nickname: true } } }
+    include: { user: { select: { displayName: true, nickname: true, avatarEmoji: true, avatarUrl: true } } }
   });
   res.json({
     success: true,
@@ -42,6 +42,8 @@ gameRouter.get('/feed', authMiddleware, async (_req, res) => {
       pointsDelta: a.pointsDelta,
       isAnonymous: a.isAnonymous,
       displayName: a.isAnonymous ? 'Alguien 👀' : (a.user.nickname || a.user.displayName),
+      avatarEmoji: a.isAnonymous ? '👀' : a.user.avatarEmoji,
+      avatarUrl: a.isAnonymous ? null : a.user.avatarUrl,
       metadata: a.metadata,
       createdAt: a.createdAt
     }))
@@ -361,13 +363,116 @@ gameRouter.post('/redeem', authMiddleware, async (req, res) => {
 
 gameRouter.patch('/profile', authMiddleware, async (req, res) => {
   const uid = userId(req);
-  const { nickname, avatarEmoji } = req.body as { nickname?: string; avatarEmoji?: string };
+  const body = req.body as {
+    nickname?: string;
+    displayName?: string;
+    gender?: string;
+    bio?: string;
+    avatarEmoji?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  };
+
+  const data: Record<string, unknown> = {};
+
+  if (body.nickname !== undefined) {
+    const nick = String(body.nickname).trim().slice(0, 30);
+    data.nickname = nick || null;
+  }
+  if (body.displayName !== undefined) {
+    const name = String(body.displayName).trim().slice(0, 50);
+    if (name.length < 2) return res.status(400).json({ success: false, error: 'Nombre muy corto' });
+    data.displayName = name;
+  }
+  if (body.gender !== undefined) {
+    if (!['M', 'F', 'OTHER'].includes(body.gender)) {
+      return res.status(400).json({ success: false, error: 'Género inválido' });
+    }
+    data.gender = body.gender;
+  }
+  if (body.bio !== undefined) {
+    data.bio = String(body.bio).trim().slice(0, 160) || null;
+  }
+  if (body.avatarEmoji !== undefined) {
+    data.avatarEmoji = String(body.avatarEmoji).slice(0, 8) || '😎';
+  }
+
+  if (body.newPassword) {
+    if (!body.currentPassword) {
+      return res.status(400).json({ success: false, error: 'Indica tu contraseña actual' });
+    }
+    if (body.newPassword.length < 8) {
+      return res.status(400).json({ success: false, error: 'Nueva contraseña: mínimo 8 caracteres' });
+    }
+    const current = await prisma.user.findUnique({ where: { id: uid } });
+    if (!current) return res.status(404).json({ success: false, error: 'No encontrado' });
+    const bcrypt = await import('bcryptjs');
+    const ok = await bcrypt.compare(body.currentPassword, current.passwordHash);
+    if (!ok) return res.status(400).json({ success: false, error: 'Contraseña actual incorrecta' });
+    data.passwordHash = await bcrypt.hash(body.newPassword, 10);
+  }
+
+  const user = await prisma.user.update({ where: { id: uid }, data });
+  res.json({
+    success: true,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      displayName: user.displayName,
+      nickname: user.nickname,
+      gender: user.gender,
+      points: user.points,
+      avatarEmoji: user.avatarEmoji,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      hasPasskey: user.passkeyRegistered
+    }
+  });
+});
+
+gameRouter.post('/profile/avatar', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  const { dataUrl } = req.body as { dataUrl?: string };
+  if (!dataUrl) return res.status(400).json({ success: false, error: 'Falta la imagen' });
+
+  try {
+    const { saveAvatarDataUrl } = await import('../lib/uploads.js');
+    const avatarUrl = saveAvatarDataUrl(uid, dataUrl);
+    const user = await prisma.user.update({
+      where: { id: uid },
+      data: { avatarUrl }
+    });
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        displayName: user.displayName,
+        nickname: user.nickname,
+        gender: user.gender,
+        points: user.points,
+        avatarEmoji: user.avatarEmoji,
+        avatarUrl: user.avatarUrl,
+        bio: user.bio,
+        hasPasskey: user.passkeyRegistered
+      }
+    });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message || 'No se pudo subir la foto' });
+  }
+});
+
+gameRouter.delete('/profile/avatar', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  const { deleteAvatarFiles } = await import('../lib/uploads.js');
+  deleteAvatarFiles(uid);
   const user = await prisma.user.update({
     where: { id: uid },
-    data: {
-      ...(nickname !== undefined ? { nickname } : {}),
-      ...(avatarEmoji !== undefined ? { avatarEmoji } : {})
-    }
+    data: { avatarUrl: null }
   });
   res.json({
     success: true,
@@ -381,6 +486,8 @@ gameRouter.patch('/profile', authMiddleware, async (req, res) => {
       gender: user.gender,
       points: user.points,
       avatarEmoji: user.avatarEmoji,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
       hasPasskey: user.passkeyRegistered
     }
   });

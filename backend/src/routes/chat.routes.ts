@@ -22,7 +22,7 @@ chatRouter.get('/messages', async (req: Request, res: Response) => {
     take: limit,
     include: {
       user: {
-        select: { id: true, displayName: true, nickname: true, avatarEmoji: true }
+        select: { id: true, displayName: true, nickname: true, avatarEmoji: true, avatarUrl: true }
       }
     }
   });
@@ -39,7 +39,8 @@ chatRouter.get('/messages', async (req: Request, res: Response) => {
       user: {
         id: m.user.id,
         name: m.user.nickname || m.user.displayName,
-        emoji: m.user.avatarEmoji
+        emoji: m.user.avatarEmoji,
+        avatarUrl: m.user.avatarUrl
       }
     }))
   });
@@ -58,7 +59,7 @@ chatRouter.post('/messages', async (req: Request, res: Response) => {
       data: { userId, body },
       include: {
         user: {
-          select: { id: true, displayName: true, nickname: true, avatarEmoji: true }
+          select: { id: true, displayName: true, nickname: true, avatarEmoji: true, avatarUrl: true }
         }
       }
     });
@@ -73,7 +74,8 @@ chatRouter.post('/messages', async (req: Request, res: Response) => {
         user: {
           id: msg.user.id,
           name: msg.user.nickname || msg.user.displayName,
-          emoji: msg.user.avatarEmoji
+          emoji: msg.user.avatarEmoji,
+          avatarUrl: msg.user.avatarUrl
         }
       }
     });

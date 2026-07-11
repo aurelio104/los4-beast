@@ -5,12 +5,13 @@ import { ArrowLeft, Trophy, Users } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
 import { CountdownTimer } from '../components/CountdownTimer';
+import { Avatar } from '../components/Avatar';
 import { api } from '../lib/api';
 import { Player, PlayerContext } from '../types';
 
 const GENDER_LABEL: Record<string, string> = {
-  MALE: 'Hombres 👨',
-  FEMALE: 'Mujeres 👩',
+  M: 'Hombres 👨',
+  F: 'Mujeres 👩',
   OTHER: 'Equipo 🌈'
 };
 
@@ -64,7 +65,8 @@ export default function Finale() {
           <p className="text-xs uppercase tracking-widest text-white/40 mb-3">Ranking pre-final</p>
           {players.slice(0, 8).map((p, i) => (
             <div key={p.id} className="flex items-center gap-3 py-1.5">
-              <span className="w-6">{i === 0 ? '👑' : `${i + 1}.`}</span>
+              <span className="w-6 shrink-0">{i === 0 ? '👑' : `${i + 1}.`}</span>
+              <Avatar url={p.avatarUrl} emoji={p.avatarEmoji} name={p.displayName} size="xs" />
               <span className="flex-1 text-sm truncate">{p.nickname || p.displayName}</span>
               <span className="text-xs font-bold text-reto-gold">{p.points} BP</span>
             </div>

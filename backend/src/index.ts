@@ -8,6 +8,7 @@ import { adminRouter } from './routes/admin.routes.js';
 import { chatRouter } from './routes/chat.routes.js';
 import { notifyDailyContinue, notifyEventReminder, isPushConfigured } from './lib/push.js';
 import { getEventCycle } from './lib/events.js';
+import { ensureUploadDir, UPLOAD_DIR } from './lib/uploads.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3010', 10);
@@ -20,8 +21,11 @@ const origins = [
   'http://127.0.0.1:3011'
 ].filter(Boolean) as string[];
 
+ensureUploadDir();
+
 app.use(cors({ origin: origins, credentials: true }));
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
+app.use('/api/uploads', express.static(UPLOAD_DIR, { maxAge: '7d', fallthrough: true }));
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, app: 'Reto', push: isPushConfigured() });

@@ -8,6 +8,8 @@ export interface User {
   gender: string;
   points: number;
   avatarEmoji?: string;
+  avatarUrl?: string | null;
+  bio?: string | null;
   hasPasskey: boolean;
 }
 
@@ -17,6 +19,8 @@ export interface FeedItem {
   pointsDelta: number;
   isAnonymous: boolean;
   displayName: string;
+  avatarEmoji?: string | null;
+  avatarUrl?: string | null;
   metadata?: string;
   createdAt: string;
 }
@@ -27,6 +31,9 @@ export interface Player {
   nickname?: string | null;
   gender: string;
   points: number;
+  avatarEmoji?: string | null;
+  avatarUrl?: string | null;
+  bio?: string | null;
 }
 
 export interface RetoEvent {
@@ -40,7 +47,7 @@ export interface RetoEvent {
 export interface PlayerContext {
   streak: number;
   continuedToday: boolean;
-  alliance: { partnerId: string; name: string; emoji: string } | null;
+  alliance: { partnerId: string; name: string; emoji: string; avatarUrl?: string | null } | null;
   hasVoted: boolean;
   canClaimChest: boolean;
   bribeAccepted: boolean;

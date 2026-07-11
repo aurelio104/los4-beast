@@ -39,7 +39,9 @@ function sanitizeUser(user: {
   gender: string;
   points: number;
   passkeyRegistered: boolean;
-  avatarEmoji?: string;
+  avatarEmoji?: string | null;
+  avatarUrl?: string | null;
+  bio?: string | null;
 }) {
   return {
     id: user.id,
@@ -51,6 +53,8 @@ function sanitizeUser(user: {
     gender: user.gender,
     points: user.points,
     avatarEmoji: user.avatarEmoji ?? '😎',
+    avatarUrl: user.avatarUrl ?? null,
+    bio: user.bio ?? null,
     hasPasskey: user.passkeyRegistered
   };
 }
@@ -218,6 +222,9 @@ authRouter.get('/players', authMiddleware, async (_req, res) => {
       nickname: true,
       gender: true,
       points: true,
+      avatarEmoji: true,
+      avatarUrl: true,
+      bio: true,
       passkeyRegistered: true
     },
     orderBy: { points: 'desc' }

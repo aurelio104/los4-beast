@@ -15,6 +15,7 @@ import { DramaFeed } from '../components/DramaFeed';
 import { ActionInfoModal } from '../components/ActionInfoModal';
 import { InstallBanner } from '../components/InstallBanner';
 import { VotePanel } from '../components/VotePanel';
+import { Avatar } from '../components/Avatar';
 import { api } from '../lib/api';
 import { HUB_ACTION_INFO, HubActionKey } from '../lib/actionInfo';
 import { User as UserType, FeedItem, Player, RetoEvent, PlayerContext } from '../types';
@@ -188,7 +189,7 @@ export default function Hub() {
         <HeroSection className="pt-6">
           <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">{user.avatarEmoji || '😎'}</span>
+              <Avatar url={user.avatarUrl} emoji={user.avatarEmoji} name={user.displayName} size="md" />
               <div>
                 <div className="flex items-center gap-2">
                   <Flame className="text-reto-pink" size={20} />
@@ -318,8 +319,9 @@ export default function Hub() {
         <GlassCard className="p-4 mb-4">
           <div className="flex items-center gap-2 mb-3"><Trophy size={16} className="text-reto-gold" /><span className="text-sm font-bold">Ranking</span></div>
           {players.slice(0, 6).map((p, i) => (
-            <motion.div key={p.id} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }} className="flex items-center gap-3 py-1">
-              <span className="w-6">{i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
+            <motion.div key={p.id} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }} className="flex items-center gap-3 py-1.5">
+              <span className="w-6 text-center shrink-0">{i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
+              <Avatar url={p.avatarUrl} emoji={p.avatarEmoji} name={p.displayName} size="xs" />
               <span className="flex-1 text-sm truncate">{p.nickname || p.displayName}</span>
               <span className="text-xs font-bold text-reto-gold">{p.points} BP</span>
             </motion.div>
@@ -381,9 +383,12 @@ export default function Hub() {
           <Modal onClose={() => setShowBetray(false)} title="💀 Traicionar">
             <p className="text-sm text-white/60 mb-4">Anónimo · +150 BP</p>
             {players.filter((p) => p.id !== user.id).map((p) => (
-              <button key={p.id} className="w-full glass-btn py-3 rounded-xl text-sm font-semibold mb-2" onClick={async () => {
+              <button key={p.id} className="w-full glass-btn py-3 rounded-xl text-sm font-semibold mb-2 flex items-center gap-3 px-4" onClick={async () => {
                 await action('betray', () => api.betray(p.id)); setShowBetray(false);
-              }}>{p.nickname || p.displayName}</button>
+              }}>
+                <Avatar url={p.avatarUrl} emoji={p.avatarEmoji} name={p.displayName} size="xs" />
+                {p.nickname || p.displayName}
+              </button>
             ))}
           </Modal>
         )}
@@ -391,9 +396,12 @@ export default function Hub() {
           <Modal onClose={() => setShowVote(false)} title="🗳️ Votar eliminar">
             <p className="text-sm text-white/60 mb-4">¿Quién hace el reto más duro?</p>
             {players.filter((p) => p.id !== user.id).map((p) => (
-              <button key={p.id} className="w-full glass-btn py-3 rounded-xl text-sm font-semibold mb-2" onClick={async () => {
+              <button key={p.id} className="w-full glass-btn py-3 rounded-xl text-sm font-semibold mb-2 flex items-center gap-3 px-4" onClick={async () => {
                 await action('vote', () => api.vote(p.id)); setShowVote(false);
-              }}>{p.nickname || p.displayName}</button>
+              }}>
+                <Avatar url={p.avatarUrl} emoji={p.avatarEmoji} name={p.displayName} size="xs" />
+                {p.nickname || p.displayName}
+              </button>
             ))}
           </Modal>
         )}
@@ -401,9 +409,12 @@ export default function Hub() {
           <Modal onClose={() => setShowAlliance(false)} title="🤝 Alianza secreta">
             <p className="text-sm text-white/60 mb-4">Pacto de este ciclo (+25 BP)</p>
             {players.filter((p) => p.id !== user.id).map((p) => (
-              <button key={p.id} className="w-full glass-btn py-3 rounded-xl text-sm font-semibold mb-2" onClick={async () => {
+              <button key={p.id} className="w-full glass-btn py-3 rounded-xl text-sm font-semibold mb-2 flex items-center gap-3 px-4" onClick={async () => {
                 await action('ally', () => api.alliance(p.id)); setShowAlliance(false);
-              }}>{p.nickname || p.displayName}</button>
+              }}>
+                <Avatar url={p.avatarUrl} emoji={p.avatarEmoji} name={p.displayName} size="xs" />
+                {p.nickname || p.displayName}
+              </button>
             ))}
           </Modal>
         )}

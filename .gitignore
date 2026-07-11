@@ -8,8 +8,11 @@ backend/*.db
 backend/*.db-journal
 backend/prisma/*.db
 backend/prisma/*.db-journal
-*.log
-.DS_Store
+data/
+backend/data/
+uploads/
+backend/uploads/
+
 ._*
 .vercel
 .koyeb

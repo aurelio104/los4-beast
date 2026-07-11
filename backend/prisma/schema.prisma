@@ -20,6 +20,8 @@ model User {
   nickname    String?
   gender      String  @default("OTHER")
   avatarEmoji String  @default("😎")
+  avatarUrl   String?
+  bio         String?
 
   points     Int       @default(0)
   lastContinuedAt DateTime?

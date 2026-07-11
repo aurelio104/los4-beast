@@ -55,7 +55,18 @@ export const api = {
   chest: () => request<{ success: boolean; clues: { cycleIndex: number; clue: string }[]; canClaim: boolean; daysUntilChallenge: number }>('/game/chest'),
   claimChest: () => request<{ success: boolean; clue?: string; points: number; gained?: number; error?: string }>('/game/chest/claim', { method: 'POST' }),
   redeem: (rewardId: string, cost: number) => request<{ success: boolean; points: number; error?: string }>('/game/redeem', { method: 'POST', body: JSON.stringify({ rewardId, cost }) }),
-  updateProfile: (data: { nickname?: string; avatarEmoji?: string }) => request<{ success: boolean; user: unknown }>('/game/profile', { method: 'PATCH', body: JSON.stringify(data) }),
+  updateProfile: (data: {
+    nickname?: string;
+    displayName?: string;
+    gender?: string;
+    bio?: string;
+    avatarEmoji?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  }) => request<{ success: boolean; user?: unknown; error?: string }>('/game/profile', { method: 'PATCH', body: JSON.stringify(data) }),
+  uploadAvatar: (dataUrl: string) =>
+    request<{ success: boolean; user?: unknown; error?: string }>('/game/profile/avatar', { method: 'POST', body: JSON.stringify({ dataUrl }) }),
+  deleteAvatar: () => request<{ success: boolean; user?: unknown; error?: string }>('/game/profile/avatar', { method: 'DELETE' }),
 
   chatMessages: (after?: string) =>
     request<{ success: boolean; messages: unknown[] }>(`/chat/messages${after ? `?after=${encodeURIComponent(after)}` : ''}`),
