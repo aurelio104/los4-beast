@@ -10,10 +10,21 @@ import {
   sendWhatsAppMessage,
   notifyUserWhatsApp
 } from '../lib/whatsapp.js';
+import { getRetoPersistenceReport } from '../lib/deploy-persistence.js';
 
 export const adminRouter = Router();
 
 adminRouter.use(authMiddleware, requireMaster);
+
+adminRouter.get('/persistence-health', async (_req, res) => {
+  try {
+    const report = await getRetoPersistenceReport();
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.json({ success: true, ...report });
+  } catch (e) {
+    res.status(500).json({ success: false, error: (e as Error).message });
+  }
+});
 
 adminRouter.get('/dashboard', async (_req, res) => {
   const [players, actions, redemptions, confessions, votes, pushSubs] = await Promise.all([

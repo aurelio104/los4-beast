@@ -19,5 +19,6 @@ backend/whatsapp-auth/
 ._*
 .vercel
 .koyeb
+usuarios
 .idea
 .vscode

@@ -83,6 +83,13 @@ app.listen(PORT, '0.0.0.0', () => {
       .then((m) => m.initWhatsAppIfPersisted())
       .catch((e) => console.warn('[whatsapp] boot auto-connect:', (e as Error).message));
   }, bootDelay);
+
+  setTimeout(() => {
+    void import('./lib/deploy-persistence.js')
+      .then((m) => m.getRetoPersistenceReport())
+      .then((r) => console.log(`💾 Persistencia: ${r.summary}`))
+      .catch(() => {});
+  }, 3000);
 });
 
 async function shutdown(signal: string) {
