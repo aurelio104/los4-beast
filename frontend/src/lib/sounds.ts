@@ -4,6 +4,7 @@ let audioCtx: AudioContext | null = null;
 
 function getCtx() {
   if (!audioCtx) audioCtx = new AudioContext();
+  if (audioCtx.state === 'suspended') void audioCtx.resume();
   return audioCtx;
 }
 
@@ -47,4 +48,16 @@ export function playCoinSound() {
 export function playAlertSound() {
   tone(440, 0.15, 'sine', 0.1);
   setTimeout(() => tone(440, 0.15, 'sine', 0.1), 200);
+}
+
+/** Alerta de notificación push / chat — más audible que el click. */
+export function playNotificationSound() {
+  if (!isSoundEnabled()) return;
+  try {
+    tone(880, 0.12, 'sine', 0.14);
+    setTimeout(() => tone(660, 0.14, 'sine', 0.12), 100);
+    setTimeout(() => tone(990, 0.1, 'triangle', 0.1), 220);
+  } catch {
+    /* silent */
+  }
 }

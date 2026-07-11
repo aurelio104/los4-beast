@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Avatar } from './Avatar';
 import { RetoLogo } from './RetoLogo';
 import { PointsBadge } from './PointsBadge';
+import { NotificationBellButton } from './NotificationProvider';
+import { useNotifications } from './NotificationProvider';
 
 type HubHeaderProps = {
   displayName: string;
@@ -13,6 +15,7 @@ type HubHeaderProps = {
 
 export function HubHeader({ displayName, avatarUrl, avatarEmoji, points }: HubHeaderProps) {
   const navigate = useNavigate();
+  const { unread, openInbox } = useNotifications();
 
   return (
     <motion.header
@@ -35,6 +38,7 @@ export function HubHeader({ displayName, avatarUrl, avatarEmoji, points }: HubHe
             <p className="text-[11px] sm:text-xs text-white/55 truncate">{displayName}</p>
           </div>
         </button>
+        <NotificationBellButton unread={unread} onClick={openInbox} />
         <PointsBadge points={points} compact />
       </div>
     </motion.header>

@@ -50,7 +50,8 @@ pushRouter.post('/test', authMiddleware, async (req: Request, res: Response) => 
   const result = await sendPushToUser(userId, {
     title: '🔥 Reto',
     body: '¡Notificaciones activadas! Te avisaremos de cada evento.',
-    url: '/'
+    url: '/',
+    tag: 'reto'
   });
   res.json({ success: true, ...result });
 });

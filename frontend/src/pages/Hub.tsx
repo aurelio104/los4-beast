@@ -24,6 +24,7 @@ import { User as UserType, FeedItem, Player, RetoEvent, PlayerContext } from '..
 import { celebrateWin, celebrateBetrayal, celebrateCoin } from '../lib/celebrate';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useLivePoll } from '../hooks/useLivePoll';
+import { useNotifications } from '../components/NotificationProvider';
 import { shareMemberInvite } from '../lib/inviteShare';
 import { RadioSubmitModal } from '../components/RadioSubmitModal';
 import { useNowPlaying } from '../components/BackgroundMusic';
@@ -32,6 +33,7 @@ export default function Hub() {
   const navigate = useNavigate();
   const location = useLocation();
   const push = usePushNotifications();
+  const { chatUnread } = useNotifications();
   const [user, setUser] = useState<UserType | null>(null);
   const [booting, setBooting] = useState(true);
   const [feed, setFeed] = useState<FeedItem[]>([]);
@@ -326,7 +328,7 @@ export default function Hub() {
           <GlassButton icon={Gamepad2} label="Arena" variant="gold" showInfoHint pulse={!!playerCtx?.featuredGame} badge={playerCtx?.featuredGame ? '🎮' : undefined} onClick={() => openInfo('arena')} />
           <GlassButton icon={ShoppingBag} label="Tienda" showInfoHint onClick={() => openInfo('tienda')} />
           <GlassButton icon={MessageSquare} label="Confesión" showInfoHint onClick={() => openInfo('confesion')} />
-          <GlassButton icon={MessagesSquare} label="Chat" sublabel="Grupo" variant="gold" showInfoHint pulse onClick={() => openInfo('chat')} />
+          <GlassButton icon={MessagesSquare} label="Chat" sublabel="Grupo" variant="gold" showInfoHint pulse badge={chatUnread > 0 ? chatUnread : undefined} onClick={() => openInfo('chat')} />
           <GlassButton icon={Calendar} label="Eventos" showInfoHint onClick={() => openInfo('eventos')} />
         </div>
 

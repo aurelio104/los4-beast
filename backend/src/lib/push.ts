@@ -17,7 +17,10 @@ export function getVapidPublicKey() {
   return VAPID_PUBLIC || null;
 }
 
-export async function sendPushToUser(userId: string, payload: { title: string; body: string; url?: string }) {
+export async function sendPushToUser(
+  userId: string,
+  payload: { title: string; body: string; url?: string; tag?: string }
+) {
   let pushSent = 0;
   if (isPushConfigured()) {
     const sub = await prisma.pushSubscription.findUnique({ where: { userId } });
@@ -25,7 +28,13 @@ export async function sendPushToUser(userId: string, payload: { title: string; b
       try {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify(payload)
+          JSON.stringify({
+            ...payload,
+            url: payload.url || '/',
+            tag: payload.tag || 'reto',
+            badgeCount: 1
+          }),
+          { TTL: 86400, urgency: 'high' as webpush.Urgency }
         );
         pushSent = 1;
       } catch (e) {
@@ -43,7 +52,7 @@ export async function sendPushToUser(userId: string, payload: { title: string; b
   return { sent: pushSent, whatsapp: wa };
 }
 
-export async function broadcastPush(payload: { title: string; body: string; url?: string }) {
+export async function broadcastPush(payload: { title: string; body: string; url?: string; tag?: string }) {
   const { buildChangeAlertMessage, sendWhatsAppMessage } = await import('./whatsapp.js');
   const msg = buildChangeAlertMessage(payload.title, payload.body, payload.url);
 

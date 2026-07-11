@@ -3,16 +3,17 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { OfflineBanner } from './components/OfflineBanner';
+import { NotificationProvider } from './components/NotificationProvider';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import './index.css';
 
 function Root() {
   const online = useOnlineStatus();
   return (
-    <>
+    <NotificationProvider>
       <OfflineBanner online={online} />
       <App />
-    </>
+    </NotificationProvider>
   );
 }
 

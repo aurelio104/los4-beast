@@ -79,6 +79,25 @@ chatRouter.post('/messages', async (req: Request, res: Response) => {
         }
       }
     });
+
+    const senderName = msg.user.nickname || msg.user.displayName;
+    void (async () => {
+      const { sendPushToUser } = await import('../lib/push.js');
+      const subs = await prisma.pushSubscription.findMany({
+        where: { userId: { not: userId } },
+        select: { userId: true }
+      });
+      await Promise.all(
+        subs.map((s) =>
+          sendPushToUser(s.userId, {
+            title: `💬 ${senderName}`,
+            body: body.slice(0, 120),
+            url: '/chat',
+            tag: 'chat'
+          }).catch(() => {})
+        )
+      );
+    })();
   } catch (e) {
     if (e instanceof z.ZodError) {
       return res.status(400).json({ success: false, error: 'Mensaje inválido (máx. 500)' });

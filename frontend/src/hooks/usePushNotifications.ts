@@ -43,6 +43,12 @@ export function usePushNotifications() {
       });
       await api.pushTest();
       setSubscribed(true);
+      const { playNotificationSound } = await import('../lib/sounds');
+      const { haptic } = await import('../lib/haptics');
+      const { syncAppBadge } = await import('../lib/notification-center');
+      playNotificationSound();
+      haptic('notification');
+      void syncAppBadge();
       return true;
     } catch {
       return false;
