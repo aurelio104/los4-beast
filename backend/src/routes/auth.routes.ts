@@ -19,6 +19,7 @@ import {
 } from '../lib/invites.js';
 import { normalizePhone } from '../lib/phone.js';
 import { buildJoinCredentialsMessage, sendWhatsAppMessage } from '../lib/whatsapp.js';
+import { generateUsernameFromEmail, isAcceptableUserPassword } from '../lib/user-credentials.js';
 
 export const authRouter = Router();
 
@@ -27,16 +28,26 @@ const loginSchema = z.object({
   password: z.string().min(1)
 });
 
-const joinSchema = z.object({
-  inviteCode: z.string().min(1),
-  username: z.string().min(3).max(30),
-  email: z.string().email(),
-  password: z.string().min(8),
-  displayName: z.string().min(2).max(50),
-  nickname: z.string().max(30).optional(),
-  gender: z.enum(['M', 'F', 'OTHER']).default('OTHER'),
-  phone: z.string().max(20).optional()
-});
+const joinSchema = z
+  .object({
+    inviteCode: z.string().min(1),
+    username: z.string().min(3).max(30).optional(),
+    email: z.string().email(),
+    password: z.string().min(1),
+    displayName: z.string().min(2).max(50),
+    nickname: z.string().max(30).optional(),
+    gender: z.enum(['M', 'F', 'OTHER']).default('OTHER'),
+    phone: z.string().max(20).optional()
+  })
+  .superRefine((data, ctx) => {
+    if (!isAcceptableUserPassword(data.password)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Usa un PIN de 4–6 dígitos o una contraseña de al menos 8 caracteres',
+        path: ['password']
+      });
+    }
+  });
 
 function sanitizeUser(user: {
   id: string;
@@ -130,10 +141,20 @@ authRouter.post('/join', async (req: Request, res: Response) => {
     }
 
     const existing = await prisma.user.findFirst({
-      where: { OR: [{ username: data.username }, { email: data.email }] }
+      where: { email: data.email }
     });
     if (existing) {
-      return res.status(400).json({ success: false, error: 'Usuario o email ya registrado' });
+      return res.status(400).json({ success: false, error: 'Este correo ya está registrado' });
+    }
+
+    const username =
+      data.username?.trim() && data.username.trim().length >= 3
+        ? data.username.trim()
+        : await generateUsernameFromEmail(data.email);
+
+    const usernameTaken = await prisma.user.findUnique({ where: { username } });
+    if (usernameTaken) {
+      return res.status(400).json({ success: false, error: 'No se pudo crear la cuenta. Prueba otro correo.' });
     }
 
     const passwordHash = await bcrypt.hash(data.password, 10);
@@ -141,7 +162,7 @@ authRouter.post('/join', async (req: Request, res: Response) => {
 
     const user = await prisma.user.create({
       data: {
-        username: data.username,
+        username,
         email: data.email,
         passwordHash,
         displayName: data.displayName,
@@ -172,7 +193,7 @@ authRouter.post('/join', async (req: Request, res: Response) => {
     if (phone) {
       const waMsg = buildJoinCredentialsMessage({
         displayName: user.displayName,
-        username: user.username,
+        email: user.email,
         password: data.password
       });
       sendWhatsAppMessage(phone, waMsg, { bypassBotPause: true }).catch(() => {});

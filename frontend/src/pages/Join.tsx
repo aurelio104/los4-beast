@@ -14,12 +14,12 @@ import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 import { PasswordInput } from '../components/PasswordInput';
 import { api } from '../lib/api';
 import { compressImageFile } from '../lib/image';
-import { isPasswordStrongEnough } from '../lib/passwordStrength';
+import { isPasswordOrPinValid, passwordHint } from '../lib/pinPassword';
 import { syncBgFromUser } from '../lib/preferences';
 import { User } from '../types';
 
 const EMOJIS = ['😎', '🔥', '👑', '💀', '🤡', '😈', '🦸', '🎭', '🐺', '🦁', '✨', '🌊'];
-const STEPS = ['Datos', 'Foto', 'Contraseña', '¡Listo!'];
+const STEPS = ['Datos', 'Foto', 'Acceso', '¡Listo!'];
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -39,7 +39,6 @@ export default function Join() {
   const [error, setError] = useState('');
 
   const [form, setForm] = useState({
-    username: '',
     email: '',
     displayName: '',
     nickname: '',
@@ -82,11 +81,10 @@ export default function Join() {
   const validateStep = (): string | null => {
     if (step === 0) {
       if (form.displayName.trim().length < 2) return 'Nombre muy corto';
-      if (form.username.trim().length < 3) return 'Usuario: mínimo 3 caracteres';
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Email inválido';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return 'Correo inválido';
     }
     if (step === 2) {
-      if (!isPasswordStrongEnough(password)) return 'La contraseña no es lo suficientemente segura';
+      if (!isPasswordOrPinValid(password)) return passwordHint();
       if (password !== confirmPassword) return 'Las contraseñas no coinciden';
     }
     return null;
@@ -226,12 +224,9 @@ export default function Join() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-white/40 mb-1 block">Usuario (único)</label>
-                  <input value={form.username} onChange={(e) => set('username', e.target.value)} required placeholder="min 3 caracteres" autoComplete="username" />
-                </div>
-                <div>
-                  <label className="text-xs text-white/40 mb-1 block">Email</label>
-                  <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required autoComplete="email" />
+                  <label className="text-xs text-white/40 mb-1 block">Correo</label>
+                  <input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} required autoComplete="email" placeholder="tu@correo.com" />
+                  <p className="text-[10px] text-white/35 mt-1">Entrarás con este correo y la contraseña que elijas</p>
                 </div>
                 <div>
                   <label className="text-xs text-white/40 mb-1 block">WhatsApp (opcional)</label>
@@ -279,17 +274,18 @@ export default function Join() {
 
             {step === 2 && (
               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                <p className="text-sm font-bold flex items-center gap-2"><Lock size={16} /> Contraseña segura</p>
+                <p className="text-sm font-bold flex items-center gap-2"><Lock size={16} /> Tu acceso</p>
+                <p className="text-xs text-white/45">Elige la contraseña para entrar con <span className="text-white/70">{form.email || 'tu correo'}</span></p>
                 <div>
                   <label className="text-xs text-white/40 mb-1 block">Contraseña</label>
                   <PasswordInput
                     value={password}
                     onChange={setPassword}
                     autoComplete="new-password"
-                    placeholder="Mínimo 10 caracteres"
+                    placeholder={passwordHint()}
                   />
                 </div>
-                <PasswordStrengthMeter password={password} />
+                {!/^\d{4,6}$/.test(password) && password.length > 0 && <PasswordStrengthMeter password={password} />}
                 <div>
                   <label className="text-xs text-white/40 mb-1 block">Confirmar contraseña</label>
                   <PasswordInput
@@ -315,7 +311,7 @@ export default function Join() {
                 </motion.div>
                 <h2 className="text-2xl font-black gradient-text">¡Cuenta creada!</h2>
                 <p className="text-sm text-white/60 leading-relaxed">
-                  Ahora configura notificaciones, música y passkey en el siguiente paso.
+                  Entra con tu correo y contraseña. Configura notificaciones y passkey en el siguiente paso.
                 </p>
                 <button
                   type="button"
@@ -341,7 +337,7 @@ export default function Join() {
               <button
                 type="button"
                 onClick={next}
-                disabled={loading || (step === 2 && (!isPasswordStrongEnough(password) || password !== confirmPassword))}
+                disabled={loading || (step === 2 && (!isPasswordOrPinValid(password) || password !== confirmPassword))}
                 className="flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-1 disabled:opacity-40"
                 style={{ background: step === 2 ? 'linear-gradient(135deg, #ffbe0b, #ff006e)' : 'linear-gradient(135deg, #8338ec, #ff006e)' }}
               >

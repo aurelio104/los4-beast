@@ -90,8 +90,8 @@ export default function Login() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="text-xs text-white/40 mb-1 block">Usuario o email</label>
-              <input value={identifier} onChange={(e) => setIdentifier(e.target.value)} required />
+              <label className="text-xs text-white/40 mb-1 block">Correo o usuario</label>
+              <input value={identifier} onChange={(e) => setIdentifier(e.target.value)} required autoComplete="username" placeholder="tu@correo.com" />
             </div>
             <div>
               <label className="text-xs text-white/40 mb-1 block">Contraseña</label>

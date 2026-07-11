@@ -7,7 +7,7 @@ import { GlassCard } from '../components/GlassCard';
 import { PasswordInput } from '../components/PasswordInput';
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 import { api } from '../lib/api';
-import { isPasswordStrongEnough } from '../lib/passwordStrength';
+import { isPasswordOrPinValid, passwordHint } from '../lib/pinPassword';
 import { shareInviteLink } from '../lib/inviteShare';
 import { openWaMe, WhatsAppResult } from '../lib/whatsapp';
 import { REWARDS } from '../types';
@@ -38,6 +38,11 @@ export default function Admin() {
   const [resetConfirm, setResetConfirm] = useState('');
   const [resetting, setResetting] = useState(false);
   const [lastWaReset, setLastWaReset] = useState<WhatsAppResult | null>(null);
+  const [waInviteName, setWaInviteName] = useState('');
+  const [waInvitePhone, setWaInvitePhone] = useState('');
+  const [waInviting, setWaInviting] = useState(false);
+  const [lastWaInvite, setLastWaInvite] = useState<WhatsAppResult | null>(null);
+  const [lastInviteLink, setLastInviteLink] = useState('');
 
   const load = () => {
     api.adminDashboard().then((r) => {
@@ -89,7 +94,7 @@ export default function Admin() {
 
   const resetUserPassword = async () => {
     if (!resetUserId) { setToast('Elige un usuario'); return; }
-    if (!isPasswordStrongEnough(resetPassword)) { setToast('Contraseña no suficientemente segura'); return; }
+    if (!isPasswordOrPinValid(resetPassword)) { setToast(passwordHint()); return; }
     if (resetPassword !== resetConfirm) { setToast('Las contraseñas no coinciden'); return; }
     setResetting(true);
     setLastWaReset(null);
@@ -117,6 +122,44 @@ export default function Admin() {
     } finally {
       setResetting(false);
       setTimeout(() => setToast(''), 4000);
+    }
+  };
+
+  const sendWhatsAppInvite = async () => {
+    if (!waInvitePhone.trim()) {
+      setToast('Indica el WhatsApp del invitado');
+      return;
+    }
+    setWaInviting(true);
+    setLastWaInvite(null);
+    setLastInviteLink('');
+    try {
+      const r = await api.adminInviteWhatsApp({
+        phone: waInvitePhone.trim(),
+        displayName: waInviteName.trim() || undefined
+      });
+      if (!r.success || !r.joinUrl) throw new Error(r.error || 'Error al invitar');
+
+      setLastInviteLink(r.joinUrl);
+
+      if (r.whatsapp) {
+        setLastWaInvite(r.whatsapp);
+        if (r.whatsapp.sent) {
+          setToast('Invitación enviada por WhatsApp — el invitado creará su correo y contraseña');
+          setWaInvitePhone('');
+          setWaInviteName('');
+        } else if (r.whatsapp.waMeUrl) {
+          openWaMe(r.whatsapp.waMeUrl);
+          setToast('Link listo · Abre WhatsApp para enviar la invitación');
+        } else {
+          setToast('Link creado — WhatsApp no conectado, copia el link manualmente');
+        }
+      }
+    } catch (e) {
+      setToast((e as Error).message);
+    } finally {
+      setWaInviting(false);
+      setTimeout(() => setToast(''), 5000);
     }
   };
 
@@ -185,6 +228,63 @@ export default function Admin() {
           </div>
         </GlassCard>
 
+        <GlassCard strong glow="gold" className="p-5 mb-4 space-y-3">
+          <p className="text-sm font-bold mb-1 flex items-center gap-2">
+            <MessageCircle size={16} className="text-[#25D366]" /> Invitar por WhatsApp
+          </p>
+          <p className="text-xs text-white/50 leading-relaxed">
+            Envía un link personal por WhatsApp. El invitado abre el link y elige su correo y contraseña al registrarse.
+          </p>
+          <div>
+            <label className="text-xs text-white/40 mb-1 block">Nombre del invitado (opcional)</label>
+            <input value={waInviteName} onChange={(e) => setWaInviteName(e.target.value)} placeholder="Para saludarlo en el mensaje" />
+          </div>
+          <div>
+            <label className="text-xs text-white/40 mb-1 block">WhatsApp del invitado</label>
+            <input
+              value={waInvitePhone}
+              onChange={(e) => setWaInvitePhone(e.target.value)}
+              placeholder="04141234567"
+              inputMode="tel"
+              autoComplete="tel"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={sendWhatsAppInvite}
+            disabled={waInviting || !waInvitePhone.trim()}
+            className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-40"
+            style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+          >
+            <MessageCircle size={18} />
+            {waInviting ? 'Enviando…' : 'Enviar invitación por WhatsApp'}
+          </button>
+          {lastInviteLink && (
+            <div className="text-xs p-3 rounded-xl bg-white/5 space-y-2">
+              <p className="text-white/50 break-all">{lastInviteLink}</p>
+              <button
+                type="button"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(lastInviteLink);
+                  setToast('Link copiado');
+                }}
+                className="glass-btn w-full py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+              >
+                <Copy size={14} /> Copiar link
+              </button>
+            </div>
+          )}
+          {lastWaInvite?.waMeUrl && !lastWaInvite.sent && (
+            <button
+              type="button"
+              onClick={() => openWaMe(lastWaInvite.waMeUrl!)}
+              className="w-full glass-btn py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 text-[#25D366]"
+            >
+              <MessageCircle size={16} /> Reenviar por WhatsApp
+            </button>
+          )}
+        </GlassCard>
+
         <GlassCard glow="pink" className="p-5 mb-4 space-y-3">
           <p className="text-sm font-bold flex items-center gap-2"><KeyRound size={16} /> Restablecer contraseña</p>
           <p className="text-xs text-white/50">Si alguien olvidó su contraseña, asígnale una nueva. Se reenvía automáticamente por WhatsApp si tiene número.</p>
@@ -201,9 +301,9 @@ export default function Admin() {
           </div>
           <div>
             <label className="text-xs text-white/40 mb-1 block">Nueva contraseña</label>
-            <PasswordInput value={resetPassword} onChange={setResetPassword} autoComplete="new-password" placeholder="Mínimo 10 caracteres" />
+            <PasswordInput value={resetPassword} onChange={setResetPassword} autoComplete="new-password" placeholder={passwordHint()} />
           </div>
-          {resetPassword && <PasswordStrengthMeter password={resetPassword} />}
+          {resetPassword && !/^\d{4,6}$/.test(resetPassword) && <PasswordStrengthMeter password={resetPassword} />}
           <div>
             <label className="text-xs text-white/40 mb-1 block">Confirmar contraseña</label>
             <PasswordInput value={resetConfirm} onChange={setResetConfirm} autoComplete="new-password" placeholder="Repite la contraseña" />
@@ -211,7 +311,7 @@ export default function Admin() {
           <button
             type="button"
             onClick={resetUserPassword}
-            disabled={resetting || !resetUserId || !isPasswordStrongEnough(resetPassword) || resetPassword !== resetConfirm}
+            disabled={resetting || !resetUserId || !isPasswordOrPinValid(resetPassword) || resetPassword !== resetConfirm}
             className="w-full py-3 rounded-xl font-bold disabled:opacity-40"
             style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
           >

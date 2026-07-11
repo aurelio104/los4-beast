@@ -94,19 +94,36 @@ export async function notifyUserWhatsApp(
 
 export function buildJoinCredentialsMessage(opts: {
   displayName: string;
-  username: string;
+  email: string;
   password: string;
   appUrl?: string;
 }) {
   const url = opts.appUrl || APP_URL;
+  const isPin = /^\d{4,6}$/.test(opts.password);
+  const secretLabel = isPin ? 'Clave' : 'Contraseña';
   return (
     `🔥 *Reto* — ¡Bienvenido/a ${opts.displayName}!*\n\n` +
     `Tu cuenta está lista:\n` +
-    `👤 Usuario: *${opts.username}*\n` +
-    `🔑 Contraseña: *${opts.password}*\n` +
+    `📧 Correo: *${opts.email}*\n` +
+    `🔑 ${secretLabel}: *${opts.password}*\n` +
     `🔗 Entrar: ${url}/login\n\n` +
-    `Recibirás aquí cambios de contraseña y alertas del reto.\n` +
-    `Guárdalo en un lugar seguro.`
+    `Usa tu correo y ${secretLabel.toLowerCase()} para entrar.\n` +
+    `Recibirás aquí alertas del reto. Guárdalo en un lugar seguro.`
+  );
+}
+
+export function buildWhatsAppInviteLinkMessage(opts: {
+  inviterName: string;
+  joinUrl: string;
+  guestName?: string;
+}) {
+  const greeting = opts.guestName ? `Hola ${opts.guestName}!` : '¡Hola!';
+  return (
+    `🔥 *Reto* — ${greeting}\n\n` +
+    `${opts.inviterName} te invita al Reto del 29 de agosto.\n\n` +
+    `Abre este link y crea tu cuenta con *tu correo y tu contraseña*:\n` +
+    `🔗 ${opts.joinUrl}\n\n` +
+    `El link es personal, válido 14 días y de un solo uso.`
   );
 }
 

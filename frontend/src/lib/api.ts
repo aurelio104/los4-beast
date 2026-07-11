@@ -136,6 +136,14 @@ export const api = {
       '/admin/invites',
       { method: 'POST' }
     ),
+  adminInviteWhatsApp: (body: { phone: string; displayName?: string }) =>
+    request<{
+      success: boolean;
+      invite?: { code: string; expiresAt: string; inviterName: string };
+      joinUrl?: string;
+      whatsapp?: import('./whatsapp').WhatsAppResult;
+      error?: string;
+    }>('/admin/invites/whatsapp', { method: 'POST', body: JSON.stringify(body) }),
   adminRevealConfessions: () => request<{ success: boolean }>('/admin/reveal-confessions', { method: 'POST' }),
   adminNotifyEvent: () => request<{ success: boolean; sent: number }>('/admin/notify-event', { method: 'POST' }),
   adminUpdateRedemption: (id: string, status: string) => request<{ success: boolean }>(`/admin/redemptions/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),

@@ -11,6 +11,8 @@ import {
   notifyUserWhatsApp
 } from '../lib/whatsapp.js';
 import { getRetoPersistenceReport } from '../lib/deploy-persistence.js';
+import { sendWhatsAppInviteLink } from '../lib/admin-invite.js';
+import { isAcceptableUserPassword } from '../lib/user-credentials.js';
 
 export const adminRouter = Router();
 
@@ -79,8 +81,11 @@ adminRouter.post('/users/:userId/reset-password', async (req: Request, res: Resp
   const userId = String(req.params.userId);
   const { newPassword } = req.body as { newPassword?: string };
 
-  if (!newPassword || newPassword.length < 8) {
-    return res.status(400).json({ success: false, error: 'Contraseña mínimo 8 caracteres' });
+  if (!newPassword || !isAcceptableUserPassword(newPassword)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Usa un PIN de 4–6 dígitos o una contraseña de al menos 8 caracteres'
+    });
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -120,6 +125,42 @@ adminRouter.post('/invites', async (req: Request, res: Response) => {
     const userId = (req as Request & { user: { userId: string } }).user.userId;
     const invite = await createMemberInvite(userId);
     res.status(201).json({ success: true, invite });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message });
+  }
+});
+
+adminRouter.post('/invites/whatsapp', async (req: Request, res: Response) => {
+  try {
+    const adminId = (req as Request & { user: { userId: string } }).user.userId;
+    const { displayName, phone } = req.body as {
+      displayName?: string;
+      phone?: string;
+    };
+
+    if (!phone?.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Indica el número de WhatsApp del invitado'
+      });
+    }
+
+    const result = await sendWhatsAppInviteLink({
+      inviterId: adminId,
+      phone: phone.trim(),
+      guestName: displayName?.trim()
+    });
+
+    res.status(201).json({
+      success: true,
+      invite: {
+        code: result.invite.code,
+        expiresAt: result.invite.expiresAt,
+        inviterName: result.invite.inviterName
+      },
+      joinUrl: result.joinUrl,
+      whatsapp: result.whatsapp
+    });
   } catch (e) {
     res.status(400).json({ success: false, error: (e as Error).message });
   }
