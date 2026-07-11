@@ -101,7 +101,8 @@ export const ACTION_LABELS: Record<string, string> = {
   TUG_WAR: '💪 Tug of War',
   CHALLENGE_1V1: '⚔️ Desafío 1v1',
   CHALLENGE_LOSS: '😵 Perdió desafío',
-  REDEEM: '🎁 Canjeó premio'
+  REDEEM: '🎁 Canjeó premio',
+  RADIO_DJ: '🎵 Puso la música del Reto'
 };
 
 export const GAME_LIST = [

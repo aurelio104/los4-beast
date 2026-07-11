@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   CircleCheck, Handshake, HeartCrack, Skull, Gift, Swords, Trophy, ShoppingBag,
   Settings, Gamepad2, DollarSign, Vote, Users, MessageSquare, MessagesSquare,
-  Calendar, Package, User, Zap, Crosshair, Share2
+  Calendar, Package, User, Zap, Crosshair, Share2, Music2
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AppShell, HeroSection } from '../components/AppShell';
@@ -25,6 +25,8 @@ import { celebrateWin, celebrateBetrayal, celebrateCoin } from '../lib/celebrate
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useLivePoll } from '../hooks/useLivePoll';
 import { shareMemberInvite } from '../lib/inviteShare';
+import { RadioSubmitModal } from '../components/RadioSubmitModal';
+import { useNowPlaying } from '../components/BackgroundMusic';
 
 export default function Hub() {
   const navigate = useNavigate();
@@ -50,6 +52,8 @@ export default function Hub() {
   const [infoKey, setInfoKey] = useState<HubActionKey | null>(null);
   const [playerCtx, setPlayerCtx] = useState<PlayerContext | null>(null);
   const [voteTally, setVoteTally] = useState<{ targetId: string; count: number; name: string }[]>([]);
+  const [showRadio, setShowRadio] = useState(false);
+  const nowPlaying = useNowPlaying();
 
   const load = useCallback(async () => {
     const stored = localStorage.getItem('user');
@@ -264,6 +268,13 @@ export default function Hub() {
               }
             }}
           />
+          <QuickChip
+            icon={Music2}
+            label="DJ Reto"
+            sublabel={nowPlaying ? nowPlaying.title.slice(0, 18) : '+75 BP'}
+            accent="pink"
+            onClick={() => setShowRadio(true)}
+          />
           {daysLeft <= 14 && (
             <QuickChip
               icon={Trophy}
@@ -471,6 +482,17 @@ export default function Hub() {
           </Modal>
         )}
       </AnimatePresence>
+
+      <RadioSubmitModal
+        open={showRadio}
+        onClose={() => setShowRadio(false)}
+        currentDj={nowPlaying?.submittedBy}
+        currentTitle={nowPlaying?.title}
+        onSuccess={(msg) => {
+          showToast(msg);
+          void load();
+        }}
+      />
     </AppShell>
   );
 }

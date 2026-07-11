@@ -24,6 +24,8 @@ export function formatFeedDetail(item: FeedItem): string | null {
         return meta.won ? 'Ganó el duelo ⚔️' : 'Perdió el duelo 😵';
       case 'REDEEM':
         return `Canje: ${meta.rewardId ?? 'premio'}`;
+      case 'RADIO_DJ':
+        return meta.title ? `"${String(meta.title).slice(0, 80)}"` : null;
       case 'COIN_FLIP':
         return meta.won ? `Ganó apuesta (${meta.bet} BP)` : `Perdió apuesta (${meta.bet} BP)`;
       default:

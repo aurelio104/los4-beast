@@ -46,6 +46,7 @@ model User {
   alliances        Alliance[]   @relation("AllianceUser")
   partnerAlliances Alliance[]   @relation("AlliancePartner")
   chestClaims      ChestClaim[]
+  radioTracks      CommunityRadioTrack[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -223,4 +224,22 @@ model WhatsAppAuthArchive {
   id        String   @id @default("main")
   data      Bytes
   updatedAt DateTime @updatedAt
+}
+
+model CommunityRadioTrack {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  sourceType  String
+  sourceRef   String?
+  audioFile   String
+  audioUrl    String
+  durationSec Int?
+  fileSizeKb  Int?
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([isActive, createdAt])
+  @@index([userId, createdAt])
 }

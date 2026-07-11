@@ -168,5 +168,42 @@ export const api = {
       whatsapp?: import('./whatsapp').WhatsAppResult;
       error?: string;
     }>(`/admin/users/${userId}/reset-password`, { method: 'POST', body: JSON.stringify({ newPassword }) }),
+
+  radioCurrent: () =>
+    request<{
+      success: boolean;
+      track?: {
+        id: string;
+        title: string;
+        audioUrl: string;
+        durationSec: number | null;
+        sourceType: string;
+        submittedBy: string;
+        submittedAt: string;
+      } | null;
+    }>('/game/radio/current'),
+
+  submitRadio: async (form: FormData) => {
+    const token = getToken();
+    const res = await fetch(`${API}/game/radio/submit`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (res.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return data as {
+      success: boolean;
+      track?: unknown;
+      gained?: number;
+      points?: number;
+      error?: string;
+    };
+  },
   adminStats: () => request<{ success: boolean; stats: { players: number; actions: number; redemptions: number }; challengeDate: string }>('/auth/admin/stats')
 };

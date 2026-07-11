@@ -1,5 +1,5 @@
 #!/bin/sh
-mkdir -p /data/uploads /data/whatsapp-auth
+mkdir -p /data/uploads /data/whatsapp-auth /data/uploads/radio
 
 export DATABASE_URL="${DATABASE_URL:-file:/data/los4.db}"
 export UPLOAD_DIR="${UPLOAD_DIR:-/data/uploads}"

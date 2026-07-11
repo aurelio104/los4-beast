@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { authRouter } from './routes/auth.routes.js';
 import { gameRouter } from './routes/game.routes.js';
+import { radioRouter } from './routes/radio.routes.js';
 import { pushRouter } from './routes/push.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
 import { chatRouter } from './routes/chat.routes.js';
@@ -11,6 +12,7 @@ import { notifyDailyContinue, notifyEventReminder, isPushConfigured } from './li
 import { isWhatsAppAutoSendEnabled, isWhatsAppConfigured } from './lib/whatsapp.js';
 import { getEventCycle } from './lib/events.js';
 import { ensureUploadDir, UPLOAD_DIR } from './lib/uploads.js';
+import { ensureRadioDir } from './lib/radio-storage.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3010', 10);
@@ -24,6 +26,7 @@ const origins = [
 ].filter(Boolean) as string[];
 
 ensureUploadDir();
+ensureRadioDir();
 
 app.use(cors({ origin: origins, credentials: true }));
 app.use(express.json({ limit: '2mb' }));
@@ -42,6 +45,7 @@ app.get('/api/health', async (_req, res) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/game', gameRouter);
+app.use('/api/game/radio', radioRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/push', pushRouter);
 app.use('/api/admin', adminRouter);
