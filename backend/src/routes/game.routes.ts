@@ -369,6 +369,7 @@ gameRouter.patch('/profile', authMiddleware, async (req, res) => {
     gender?: string;
     bio?: string;
     avatarEmoji?: string;
+    bgMode?: string;
     currentPassword?: string;
     newPassword?: string;
   };
@@ -396,6 +397,12 @@ gameRouter.patch('/profile', authMiddleware, async (req, res) => {
   if (body.avatarEmoji !== undefined) {
     data.avatarEmoji = String(body.avatarEmoji).slice(0, 8) || '😎';
   }
+  if (body.bgMode !== undefined) {
+    if (!['beach', 'celosia', 'orbs', 'custom'].includes(body.bgMode)) {
+      return res.status(400).json({ success: false, error: 'Fondo inválido' });
+    }
+    data.bgMode = body.bgMode;
+  }
 
   if (body.newPassword) {
     if (!body.currentPassword) {
@@ -413,24 +420,42 @@ gameRouter.patch('/profile', authMiddleware, async (req, res) => {
   }
 
   const user = await prisma.user.update({ where: { id: uid }, data });
-  res.json({
-    success: true,
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      displayName: user.displayName,
-      nickname: user.nickname,
-      gender: user.gender,
-      points: user.points,
-      avatarEmoji: user.avatarEmoji,
-      avatarUrl: user.avatarUrl,
-      bio: user.bio,
-      hasPasskey: user.passkeyRegistered
-    }
-  });
+  res.json({ success: true, user: publicUser(user) });
 });
+
+function publicUser(user: {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+  displayName: string;
+  nickname: string | null;
+  gender: string;
+  points: number;
+  avatarEmoji: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  bgMode: string;
+  bgUrl: string | null;
+  passkeyRegistered: boolean;
+}) {
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    role: user.role,
+    displayName: user.displayName,
+    nickname: user.nickname,
+    gender: user.gender,
+    points: user.points,
+    avatarEmoji: user.avatarEmoji,
+    avatarUrl: user.avatarUrl,
+    bio: user.bio,
+    bgMode: user.bgMode || 'beach',
+    bgUrl: user.bgUrl,
+    hasPasskey: user.passkeyRegistered
+  };
+}
 
 gameRouter.post('/profile/avatar', authMiddleware, async (req, res) => {
   const uid = userId(req);
@@ -440,27 +465,8 @@ gameRouter.post('/profile/avatar', authMiddleware, async (req, res) => {
   try {
     const { saveAvatarDataUrl } = await import('../lib/uploads.js');
     const avatarUrl = saveAvatarDataUrl(uid, dataUrl);
-    const user = await prisma.user.update({
-      where: { id: uid },
-      data: { avatarUrl }
-    });
-    res.json({
-      success: true,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        displayName: user.displayName,
-        nickname: user.nickname,
-        gender: user.gender,
-        points: user.points,
-        avatarEmoji: user.avatarEmoji,
-        avatarUrl: user.avatarUrl,
-        bio: user.bio,
-        hasPasskey: user.passkeyRegistered
-      }
-    });
+    const user = await prisma.user.update({ where: { id: uid }, data: { avatarUrl } });
+    res.json({ success: true, user: publicUser(user) });
   } catch (e) {
     res.status(400).json({ success: false, error: (e as Error).message || 'No se pudo subir la foto' });
   }
@@ -470,25 +476,35 @@ gameRouter.delete('/profile/avatar', authMiddleware, async (req, res) => {
   const uid = userId(req);
   const { deleteAvatarFiles } = await import('../lib/uploads.js');
   deleteAvatarFiles(uid);
+  const user = await prisma.user.update({ where: { id: uid }, data: { avatarUrl: null } });
+  res.json({ success: true, user: publicUser(user) });
+});
+
+gameRouter.post('/profile/background', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  const { dataUrl } = req.body as { dataUrl?: string };
+  if (!dataUrl) return res.status(400).json({ success: false, error: 'Falta la imagen' });
+
+  try {
+    const { saveBackgroundDataUrl } = await import('../lib/uploads.js');
+    const bgUrl = saveBackgroundDataUrl(uid, dataUrl);
+    const user = await prisma.user.update({
+      where: { id: uid },
+      data: { bgUrl, bgMode: 'custom' }
+    });
+    res.json({ success: true, user: publicUser(user) });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message || 'No se pudo subir el fondo' });
+  }
+});
+
+gameRouter.delete('/profile/background', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  const { deleteBackgroundFiles } = await import('../lib/uploads.js');
+  deleteBackgroundFiles(uid);
   const user = await prisma.user.update({
     where: { id: uid },
-    data: { avatarUrl: null }
+    data: { bgUrl: null, bgMode: 'beach' }
   });
-  res.json({
-    success: true,
-    user: {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      displayName: user.displayName,
-      nickname: user.nickname,
-      gender: user.gender,
-      points: user.points,
-      avatarEmoji: user.avatarEmoji,
-      avatarUrl: user.avatarUrl,
-      bio: user.bio,
-      hasPasskey: user.passkeyRegistered
-    }
-  });
+  res.json({ success: true, user: publicUser(user) });
 });

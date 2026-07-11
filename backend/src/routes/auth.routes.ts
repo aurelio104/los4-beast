@@ -48,6 +48,8 @@ function sanitizeUser(user: {
   avatarEmoji?: string | null;
   avatarUrl?: string | null;
   bio?: string | null;
+  bgMode?: string | null;
+  bgUrl?: string | null;
 }) {
   return {
     id: user.id,
@@ -61,6 +63,8 @@ function sanitizeUser(user: {
     avatarEmoji: user.avatarEmoji ?? '😎',
     avatarUrl: user.avatarUrl ?? null,
     bio: user.bio ?? null,
+    bgMode: user.bgMode ?? 'beach',
+    bgUrl: user.bgUrl ?? null,
     hasPasskey: user.passkeyRegistered
   };
 }

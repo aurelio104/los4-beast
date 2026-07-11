@@ -5,7 +5,7 @@ const DATA_ROOT = fs.existsSync('/data') ? '/data' : path.join(process.cwd(), 'd
 export const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(DATA_ROOT, 'uploads');
 
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const MAX_BYTES = 900_000; // ~900KB after client compression
+const MAX_BYTES = 900_000;
 
 export function ensureUploadDir() {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -18,8 +18,7 @@ export function extensionForMime(mime: string): string | null {
   return null;
 }
 
-/** Guarda data URL → archivo y devuelve path público `/api/uploads/...` */
-export function saveAvatarDataUrl(userId: string, dataUrl: string): string {
+function saveDataUrl(prefix: string, dataUrl: string): string {
   const match = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/i.exec(dataUrl);
   if (!match) throw new Error('Formato de imagen inválido');
 
@@ -32,21 +31,36 @@ export function saveAvatarDataUrl(userId: string, dataUrl: string): string {
 
   ensureUploadDir();
   const ext = extensionForMime(mime)!;
-  // limpia avatares previos del mismo usuario
   for (const e of ['jpg', 'png', 'webp']) {
-    const prev = path.join(UPLOAD_DIR, `${userId}.${e}`);
+    const prev = path.join(UPLOAD_DIR, `${prefix}.${e}`);
     if (fs.existsSync(prev)) fs.unlinkSync(prev);
   }
 
-  const filename = `${userId}.${ext}`;
+  const filename = `${prefix}.${ext}`;
   fs.writeFileSync(path.join(UPLOAD_DIR, filename), buffer);
   return `/api/uploads/${filename}?v=${Date.now()}`;
 }
 
-export function deleteAvatarFiles(userId: string) {
+function deletePrefixed(prefix: string) {
   ensureUploadDir();
   for (const e of ['jpg', 'png', 'webp']) {
-    const prev = path.join(UPLOAD_DIR, `${userId}.${e}`);
+    const prev = path.join(UPLOAD_DIR, `${prefix}.${e}`);
     if (fs.existsSync(prev)) fs.unlinkSync(prev);
   }
+}
+
+export function saveAvatarDataUrl(userId: string, dataUrl: string): string {
+  return saveDataUrl(userId, dataUrl);
+}
+
+export function deleteAvatarFiles(userId: string) {
+  deletePrefixed(userId);
+}
+
+export function saveBackgroundDataUrl(userId: string, dataUrl: string): string {
+  return saveDataUrl(`bg-${userId}`, dataUrl);
+}
+
+export function deleteBackgroundFiles(userId: string) {
+  deletePrefixed(`bg-${userId}`);
 }

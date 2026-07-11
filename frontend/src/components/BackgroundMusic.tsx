@@ -1,20 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Music2, VolumeX } from 'lucide-react';
+import { getPreferences } from '../lib/preferences';
 
-const STORAGE_KEY = 'reto_bgm_on';
 const BGM_SRC = '/audio/reto-bgm.mp3';
 
-/**
- * Música de fondo (toggle).
- * - Si existe /audio/reto-bgm.mp3 → la usa en loop
- * - Si no → genera un pad ambiente suave con Web Audio
- * Los navegadores requieren un toque del usuario para iniciar audio.
- */
+/** Reproduce música según la preferencia del perfil (sin botón flotante). */
 export function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const nodesRef = useRef<{ osc: OscillatorNode[]; gain: GainNode } | null>(null);
-  const [on, setOn] = useState(() => localStorage.getItem(STORAGE_KEY) === '1');
+  const [on, setOn] = useState(() => getPreferences().music);
   const [useFile, setUseFile] = useState(false);
 
   useEffect(() => {
@@ -29,10 +23,14 @@ export function BackgroundMusic() {
     audio.addEventListener('canplaythrough', onReady);
     audio.addEventListener('error', onError);
 
+    const onPrefs = () => setOn(getPreferences().music);
+    window.addEventListener('reto-prefs', onPrefs);
+
     return () => {
       audio.pause();
       audio.removeEventListener('canplaythrough', onReady);
       audio.removeEventListener('error', onError);
+      window.removeEventListener('reto-prefs', onPrefs);
       stopAmbient();
       audioRef.current = null;
     };
@@ -78,7 +76,6 @@ export function BackgroundMusic() {
   };
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, on ? '1' : '0');
     const audio = audioRef.current;
 
     if (!on) {
@@ -96,15 +93,5 @@ export function BackgroundMusic() {
     }
   }, [on, useFile]);
 
-  return (
-    <button
-      type="button"
-      onClick={() => setOn((v) => !v)}
-      className="fixed top-4 right-4 z-[60] glass-btn rounded-full p-3 shadow-lg"
-      aria-label={on ? 'Silenciar música' : 'Activar música'}
-      title={on ? 'Silenciar música' : 'Música de fondo'}
-    >
-      {on ? <Music2 size={18} className="text-reto-cyan" /> : <VolumeX size={18} className="text-white/50" />}
-    </button>
-  );
+  return null;
 }

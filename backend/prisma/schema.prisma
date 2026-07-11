@@ -22,6 +22,8 @@ model User {
   avatarEmoji String  @default("😎")
   avatarUrl   String?
   bio         String?
+  bgMode      String  @default("beach")
+  bgUrl       String?
   invitedById String?
   invitedBy   User?   @relation("UserInvites", fields: [invitedById], references: [id], onDelete: SetNull)
   invitees    User[]  @relation("UserInvites")

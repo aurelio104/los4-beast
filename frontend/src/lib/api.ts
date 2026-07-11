@@ -74,12 +74,16 @@ export const api = {
     gender?: string;
     bio?: string;
     avatarEmoji?: string;
+    bgMode?: string;
     currentPassword?: string;
     newPassword?: string;
   }) => request<{ success: boolean; user?: unknown; error?: string }>('/game/profile', { method: 'PATCH', body: JSON.stringify(data) }),
   uploadAvatar: (dataUrl: string) =>
     request<{ success: boolean; user?: unknown; error?: string }>('/game/profile/avatar', { method: 'POST', body: JSON.stringify({ dataUrl }) }),
   deleteAvatar: () => request<{ success: boolean; user?: unknown; error?: string }>('/game/profile/avatar', { method: 'DELETE' }),
+  uploadBackground: (dataUrl: string) =>
+    request<{ success: boolean; user?: unknown; error?: string }>('/game/profile/background', { method: 'POST', body: JSON.stringify({ dataUrl }) }),
+  deleteBackground: () => request<{ success: boolean; user?: unknown; error?: string }>('/game/profile/background', { method: 'DELETE' }),
 
   chatMessages: (after?: string) =>
     request<{ success: boolean; messages: unknown[] }>(`/chat/messages${after ? `?after=${encodeURIComponent(after)}` : ''}`),

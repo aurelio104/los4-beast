@@ -10,6 +10,8 @@ export interface User {
   avatarEmoji?: string;
   avatarUrl?: string | null;
   bio?: string | null;
+  bgMode?: 'beach' | 'celosia' | 'orbs' | 'custom' | string;
+  bgUrl?: string | null;
   hasPasskey: boolean;
 }
 
