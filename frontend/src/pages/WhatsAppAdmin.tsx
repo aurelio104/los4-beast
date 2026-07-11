@@ -6,6 +6,7 @@ import {
   Phone, Pause, Play, Wifi, WifiOff, Loader2, History, ArrowLeft
 } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
+import { PageContainer } from '../components/PageContainer';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 
@@ -145,7 +146,7 @@ export default function WhatsAppAdmin() {
 
   return (
     <AppShell>
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
+      <PageContainer>
         <button type="button" onClick={() => navigate('/admin')} className="flex items-center gap-2 text-sm text-white/50 mb-4">
           <ArrowLeft size={16} /> Admin
         </button>
@@ -247,8 +248,7 @@ export default function WhatsAppAdmin() {
 
         {toast && (
           <div className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-5 py-3 rounded-2xl z-50 text-sm">{toast}</div>
-        )}
-      </div>
+        )}</PageContainer>
     </AppShell>
   );
 }

@@ -31,7 +31,7 @@ export function GlassButton({ icon: Icon, label, sublabel, onClick, disabled, va
       whileTap={disabled ? {} : { scale: 0.97 }}
       onClick={() => { haptic('light'); onClick?.(); }}
       disabled={disabled || loading}
-      className="glass-btn relative flex flex-col items-center justify-center gap-2 p-4 rounded-2xl min-h-[100px] disabled:opacity-40 disabled:cursor-not-allowed"
+      className="glass-btn relative flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-4 rounded-2xl min-h-[clamp(5.5rem,22vw,6.5rem)] disabled:opacity-40 disabled:cursor-not-allowed"
       style={{ borderColor: v.border }}
       onHoverStart={() => {}}
     >
@@ -53,7 +53,7 @@ export function GlassButton({ icon: Icon, label, sublabel, onClick, disabled, va
       >
         <AnimatedIcon icon={Icon} active={!!pulse || !!badge} pulse={pulse} className="text-white drop-shadow-lg" />
       </motion.div>
-      <span className="text-sm font-semibold text-white text-center leading-tight">{label}</span>
+      <span className="text-xs sm:text-sm font-semibold text-white text-center leading-tight px-0.5">{label}</span>
       {sublabel && <span className="text-[10px] text-white/50 text-center">{sublabel}</span>}
     </motion.button>
   );

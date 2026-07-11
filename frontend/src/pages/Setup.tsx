@@ -167,7 +167,7 @@ export default function Setup() {
 
   return (
     <AppShell background="beach">
-      <div className="min-h-dvh flex flex-col px-[max(1rem,env(safe-area-inset-left))] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] max-w-md mx-auto w-full">
+      <div className="auth-screen flex flex-col py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">
           <RetoLogo size="lg" animate glow className="mx-auto mb-2" />
           <h1 className="text-xl font-black gradient-text">Configura tu Reto</h1>

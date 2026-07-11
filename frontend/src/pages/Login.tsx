@@ -60,7 +60,7 @@ export default function Login() {
 
   return (
     <AppShell background="beach">
-      <div className="min-h-dvh flex flex-col items-center justify-center px-[max(1rem,env(safe-area-inset-left))] py-12 pb-[max(3rem,env(safe-area-inset-bottom))]">
+      <div className="auth-screen flex flex-col items-center justify-center py-12 pb-[max(3rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}

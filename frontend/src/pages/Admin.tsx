@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Shield, Users, Zap, Bell, Eye, Megaphone, Send, MessageCircle, UserCog } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
+import { PageContainer } from '../components/PageContainer';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 import { REWARDS } from '../types';
@@ -45,14 +46,14 @@ export default function Admin() {
 
   return (
     <AppShell>
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
+      <PageContainer>
         <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-6">
           <ArrowLeft size={18} /> Hub
         </button>
 
         <div className="flex items-center gap-3 mb-6">
           <Shield className="text-reto-gold" size={28} />
-          <h2 className="text-2xl font-black gradient-text">Panel Admin</h2>
+          <h2 className="text-page-title font-black gradient-text">Panel Admin</h2>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
@@ -75,7 +76,7 @@ export default function Admin() {
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mb-6">
+        <div className="stats-grid mb-6">
           {[
             { icon: Users, label: 'Jugadores', key: 'players' },
             { icon: Zap, label: 'Acciones', key: 'actions' },
@@ -140,8 +141,7 @@ export default function Admin() {
         {toast && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl z-50">{toast}</motion.div>
-        )}
-      </div>
+        )}</PageContainer>
     </AppShell>
   );
 }

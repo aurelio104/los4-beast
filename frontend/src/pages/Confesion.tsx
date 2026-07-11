@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MessageSquare } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
+import { PageContainer } from '../components/PageContainer';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 import { celebrateWin } from '../lib/celebrate';
@@ -44,7 +45,7 @@ export default function Confesion() {
 
   return (
     <AppShell>
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
+      <PageContainer>
         <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-6">
           <ArrowLeft size={18} /> Hub
         </button>
@@ -79,8 +80,7 @@ export default function Confesion() {
             className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl z-50">
             {toast}
           </motion.div>
-        )}
-      </div>
+        )}</PageContainer>
     </AppShell>
   );
 }

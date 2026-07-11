@@ -8,22 +8,22 @@ function pad(n: number) {
 
 function FlipUnit({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative">
+    <div className="flex flex-col items-center gap-1.5 min-w-0">
+      <div className="relative w-full">
         <motion.div
           key={value}
           initial={{ rotateX: -90, opacity: 0 }}
           animate={{ rotateX: 0, opacity: 1 }}
           exit={{ rotateX: 90, opacity: 0 }}
           transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-          className="glass-strong w-[72px] h-[88px] sm:w-[80px] sm:h-[96px] rounded-2xl flex items-center justify-center"
+          className="glass-strong countdown-unit-box flex items-center justify-center mx-auto"
           style={{ perspective: '400px' }}
         >
-          <span className="text-4xl sm:text-5xl font-black gradient-text tabular-nums">{value}</span>
+          <span className="countdown-unit-digit font-black gradient-text tabular-nums">{value}</span>
         </motion.div>
-        <div className="absolute inset-x-0 top-1/2 h-px bg-white/10" />
+        <div className="absolute inset-x-0 top-1/2 h-px bg-white/10 pointer-events-none" />
       </div>
-      <span className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-white/40 font-medium">{label}</span>
+      <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-white/40 font-medium truncate w-full text-center">{label}</span>
     </div>
   );
 }
@@ -61,15 +61,15 @@ export function CountdownTimer() {
   ];
 
   return (
-    <div className="w-full">
-      <div className="flex justify-center gap-3 sm:gap-4">
+    <div className="w-full min-w-0">
+      <div className="countdown-row">
         <AnimatePresence mode="popLayout">
           {units.map((u) => (
             <FlipUnit key={u.label} value={u.value} label={u.label} />
           ))}
         </AnimatePresence>
       </div>
-      <div className="mt-6 px-2">
+      <div className="mt-5 sm:mt-6 px-1">
         <div className="flex justify-between text-[10px] text-white/40 mb-2 uppercase tracking-wider">
           <span>Camino al reto</span>
           <span>{Math.round(progress)}%</span>

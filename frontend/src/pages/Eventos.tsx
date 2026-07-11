@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, Zap } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
+import { PageContainer } from '../components/PageContainer';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 import { RetoEvent } from '../types';
@@ -30,7 +31,7 @@ export default function Eventos() {
 
   return (
     <AppShell>
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
+      <PageContainer>
         <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-6">
           <ArrowLeft size={18} /> Hub
         </button>
@@ -95,8 +96,7 @@ export default function Eventos() {
           <p className="text-sm text-white/60">
             Cada evento dura ~10 días. Completa mini-juegos, abre el cofre y acumula Puntos para el gran reto del <strong className="text-white">29 de agosto</strong>.
           </p>
-        </GlassCard>
-      </div>
+        </GlassCard></PageContainer>
     </AppShell>
   );
 }

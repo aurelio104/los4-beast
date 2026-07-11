@@ -119,7 +119,7 @@ export default function Hub() {
   if (booting || !user) {
     return (
       <AppShell>
-        <div className="app-container py-6 pb-24 space-y-4 animate-pulse">
+        <div className="app-container page-shell page-shell--tabbar space-y-4 animate-pulse">
           <div className="h-36 rounded-3xl bg-white/5" />
           <div className="grid grid-cols-3 gap-2">
             {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -210,7 +210,7 @@ export default function Hub() {
 
   return (
     <AppShell>
-      <div className="app-container pb-[max(7rem,calc(5.5rem+env(safe-area-inset-bottom)))]">
+        <div className="app-container page-shell page-shell--tabbar">
         <HeroSection className="pt-[max(0.75rem,env(safe-area-inset-top))]">
           <HubHeader
             displayName={user.displayName}
@@ -303,7 +303,8 @@ export default function Hub() {
         )}
 
         <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-3 px-0.5">Acciones</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3 mb-4">
+        <div className="hub-actions-wrap mb-4">
+          <div className="action-grid">
           <GlassButton icon={CircleCheck} label="Continuar" sublabel={playerCtx?.continuedToday ? 'Hecho hoy ✓' : '+10 Puntos'} variant="success" loading={loading === 'continue'} showInfoHint badge={playerCtx ? !playerCtx.continuedToday : undefined} onClick={() => openInfo('continue')} />
           <GlassButton icon={HeartCrack} label="Clemencia" sublabel="1×/10 días" variant="gold" loading={loading === 'clemency'} showInfoHint onClick={() => openInfo('clemency')} />
           <GlassButton icon={Handshake} label="Renegociar" showInfoHint onClick={() => openInfo('renegotiate')} />
@@ -317,6 +318,7 @@ export default function Hub() {
           <GlassButton icon={MessageSquare} label="Confesión" showInfoHint onClick={() => openInfo('confesion')} />
           <GlassButton icon={MessagesSquare} label="Chat" sublabel="Grupo" variant="gold" showInfoHint pulse badge={chatUnread > 0 ? chatUnread : undefined} onClick={() => openInfo('chat')} />
           <GlassButton icon={Calendar} label="Eventos" showInfoHint onClick={() => openInfo('eventos')} />
+          </div>
         </div>
 
         <VotePanel tally={voteTally} />
@@ -349,8 +351,8 @@ export default function Hub() {
           <DramaFeed items={feed} />
         </GlassCard>
 
-        <div className="fixed bottom-0 inset-x-0 z-50 p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <div className="app-container !px-0 max-w-lg mx-auto glass-strong rounded-3xl p-1.5 sm:p-2 flex justify-around">
+        <div className="bottom-nav-bar">
+          <div className="bottom-nav-inner glass-strong rounded-3xl p-1.5 sm:p-2">
             {([
               { path: '/', active: true, logo: true as const },
               { icon: Gamepad2, path: '/arena' },
@@ -361,7 +363,7 @@ export default function Hub() {
             ] as Array<{ path: string; active?: boolean; logo: true } | { path: string; active?: boolean; icon: LucideIcon }>).map((item) => {
               const active = location.pathname === item.path || ('active' in item && item.active);
               return (
-                <button key={item.path} onClick={() => navigate(item.path)} className={`p-2.5 sm:p-3 rounded-2xl ${active ? 'bg-white/10' : ''}`}>
+                <button key={item.path} type="button" onClick={() => navigate(item.path)} className={`bottom-nav-btn ${active ? 'bg-white/10' : ''}`}>
                   {'logo' in item ? (
                     <RetoLogo size="xs" className={active ? '' : 'opacity-50'} />
                   ) : (
@@ -389,7 +391,7 @@ export default function Hub() {
       <AnimatePresence>
         {toast && (
           <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] glass-strong px-6 py-3 rounded-2xl text-sm font-semibold">{toast}</motion.div>
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] glass-strong px-6 py-3 rounded-2xl text-sm font-semibold toast-above-nav max-w-[min(22rem,calc(100vw-2rem))] text-center">{toast}</motion.div>
         )}
       </AnimatePresence>
 

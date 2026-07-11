@@ -160,7 +160,7 @@ export default function Join() {
   if (!valid) {
     return (
       <AppShell background="beach">
-        <div className="min-h-dvh flex flex-col items-center justify-center px-4 text-center max-w-md mx-auto">
+        <div className="auth-screen flex flex-col items-center justify-center px-4 text-center">
           <div className="mb-4 flex justify-center">
             {expired
               ? <Hourglass size={40} className="text-reto-gold" strokeWidth={1.75} />
@@ -182,7 +182,7 @@ export default function Join() {
 
   return (
     <AppShell background="beach">
-      <div className="min-h-dvh flex flex-col px-[max(1rem,env(safe-area-inset-left))] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] max-w-md mx-auto w-full">
+      <div className="auth-screen flex flex-col py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6">
           <RetoLogo size="lg" animate glow className="mx-auto mb-2" />
           <h1 className="text-[clamp(1.35rem,5vw,1.75rem)] font-black gradient-text">Únete al Reto</h1>

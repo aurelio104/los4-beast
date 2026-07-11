@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Send } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
+import { PageContainer } from '../components/PageContainer';
 import { GlassCard } from '../components/GlassCard';
 import { Avatar } from '../components/Avatar';
 import { api } from '../lib/api';
@@ -77,12 +78,12 @@ export default function Chat() {
 
   return (
     <AppShell>
-      <div className="max-w-lg mx-auto px-4 pt-6 pb-28 flex flex-col min-h-dvh">
-        <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-4">
+      <PageContainer variant="chat">
+        <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-4 shrink-0">
           <ArrowLeft size={18} /> Hub
         </button>
 
-        <h2 className="text-2xl font-black gradient-text mb-1">Chat del grupo</h2>
+        <h2 className="text-page-title font-black gradient-text mb-1 shrink-0">Chat del grupo</h2>
         <p className="text-white/40 text-sm mb-4">Habla con los miembros del Reto · se actualiza solo</p>
 
         <GlassCard strong className="flex-1 p-3 mb-4 overflow-hidden flex flex-col min-h-[50dvh]">
@@ -121,8 +122,8 @@ export default function Chat() {
           </div>
         </GlassCard>
 
-        <div className="fixed bottom-0 inset-x-0 z-50 p-4 pb-safe">
-          <div className="max-w-lg mx-auto flex gap-2">
+        <div className="fixed bottom-0 inset-x-0 z-50 p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="app-container !py-0 flex gap-2">
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -148,7 +149,7 @@ export default function Chat() {
             </motion.button>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </AppShell>
   );
 }

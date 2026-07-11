@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Trophy, Users } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
+import { PageContainer } from '../components/PageContainer';
 import { GlassCard } from '../components/GlassCard';
 import { CountdownTimer } from '../components/CountdownTimer';
 import { Avatar } from '../components/Avatar';
@@ -30,7 +31,7 @@ export default function Finale() {
 
   return (
     <AppShell background="beach">
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
+      <PageContainer>
         <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-6">
           <ArrowLeft size={18} /> Hub
         </button>
@@ -78,8 +79,7 @@ export default function Finale() {
             El gran día se juega <strong className="text-white">en persona</strong>. Los premios canjeados en la Tienda se entregan ese día.
             Traiciones, confesiones y votos se revelan en vivo. 🔥
           </p>
-        </GlassCard>
-      </div>
+        </GlassCard></PageContainer>
     </AppShell>
   );
 }

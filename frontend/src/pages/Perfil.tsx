@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { startRegistration } from '@simplewebauthn/browser';
 import { AppShell } from '../components/AppShell';
+import { PageContainer } from '../components/PageContainer';
 import { GlassCard } from '../components/GlassCard';
 import { Avatar } from '../components/Avatar';
 import { PasswordInput } from '../components/PasswordInput';
@@ -229,7 +230,7 @@ export default function Perfil() {
 
   return (
     <AppShell>
-      <div className="max-w-lg mx-auto px-4 py-6 pb-28">
+      <PageContainer variant="tall">
         <button type="button" onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-6">
           <ArrowLeft size={18} /> Hub
         </button>
@@ -547,8 +548,7 @@ export default function Perfil() {
           >
             {toast}
           </motion.div>
-        )}
-      </div>
+        )}</PageContainer>
     </AppShell>
   );
 }

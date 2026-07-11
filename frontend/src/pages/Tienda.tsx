@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
+import { PageContainer } from '../components/PageContainer';
 import { GlassCard } from '../components/GlassCard';
 import { PointsBadge } from '../components/PointsBadge';
 import { ActionInfoModal } from '../components/ActionInfoModal';
@@ -47,7 +48,7 @@ export default function Tienda() {
 
   return (
     <AppShell>
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
+      <PageContainer>
         <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/50 mb-4">
           <ArrowLeft size={18} /> Volver
         </button>
@@ -138,8 +139,7 @@ export default function Tienda() {
               disabled={!user || !REWARDS.find((x) => x.id === infoRewardId) || user.points < REWARDS.find((x) => x.id === infoRewardId)!.cost}
             />
           )}
-        </AnimatePresence>
-      </div>
+        </AnimatePresence></PageContainer>
     </AppShell>
   );
 }

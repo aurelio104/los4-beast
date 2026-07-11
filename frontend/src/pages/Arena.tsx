@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
+import { PageContainer } from '../components/PageContainer';
 import { GlassCard } from '../components/GlassCard';
 import { ActionInfoModal } from '../components/ActionInfoModal';
 import { api } from '../lib/api';
@@ -11,6 +12,7 @@ import { playClickSound } from '../lib/sounds';
 import { GAME_LIST, TriviaQuestion } from '../types';
 import { GAME_ACTION_INFO, GameActionKey } from '../lib/actionInfo';
 import { haptic } from '../lib/haptics';
+import { useSquareCanvas } from '../lib/useSquareCanvas';
 
 type GameId = typeof GAME_LIST[number]['id'] | 'menu';
 
@@ -61,7 +63,7 @@ export default function Arena() {
 
   return (
     <AppShell>
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
+      <PageContainer>
         <button onClick={() => game === 'menu' ? navigate('/') : setGame('menu')} className="flex items-center gap-2 text-white/50 mb-6">
           <ArrowLeft size={18} /> {game === 'menu' ? 'Hub' : 'Arena'}
         </button>
@@ -69,7 +71,7 @@ export default function Arena() {
         <AnimatePresence mode="wait">
           {game === 'menu' && (
             <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <h2 className="text-2xl font-black gradient-text mb-1">Arena</h2>
+              <h2 className="text-page-title font-black gradient-text mb-1">Arena</h2>
               <p className="text-white/40 text-sm mb-6">1 juego de cada tipo por día · confetti incluido 🎉</p>
               <div className="grid gap-3">
                 {GAME_LIST.map((g, i) => (
@@ -102,7 +104,7 @@ export default function Arena() {
 
         {(toast || error) && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className={`fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl font-semibold z-50 ${error ? 'text-reto-red' : ''}`}>
+            className={`fixed left-1/2 -translate-x-1/2 z-50 glass-strong px-6 py-3 rounded-2xl font-semibold toast-above-nav max-w-[min(22rem,calc(100vw-2rem))] text-center ${error ? 'text-reto-red' : ''}`}>
             {error || toast}
           </motion.div>
         )}
@@ -121,7 +123,7 @@ export default function Arena() {
             />
           )}
         </AnimatePresence>
-      </div>
+      </PageContainer>
     </AppShell>
   );
 }
@@ -155,8 +157,8 @@ function RedLightGame({ onFinish, onBack }: { onFinish: (s: boolean) => void; on
   return (
     <motion.div key="rl" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
       <motion.div animate={{ backgroundColor: light === 'green' ? '#06d6a0' : '#ef233c', boxShadow: light === 'green' ? '0 0 80px rgba(6,214,160,0.6)' : '0 0 80px rgba(239,35,60,0.8)' }}
-        className="w-52 h-52 rounded-full mx-auto mb-8 flex items-center justify-center">
-        <span className="text-3xl font-black">{light === 'green' ? 'VERDE' : 'ROJO'}</span>
+        className="game-light mb-6 sm:mb-8">
+        <span className="text-xl sm:text-3xl font-black">{light === 'green' ? 'VERDE' : 'ROJO'}</span>
       </motion.div>
       <p className="text-white/60">Toca en VERDE · meta: 10</p>
       <button onClick={onBack} className="mt-6 text-white/40 text-sm">Salir</button>
@@ -250,10 +252,10 @@ function GlassBridgeGame({ onFinish, onBack }: { onFinish: (steps: number) => vo
   return (
     <div className="text-center">
       <p className="mb-4 text-white/60">Paso {step}/8 · elige la baldosa segura</p>
-      <div className="flex gap-4 justify-center mb-6">
+      <div className="flex gap-3 sm:gap-4 justify-center mb-6 flex-wrap">
         {[0, 1].map((s) => (
           <motion.button key={s} whileHover={{ scale: 1.05 }} onClick={() => pick(s)}
-            className={`w-28 h-28 rounded-2xl glass-strong ${dead ? 'opacity-50' : ''}`}>
+            className={`game-tile rounded-2xl glass-strong ${dead ? 'opacity-50' : ''}`}>
             {dead && s === trap.current ? '💥' : '🟦'}
           </motion.button>
         ))}
@@ -264,7 +266,7 @@ function GlassBridgeGame({ onFinish, onBack }: { onFinish: (steps: number) => vo
 }
 
 function HoneycombGame({ onFinish, onBack }: { onFinish: (p: number) => void; onBack: () => void }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { wrapRef, canvasRef } = useSquareCanvas(300);
   const [precision, setPrecision] = useState<number | null>(null);
 
   const startDraw = useCallback(() => {
@@ -279,9 +281,12 @@ function HoneycombGame({ onFinish, onBack }: { onFinish: (p: number) => void; on
     const onMove = (e: PointerEvent) => {
       if (!drawing) return;
       total++;
-      const cx = canvas.width / 2; const cy = canvas.height / 2;
+      const cx = canvas.clientWidth / 2;
+      const cy = canvas.clientHeight / 2;
       const dist = Math.hypot(e.offsetX - cx, e.offsetY - cy);
-      if (dist >= 60 && dist <= 90) points++;
+      const radius = canvas.clientWidth * 0.28;
+      const band = canvas.clientWidth * 0.1;
+      if (dist >= radius - band && dist <= radius + band) points++;
       ctx.lineTo(e.offsetX, e.offsetY);
       ctx.strokeStyle = '#ffbe0b'; ctx.lineWidth = 3; ctx.stroke();
     };
@@ -297,14 +302,16 @@ function HoneycombGame({ onFinish, onBack }: { onFinish: (p: number) => void; on
     canvas.addEventListener('pointerdown', onStart);
     canvas.addEventListener('pointermove', onMove);
     canvas.addEventListener('pointerup', onEnd);
-  }, [onFinish]);
+  }, [canvasRef, onFinish]);
 
   useEffect(() => { startDraw(); }, [startDraw]);
 
   return (
     <GlassCard className="p-4 text-center">
       <p className="text-sm text-white/60 mb-4">Traza el círculo sin salirte</p>
-      <canvas ref={canvasRef} width={280} height={280} className="mx-auto rounded-2xl bg-white/5 touch-none" />
+      <div ref={wrapRef} className="game-canvas-wrap">
+        <canvas ref={canvasRef} className="bg-white/5 touch-none" />
+      </div>
       {precision !== null && <p className="mt-2 text-reto-gold font-bold">{precision}% precisión</p>}
       <button onClick={onBack} className="mt-4 text-white/40 text-sm">Salir</button>
     </GlassCard>
@@ -316,11 +323,11 @@ function MysteryBoxGame({ onFinish, onBack }: { onFinish: (i: number) => void; o
   return (
     <div className="text-center">
       <p className="text-white/60 mb-6">Elige un cofre</p>
-      <div className="flex gap-4 justify-center">
+      <div className="flex gap-3 sm:gap-4 justify-center flex-wrap">
         {[0, 1, 2].map((i) => (
           <motion.button key={i} whileHover={{ scale: 1.1, rotate: 5 }} whileTap={{ scale: 0.9 }}
             disabled={picked !== null} onClick={() => { setPicked(i); setTimeout(() => onFinish(i), 600); }}
-            className="text-5xl p-6 glass-strong rounded-2xl disabled:opacity-60">📦</motion.button>
+            className="game-chest-btn glass-strong rounded-2xl disabled:opacity-60">📦</motion.button>
         ))}
       </div>
       <button onClick={onBack} className="mt-8 text-white/40 text-sm">Salir</button>
@@ -375,7 +382,7 @@ function TugWarGame({ onFinish, onBack }: { onFinish: (taps: number) => void; on
       <motion.p key={time} initial={{ scale: 1.5 }} animate={{ scale: 1 }} className="text-5xl font-black gradient-text mb-2">{time}s</motion.p>
       <p className="text-3xl font-bold text-reto-gold mb-6">{taps} taps</p>
       <motion.button whileTap={{ scale: 0.92 }} onClick={() => { setTaps((t) => t + 1); playClickSound(); }}
-        className="w-40 h-40 rounded-full glass-strong text-xl font-black mx-auto block"
+        className="game-tap-btn glass-strong text-lg sm:text-xl font-black"
         style={{ boxShadow: '0 0 40px rgba(255,0,110,0.4)' }}>TIRA</motion.button>
       <button onClick={onBack} className="mt-6 text-white/40 text-sm">Salir</button>
     </div>
