@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://PLACEHOLDER.koyeb.app/api/$1"
+      "destination": "https://los4-beast-aurelio104-156698e6.koyeb.app/api/$1"
     }
   ],
   "headers": [

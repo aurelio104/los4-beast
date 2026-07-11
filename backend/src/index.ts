@@ -52,8 +52,8 @@ setInterval(async () => {
   }
 }, 60 * 60 * 1000);
 
-app.listen(PORT, () => {
-  console.log(`🔥 LOS 4 backend → http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🔥 LOS 4 backend → port ${PORT}`);
   if (!isPushConfigured()) {
     console.log('ℹ️  Push: genera VAPID con npm run vapid:generate en backend');
   }
