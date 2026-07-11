@@ -5,6 +5,7 @@ import { authRouter } from './routes/auth.routes.js';
 import { gameRouter } from './routes/game.routes.js';
 import { pushRouter } from './routes/push.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
+import { chatRouter } from './routes/chat.routes.js';
 import { notifyDailyContinue, notifyEventReminder, isPushConfigured } from './lib/push.js';
 import { getEventCycle } from './lib/events.js';
 
@@ -23,11 +24,12 @@ app.use(cors({ origin: origins, credentials: true }));
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, app: 'LOS 4 Beast Protocol', push: isPushConfigured() });
+  res.json({ ok: true, app: 'Reto', push: isPushConfigured() });
 });
 
 app.use('/api/auth', authRouter);
 app.use('/api/game', gameRouter);
+app.use('/api/chat', chatRouter);
 app.use('/api/push', pushRouter);
 app.use('/api/admin', adminRouter);
 
@@ -53,7 +55,7 @@ setInterval(async () => {
 }, 60 * 60 * 1000);
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🔥 LOS 4 backend → port ${PORT}`);
+  console.log(`🔥 Reto backend → port ${PORT}`);
   if (!isPushConfigured()) {
     console.log('ℹ️  Push: genera VAPID con npm run vapid:generate en backend');
   }

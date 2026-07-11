@@ -1,6 +1,6 @@
-# LOS 4 — Beast Protocol PWA
+# Reto PWA
 
-PWA interactiva estilo MrBeast para el reto del **29 de agosto de 2026**.
+PWA interactiva para el reto del **29 de agosto de 2026**.
 
 ## Arrancar en local
 
@@ -24,7 +24,7 @@ npm run dev
 ## Invitar amigos
 
 ```
-http://localhost:3011/join/BEAST2026
+http://localhost:3011/join/RETO2026
 ```
 
 ## Push notifications (producción)
@@ -60,7 +60,7 @@ Copia las claves a `backend/.env` y reinicia el backend.
 | **Instalar PWA** | Banner automático + iconos 192/512 |
 | **Compartir invitación** | Web Share API / copiar link |
 | **Preferencias** | Sonido, vibración, reduced motion |
-| **Logros Beast** | 8 achievements desbloqueables |
+| **Logros** | 8 achievements desbloqueables |
 | **Equipos por género** | Stats en Gran Final |
 | **Deep-link Arena** | Evento → juego directo (`?game=redlight`) |
 | **Feed enriquecido** | Propuestas, penalizaciones, pistas |

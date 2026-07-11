@@ -21,7 +21,7 @@ model User {
   gender      String  @default("OTHER")
   avatarEmoji String  @default("😎")
 
-  beastPoints     Int       @default(0)
+  points     Int       @default(0)
   lastContinuedAt DateTime?
   clemencyUsedAt  DateTime?
   bribeAcceptedCycle Int?
@@ -30,6 +30,7 @@ model User {
   actions          GameAction[]
   pushSubscription PushSubscription?
   confessions      Confession[]
+  chatMessages     ChatMessage[]
   votesCast        Vote[]       @relation("VotesCast")
   votesReceived    Vote[]       @relation("VotesReceived")
   alliances        Alliance[]   @relation("AllianceUser")
@@ -38,6 +39,16 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model WebAuthnChallenge {

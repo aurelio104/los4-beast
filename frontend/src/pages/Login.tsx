@@ -82,10 +82,10 @@ export default function Login() {
             animate={{ rotate: [0, 5, -5, 0] }}
             transition={{ duration: 4, repeat: Infinity }}
           >
-            <Flame size={48} className="mx-auto text-beast-pink mb-3" />
+            <Flame size={48} className="mx-auto text-reto-pink mb-3" />
           </motion.div>
-          <h1 className="text-4xl font-black gradient-text text-glow">LOS 4</h1>
-          <p className="text-white/40 text-sm mt-1 tracking-widest uppercase">Beast Protocol</p>
+          <h1 className="text-4xl font-black gradient-text text-glow">Reto</h1>
+          <p className="text-white/40 text-sm mt-1 tracking-widest uppercase">29 agosto 2026</p>
         </motion.div>
 
         <GlassCard strong glow="purple" className="w-full max-w-md p-8 bg-black/30 backdrop-blur-2xl">
@@ -116,7 +116,7 @@ export default function Login() {
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
             {error && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-beast-red text-sm">
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-reto-red text-sm">
                 {error}
               </motion.p>
             )}
@@ -135,7 +135,7 @@ export default function Login() {
 
           <p className="text-center text-sm text-white/40 mt-6">
             ¿Nuevo?{' '}
-            <Link to="/join/BEAST2026" className="text-beast-pink font-semibold hover:underline">
+            <Link to="/join/RETO2026" className="text-reto-pink font-semibold hover:underline">
               Unirse al reto
             </Link>
           </p>

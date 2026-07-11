@@ -69,7 +69,7 @@ export default function Arena() {
         <AnimatePresence mode="wait">
           {game === 'menu' && (
             <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <h2 className="text-2xl font-black gradient-text mb-1">Arena Beast</h2>
+              <h2 className="text-2xl font-black gradient-text mb-1">Arena</h2>
               <p className="text-white/40 text-sm mb-6">1 juego de cada tipo por día · confetti incluido 🎉</p>
               <div className="grid gap-3">
                 {GAME_LIST.map((g, i) => (
@@ -102,7 +102,7 @@ export default function Arena() {
 
         {(toast || error) && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className={`fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl font-semibold z-50 ${error ? 'text-beast-red' : ''}`}>
+            className={`fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl font-semibold z-50 ${error ? 'text-reto-red' : ''}`}>
             {error || toast}
           </motion.div>
         )}
@@ -222,7 +222,7 @@ function DdakjiGame({ onFinish, onBack }: { onFinish: (w: boolean) => void; onBa
         {flipped === null ? '🟥' : flipped ? '✅' : '❌'}
       </motion.div>
       <div className="h-3 rounded-full bg-white/10 mb-4 overflow-hidden">
-        <motion.div className="h-full bg-beast-gold" style={{ width: `${power}%` }} />
+        <motion.div className="h-full bg-reto-gold" style={{ width: `${power}%` }} />
       </div>
       <p className="text-sm text-white/50 mb-4">Toca en la zona dorada (40-75%)</p>
       <motion.button whileTap={{ scale: 0.95 }} onClick={flip} className="glass-btn px-10 py-4 rounded-2xl font-bold">¡FLIP!</motion.button>
@@ -305,7 +305,7 @@ function HoneycombGame({ onFinish, onBack }: { onFinish: (p: number) => void; on
     <GlassCard className="p-4 text-center">
       <p className="text-sm text-white/60 mb-4">Traza el círculo sin salirte</p>
       <canvas ref={canvasRef} width={280} height={280} className="mx-auto rounded-2xl bg-white/5 touch-none" />
-      {precision !== null && <p className="mt-2 text-beast-gold font-bold">{precision}% precisión</p>}
+      {precision !== null && <p className="mt-2 text-reto-gold font-bold">{precision}% precisión</p>}
       <button onClick={onBack} className="mt-4 text-white/40 text-sm">Salir</button>
     </GlassCard>
   );
@@ -373,7 +373,7 @@ function TugWarGame({ onFinish, onBack }: { onFinish: (taps: number) => void; on
   return (
     <div className="text-center">
       <motion.p key={time} initial={{ scale: 1.5 }} animate={{ scale: 1 }} className="text-5xl font-black gradient-text mb-2">{time}s</motion.p>
-      <p className="text-3xl font-bold text-beast-gold mb-6">{taps} taps</p>
+      <p className="text-3xl font-bold text-reto-gold mb-6">{taps} taps</p>
       <motion.button whileTap={{ scale: 0.92 }} onClick={() => { setTaps((t) => t + 1); playClickSound(); }}
         className="w-40 h-40 rounded-full glass-strong text-xl font-black mx-auto block"
         style={{ boxShadow: '0 0 40px rgba(255,0,110,0.4)' }}>TIRA</motion.button>

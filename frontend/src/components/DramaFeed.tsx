@@ -34,7 +34,7 @@ export function DramaFeed({ items }: { items: FeedItem[] }) {
             <p className="text-[10px] text-white/30">{formatDistanceToNow(item.createdAt)}</p>
           </div>
           {item.pointsDelta !== 0 && (
-            <span className={`text-xs font-bold tabular-nums ${item.pointsDelta > 0 ? 'text-beast-cyan' : 'text-beast-red'}`}>
+            <span className={`text-xs font-bold tabular-nums ${item.pointsDelta > 0 ? 'text-reto-cyan' : 'text-reto-red'}`}>
               {item.pointsDelta > 0 ? '+' : ''}{item.pointsDelta}
             </span>
           )}

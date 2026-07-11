@@ -50,7 +50,7 @@ export async function broadcastPush(payload: { title: string; body: string; url?
 
 export async function notifyEventReminder() {
   return broadcastPush({
-    title: '🔥 Evento Beast activo',
+    title: '🔥 Evento activo',
     body: 'Tienes 48h para jugar y ganar BP. ¡Entra ya!',
     url: '/eventos'
   });

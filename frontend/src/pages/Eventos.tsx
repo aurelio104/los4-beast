@@ -5,7 +5,7 @@ import { ArrowLeft, Calendar, Zap } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
-import { BeastEvent } from '../types';
+import { RetoEvent } from '../types';
 
 const EVENT_GAME: Record<string, string> = {
   RED_LIGHT: 'redlight',
@@ -16,13 +16,13 @@ const EVENT_GAME: Record<string, string> = {
 
 export default function Eventos() {
   const navigate = useNavigate();
-  const [events, setEvents] = useState<BeastEvent[]>([]);
-  const [current, setCurrent] = useState<{ cycleIndex: number; isEventActive: boolean; hoursUntilNext: number; event: BeastEvent } | null>(null);
+  const [events, setEvents] = useState<RetoEvent[]>([]);
+  const [current, setCurrent] = useState<{ cycleIndex: number; isEventActive: boolean; hoursUntilNext: number; event: RetoEvent } | null>(null);
 
   useEffect(() => {
     api.events().then((r) => {
       if (r.success) {
-        setEvents(r.events as BeastEvent[]);
+        setEvents(r.events as RetoEvent[]);
         setCurrent(r.current as typeof current);
       }
     });
@@ -35,17 +35,17 @@ export default function Eventos() {
           <ArrowLeft size={18} /> Hub
         </button>
 
-        <h2 className="text-2xl font-black gradient-text mb-2">Calendario Beast</h2>
+        <h2 className="text-2xl font-black gradient-text mb-2">Calendario</h2>
         <p className="text-white/40 text-sm mb-6">Eventos cada 10 días hasta el 29 de agosto</p>
 
         {current?.isEventActive && (
           <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }}>
             <GlassCard glow="pink" className="p-5 mb-6 flex items-center gap-4">
               <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 2 }}>
-                <Zap className="text-beast-pink" size={32} />
+                <Zap className="text-reto-pink" size={32} />
               </motion.div>
               <div>
-                <p className="font-bold text-beast-pink">⚡ EVENTO ACTIVO</p>
+                <p className="font-bold text-reto-pink">⚡ EVENTO ACTIVO</p>
                 <p className="text-sm text-white/70">{current.event.emoji} {current.event.name}</p>
                 <p className="text-xs text-white/40">{Math.round(current.hoursUntilNext)}h restantes</p>
               </div>
@@ -77,10 +77,10 @@ export default function Eventos() {
                     </div>
                     {isCurrent && ev.game && EVENT_GAME[ev.game] && (
                       <button type="button" onClick={() => navigate(`/arena?game=${EVENT_GAME[ev.game!]}`)}
-                        className="text-[10px] bg-beast-cyan/30 px-2 py-1 rounded-full font-bold">JUGAR</button>
+                        className="text-[10px] bg-reto-cyan/30 px-2 py-1 rounded-full font-bold">JUGAR</button>
                     )}
                     {isCurrent && (!ev.game || !EVENT_GAME[ev.game]) && (
-                      <span className="text-xs bg-beast-pink/30 px-2 py-1 rounded-full">AHORA</span>
+                      <span className="text-xs bg-reto-pink/30 px-2 py-1 rounded-full">AHORA</span>
                     )}
                     {isPast && <span className="text-xs text-white/30">✓</span>}
                   </div>
@@ -91,7 +91,7 @@ export default function Eventos() {
         </div>
 
         <GlassCard className="p-5 mt-6 flex items-start gap-3">
-          <Calendar size={20} className="text-beast-cyan shrink-0 mt-0.5" />
+          <Calendar size={20} className="text-reto-cyan shrink-0 mt-0.5" />
           <p className="text-sm text-white/60">
             Cada evento dura ~10 días. Completa mini-juegos, abre el cofre y acumula BP para el gran reto del <strong className="text-white">29 de agosto</strong>.
           </p>

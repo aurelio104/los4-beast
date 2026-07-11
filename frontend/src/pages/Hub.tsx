@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle2, Handshake, HeartCrack, Skull, Gift, Swords, Trophy, ShoppingBag,
-  Settings, Flame, Gamepad2, DollarSign, Vote, Users, MessageSquare,
+  Settings, Flame, Gamepad2, DollarSign, Vote, Users, MessageSquare, MessagesSquare,
   Calendar, Package, User, Zap, Bell, Crosshair, Share2
 } from 'lucide-react';
 import { AppShell, HeroSection } from '../components/AppShell';
@@ -17,13 +17,13 @@ import { InstallBanner } from '../components/InstallBanner';
 import { VotePanel } from '../components/VotePanel';
 import { api } from '../lib/api';
 import { HUB_ACTION_INFO, HubActionKey } from '../lib/actionInfo';
-import { User as UserType, FeedItem, Player, BeastEvent, PlayerContext } from '../types';
+import { User as UserType, FeedItem, Player, RetoEvent, PlayerContext } from '../types';
 import { celebrateWin, celebrateBetrayal, celebrateCoin } from '../lib/celebrate';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useLivePoll } from '../hooks/useLivePoll';
 import { useInstallPrompt, shareInvite } from '../hooks/useInstallPrompt';
 
-const INVITE_CODE = 'BEAST2026';
+const INVITE_CODE = 'RETO2026';
 
 export default function Hub() {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ export default function Hub() {
   const [bribeOffer, setBribeOffer] = useState<{ points: number; penalty: string; alreadyAccepted?: boolean } | null>(null);
   const [daysLeft, setDaysLeft] = useState(49);
   const [eventActive, setEventActive] = useState(false);
-  const [currentEvent, setCurrentEvent] = useState<BeastEvent | null>(null);
+  const [currentEvent, setCurrentEvent] = useState<RetoEvent | null>(null);
   const [infoKey, setInfoKey] = useState<HubActionKey | null>(null);
   const [playerCtx, setPlayerCtx] = useState<PlayerContext | null>(null);
   const [voteTally, setVoteTally] = useState<{ targetId: string; count: number; name: string }[]>([]);
@@ -66,7 +66,7 @@ export default function Hub() {
     setPlayers((playersRes.players || []) as Player[]);
     setDaysLeft(status.daysUntilChallenge);
     setEventActive(status.isEventActive);
-    setCurrentEvent(status.event as BeastEvent);
+    setCurrentEvent(status.event as RetoEvent);
     if (status.player) setPlayerCtx(status.player);
     if (votesRes.success) setVoteTally(votesRes.tally || []);
     if (bribe.success) setBribeOffer({ ...bribe.offer, alreadyAccepted: bribe.alreadyAccepted });
@@ -82,7 +82,7 @@ export default function Hub() {
 
   const action = async (
     key: string,
-    fn: () => Promise<{ success: boolean; beastPoints?: number; gained?: number; points?: number; alreadyDone?: boolean; error?: string; message?: string; penalty?: string }>,
+    fn: () => Promise<{ success: boolean; points?: number; gained?: number; alreadyDone?: boolean; error?: string; message?: string; penalty?: string }>,
     onSuccess?: (res: { gained?: number; points?: number }) => void
   ) => {
     setLoading(key);
@@ -90,7 +90,7 @@ export default function Hub() {
       const res = await fn();
       if (res.success) {
         if (res.alreadyDone) showToast('Ya confirmaste hoy ✅');
-        else if (res.gained || res.points) {
+        else if (res.gained != null || res.points != null) {
           const pts = res.gained ?? res.points ?? 0;
           if (key === 'betray') celebrateBetrayal();
           else if (key === 'bribe') celebrateCoin();
@@ -147,6 +147,9 @@ export default function Hub() {
       case 'confesion':
         navigate('/confesion');
         break;
+      case 'chat':
+        navigate('/chat');
+        break;
       case 'eventos':
       case 'evento-activo':
         navigate('/eventos');
@@ -172,6 +175,7 @@ export default function Hub() {
     arena: 'Ir a Arena',
     tienda: 'Ir a Tienda',
     confesion: 'Ir a Confesión',
+    chat: 'Abrir chat',
     eventos: 'Ver calendario',
     'evento-activo': 'Ver evento',
     cofre: 'Abrir cofre',
@@ -187,23 +191,23 @@ export default function Hub() {
               <span className="text-3xl">{user.avatarEmoji || '😎'}</span>
               <div>
                 <div className="flex items-center gap-2">
-                  <Flame className="text-beast-pink" size={20} />
-                  <h1 className="text-lg font-black gradient-text text-glow">LOS 4</h1>
+                  <Flame className="text-reto-pink" size={20} />
+                  <h1 className="text-lg font-black gradient-text text-glow">Reto</h1>
                 </div>
                 <p className="text-xs text-white/60">{user.displayName}</p>
               </div>
             </div>
-            <PointsBadge points={user.beastPoints} />
+            <PointsBadge points={user.points} />
           </motion.header>
 
           {eventActive && currentEvent && (
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} onClick={() => openInfo('evento-activo')} className="mb-4">
               <GlassCard glow="pink" className="p-4 cursor-pointer flex items-center gap-3 bg-black/20">
                 <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.5 }}>
-                  <Zap className="text-beast-pink" />
+                  <Zap className="text-reto-pink" />
                 </motion.div>
                 <div>
-                  <p className="text-xs text-beast-pink font-bold uppercase">Evento activo</p>
+                  <p className="text-xs text-reto-pink font-bold uppercase">Evento activo</p>
                   <p className="font-bold">{currentEvent.emoji} {currentEvent.name}</p>
                 </div>
               </GlassCard>
@@ -218,7 +222,7 @@ export default function Hub() {
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 3, repeat: Infinity }}
             >
-              Playa · Beast Edition
+              Playa · Reto
             </motion.p>
           </GlassCard>
         </HeroSection>
@@ -231,7 +235,7 @@ export default function Hub() {
           <GlassCard glow="cyan" className="p-4 mb-4 cursor-pointer flex items-center gap-3" onClick={() => navigate(`/arena?game=${playerCtx.featuredGame}`)}>
             <motion.span animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.2 }} className="text-2xl">🎮</motion.span>
             <div className="flex-1">
-              <p className="text-xs text-beast-cyan font-bold uppercase">Juego del evento</p>
+              <p className="text-xs text-reto-cyan font-bold uppercase">Juego del evento</p>
               <p className="font-bold text-sm">Jugar ahora en Arena →</p>
             </div>
           </GlassCard>
@@ -249,15 +253,15 @@ export default function Hub() {
 
         {!push.subscribed && push.supported && (
           <GlassCard className="p-3 mb-4 flex items-center justify-between cursor-pointer" onClick={() => openInfo('notificaciones')}>
-            <span className="text-sm flex items-center gap-2"><Bell size={16} className="text-beast-gold" /> Activar notificaciones</span>
-            <span className="text-xs text-beast-cyan">→</span>
+            <span className="text-sm flex items-center gap-2"><Bell size={16} className="text-reto-gold" /> Activar notificaciones</span>
+            <span className="text-xs text-reto-cyan">→</span>
           </GlassCard>
         )}
 
         <GlassCard glow="gold" className="p-4 mb-4 flex items-center gap-4 cursor-pointer" onClick={() => openInfo('cofre')}>
           <motion.span animate={{ rotate: [0, -5, 5, 0] }} transition={{ repeat: Infinity, duration: 4 }} className="text-4xl">📦</motion.span>
           <div className="flex-1">
-            <p className="font-bold text-sm">Cofre Beast {playerCtx?.canClaimChest && <span className="text-beast-pink ml-1">· ¡Listo!</span>}</p>
+            <p className="font-bold text-sm">Cofre {playerCtx?.canClaimChest && <span className="text-reto-pink ml-1">· ¡Listo!</span>}</p>
             <p className="text-xs text-white/50">{daysLeft} días · toca para pistas</p>
           </div>
         </GlassCard>
@@ -268,7 +272,7 @@ export default function Hub() {
             <Share2 size={16} /> Invitar amigos
           </button>
           {daysLeft <= 14 && (
-            <button type="button" onClick={() => navigate('/finale')} className="flex-1 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-beast-pink to-beast-purple">
+            <button type="button" onClick={() => navigate('/finale')} className="flex-1 py-3 rounded-2xl text-sm font-bold bg-gradient-to-r from-reto-pink to-reto-purple">
               🏆 Gran Final
             </button>
           )}
@@ -277,11 +281,11 @@ export default function Hub() {
         {playerCtx && playerCtx.streak > 0 && (
           <GlassCard className="p-3 mb-4 flex items-center justify-between">
             <span className="text-sm font-bold">🔥 Racha diaria</span>
-            <span className="text-lg font-black text-beast-gold tabular-nums">{playerCtx.streak} días</span>
+            <span className="text-lg font-black text-reto-gold tabular-nums">{playerCtx.streak} días</span>
           </GlassCard>
         )}
 
-        <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-3">Acciones Beast</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-3">Acciones</p>
         <div className="grid grid-cols-2 gap-3 mb-4">
           <GlassButton icon={CheckCircle2} label="Continuar" sublabel={playerCtx?.continuedToday ? 'Hecho hoy ✓' : '+10 BP'} variant="success" loading={loading === 'continue'} showInfoHint badge={playerCtx ? !playerCtx.continuedToday : undefined} onClick={() => openInfo('continue')} />
           <GlassButton icon={HeartCrack} label="Clemencia" sublabel="1×/10 días" variant="gold" loading={loading === 'clemency'} showInfoHint onClick={() => openInfo('clemency')} />
@@ -294,6 +298,7 @@ export default function Hub() {
           <GlassButton icon={Gamepad2} label="Arena" variant="gold" showInfoHint pulse={!!playerCtx?.featuredGame} badge={playerCtx?.featuredGame ? '🎮' : undefined} onClick={() => openInfo('arena')} />
           <GlassButton icon={ShoppingBag} label="Tienda" showInfoHint onClick={() => openInfo('tienda')} />
           <GlassButton icon={MessageSquare} label="Confesión" showInfoHint onClick={() => openInfo('confesion')} />
+          <GlassButton icon={MessagesSquare} label="Chat" sublabel="Grupo" variant="gold" showInfoHint pulse onClick={() => openInfo('chat')} />
           <GlassButton icon={Calendar} label="Eventos" showInfoHint onClick={() => openInfo('eventos')} />
         </div>
 
@@ -301,7 +306,7 @@ export default function Hub() {
 
         {playerCtx?.achievements && (
           <GlassCard className="p-4 mb-4">
-            <p className="text-xs uppercase tracking-widest text-white/40 mb-3">Logros Beast</p>
+            <p className="text-xs uppercase tracking-widest text-white/40 mb-3">Logros</p>
             <div className="flex flex-wrap gap-2">
               {playerCtx.achievements.map((a) => (
                 <span key={a.id} title={a.title} className={`text-xl p-2 rounded-xl ${a.unlocked ? 'bg-white/10' : 'bg-white/5 opacity-30 grayscale'}`}>{a.emoji}</span>
@@ -311,18 +316,18 @@ export default function Hub() {
         )}
 
         <GlassCard className="p-4 mb-4">
-          <div className="flex items-center gap-2 mb-3"><Trophy size={16} className="text-beast-gold" /><span className="text-sm font-bold">Ranking</span></div>
+          <div className="flex items-center gap-2 mb-3"><Trophy size={16} className="text-reto-gold" /><span className="text-sm font-bold">Ranking</span></div>
           {players.slice(0, 6).map((p, i) => (
             <motion.div key={p.id} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }} className="flex items-center gap-3 py-1">
               <span className="w-6">{i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
               <span className="flex-1 text-sm truncate">{p.nickname || p.displayName}</span>
-              <span className="text-xs font-bold text-beast-gold">{p.beastPoints} BP</span>
+              <span className="text-xs font-bold text-reto-gold">{p.points} BP</span>
             </motion.div>
           ))}
         </GlassCard>
 
         <GlassCard className="p-4 mb-4">
-          <div className="flex items-center gap-2 mb-3"><Swords size={16} className="text-beast-pink" /><span className="text-sm font-bold">Feed del Drama</span></div>
+          <div className="flex items-center gap-2 mb-3"><Swords size={16} className="text-reto-pink" /><span className="text-sm font-bold">Feed del Drama</span></div>
           <DramaFeed items={feed} />
         </GlassCard>
 
@@ -337,7 +342,7 @@ export default function Hub() {
               ...(user.role === 'MASTER' ? [{ icon: Settings, path: '/admin' }] : [])
             ].map(({ icon: Icon, path, active }) => (
               <button key={path} onClick={() => navigate(path)} className={`p-3 rounded-2xl ${active ? 'bg-white/10' : ''}`}>
-                <Icon size={20} className={path === '/admin' ? 'text-beast-gold' : active ? 'text-white' : 'text-white/50'} />
+                <Icon size={20} className={path === '/admin' ? 'text-reto-gold' : active ? 'text-white' : 'text-white/50'} />
               </button>
             ))}
           </div>
@@ -424,7 +429,7 @@ export default function Hub() {
             ) : (
               <>
                 <motion.p animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="text-4xl font-black text-glow-gold text-center my-4">+{bribeOffer.points} BP</motion.p>
-                <p className="text-sm text-beast-red text-center mb-4">Penalización: {bribeOffer.penalty}</p>
+                <p className="text-sm text-reto-red text-center mb-4">Penalización: {bribeOffer.penalty}</p>
                 <button className="w-full py-4 rounded-2xl font-bold" style={{ background: 'linear-gradient(135deg,#ffbe0b,#ff006e)' }}
                   onClick={async () => { await action('bribe', api.acceptBribe); setShowBribe(false); }}>Aceptar soborno</button>
               </>

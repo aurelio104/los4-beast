@@ -56,7 +56,7 @@ gameRouter.post('/continue', authMiddleware, async (req, res) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   if (user.lastContinuedAt && user.lastContinuedAt >= today) {
-    return res.json({ success: true, alreadyDone: true, beastPoints: user.beastPoints });
+    return res.json({ success: true, alreadyDone: true, points: user.points });
   }
 
   await prisma.user.update({ where: { id: uid }, data: { lastContinuedAt: new Date() } });
@@ -141,8 +141,8 @@ gameRouter.post('/vote', authMiddleware, async (req, res) => {
   await prisma.gameAction.create({
     data: { userId: uid, type: 'VOTE', pointsDelta: 5, metadata: JSON.stringify({ targetId, voteType }) }
   });
-  await prisma.user.update({ where: { id: uid }, data: { beastPoints: { increment: 5 } } });
-  res.json({ success: true, beastPoints: (await prisma.user.findUnique({ where: { id: uid } }))!.beastPoints });
+  await prisma.user.update({ where: { id: uid }, data: { points: { increment: 5 } } });
+  res.json({ success: true, points: (await prisma.user.findUnique({ where: { id: uid } }))!.points });
 });
 
 gameRouter.get('/votes', authMiddleware, async (_req, res) => {
@@ -266,7 +266,7 @@ async function miniGame(
     return res.status(400).json({ success: false, error: 'Ya jugaste esto hoy' });
   }
   const result = await awardPoints(uid, type, points, metadata);
-  res.json({ success: true, ...result });
+  res.json({ success: true, ...result, points: result.gained });
 }
 
 gameRouter.post('/minigame/red-light', authMiddleware, async (req, res) => {
@@ -311,7 +311,7 @@ gameRouter.post('/minigame/coin-flip', authMiddleware, async (req, res) => {
     return res.status(400).json({ success: false, error: 'Elige heads o tails' });
   }
   const user = await prisma.user.findUnique({ where: { id: uid } });
-  if (!user || user.beastPoints < bet) {
+  if (!user || user.points < bet) {
     return res.status(400).json({ success: false, error: 'Puntos insuficientes para apostar' });
   }
   if (await playedMiniGameToday(uid, 'COIN_FLIP')) {
@@ -350,7 +350,7 @@ gameRouter.post('/redeem', authMiddleware, async (req, res) => {
   if (!rewardId || !cost) return res.status(400).json({ success: false, error: 'Premio inválido' });
 
   const user = await prisma.user.findUnique({ where: { id: uid } });
-  if (!user || user.beastPoints < cost) {
+  if (!user || user.points < cost) {
     return res.status(400).json({ success: false, error: 'Puntos insuficientes' });
   }
 
@@ -379,7 +379,7 @@ gameRouter.patch('/profile', authMiddleware, async (req, res) => {
       displayName: user.displayName,
       nickname: user.nickname,
       gender: user.gender,
-      beastPoints: user.beastPoints,
+      points: user.points,
       avatarEmoji: user.avatarEmoji,
       hasPasskey: user.passkeyRegistered
     }

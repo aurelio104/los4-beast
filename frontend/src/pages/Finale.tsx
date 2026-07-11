@@ -35,7 +35,7 @@ export default function Finale() {
         </button>
 
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center mb-8">
-          <Trophy className="mx-auto text-beast-gold mb-3" size={48} />
+          <Trophy className="mx-auto text-reto-gold mb-3" size={48} />
           <h1 className="text-3xl font-black gradient-text text-glow">Gran Final</h1>
           <p className="text-white/50 text-sm mt-2">29 de agosto · retos en vivo</p>
         </motion.div>
@@ -52,7 +52,7 @@ export default function Finale() {
               {ctx.teamStats.map((t) => (
                 <div key={t.gender} className="flex items-center justify-between">
                   <span className="text-sm font-semibold">{GENDER_LABEL[t.gender] || t.gender}</span>
-                  <span className="text-beast-gold font-black tabular-nums">{t.totalBp} BP</span>
+                  <span className="text-reto-gold font-black tabular-nums">{t.totalPoints} BP</span>
                 </div>
               ))}
             </div>
@@ -66,14 +66,14 @@ export default function Finale() {
             <div key={p.id} className="flex items-center gap-3 py-1.5">
               <span className="w-6">{i === 0 ? '👑' : `${i + 1}.`}</span>
               <span className="flex-1 text-sm truncate">{p.nickname || p.displayName}</span>
-              <span className="text-xs font-bold text-beast-gold">{p.beastPoints} BP</span>
+              <span className="text-xs font-bold text-reto-gold">{p.points} BP</span>
             </div>
           ))}
         </GlassCard>
 
         <GlassCard className="p-5">
           <p className="text-sm text-white/70 leading-relaxed">
-            El gran día se juega <strong className="text-white">en persona</strong>. Los premios canjeados en la Tienda Beast se entregan ese día.
+            El gran día se juega <strong className="text-white">en persona</strong>. Los premios canjeados en la Tienda se entregan ese día.
             Traiciones, confesiones y votos se revelan en vivo. 🔥
           </p>
         </GlassCard>

@@ -15,7 +15,7 @@ export default function Admin() {
   const [redemptions, setRedemptions] = useState<{ id: string; rewardId: string; cost: number; userName: string; status: string }[]>([]);
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState('');
-  const [pushTitle, setPushTitle] = useState('🔥 LOS 4 Beast');
+  const [pushTitle, setPushTitle] = useState('🔥 Reto');
   const [pushBody, setPushBody] = useState('¡Entra al Hub y compite!');
 
   const load = () => api.adminDashboard().then((r) => {
@@ -56,7 +56,7 @@ export default function Admin() {
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <Shield className="text-beast-gold" size={28} />
+          <Shield className="text-reto-gold" size={28} />
           <h2 className="text-2xl font-black gradient-text">Panel Admin</h2>
         </div>
 
@@ -117,12 +117,12 @@ export default function Admin() {
                     <p className="text-sm font-semibold">{reward?.emoji} {reward?.title || r.rewardId}</p>
                     <p className="text-xs text-white/40">{r.userName} · {r.cost} BP</p>
                   </div>
-                  <span className="text-xs px-2 py-1 rounded-full bg-beast-gold/20 text-beast-gold">{r.status}</span>
+                  <span className="text-xs px-2 py-1 rounded-full bg-reto-gold/20 text-reto-gold">{r.status}</span>
                 </div>
                 {r.status === 'PENDING' && (
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => updateRedemption(r.id, 'APPROVED')} className="flex-1 text-xs py-2 rounded-lg bg-beast-cyan/20">Aprobar</button>
-                    <button type="button" onClick={() => updateRedemption(r.id, 'DELIVERED')} className="flex-1 text-xs py-2 rounded-lg bg-beast-gold/20">Entregado</button>
+                    <button type="button" onClick={() => updateRedemption(r.id, 'APPROVED')} className="flex-1 text-xs py-2 rounded-lg bg-reto-cyan/20">Aprobar</button>
+                    <button type="button" onClick={() => updateRedemption(r.id, 'DELIVERED')} className="flex-1 text-xs py-2 rounded-lg bg-reto-gold/20">Entregado</button>
                   </div>
                 )}
               </GlassCard>

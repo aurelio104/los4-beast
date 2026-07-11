@@ -18,6 +18,7 @@ export type HubActionKey =
   | 'arena'
   | 'tienda'
   | 'confesion'
+  | 'chat'
   | 'eventos'
   | 'cofre'
   | 'notificaciones'
@@ -37,7 +38,7 @@ export const HUB_ACTION_INFO: Record<HubActionKey, ActionInfo> = {
   continue: {
     emoji: '✅',
     title: 'Continuar',
-    description: 'Confirma que sigues activo en el reto Beast. Es tu check-in diario para demostrar que no te rindes.',
+    description: 'Confirma que sigues activo en el reto. Es tu check-in diario para demostrar que no te rindes.',
     points: '+10 BP',
     rules: ['Solo 1 vez al día', 'Aparece en el Feed del Drama', 'Ideal para mantener la racha']
   },
@@ -92,15 +93,15 @@ export const HUB_ACTION_INFO: Record<HubActionKey, ActionInfo> = {
   },
   arena: {
     emoji: '🎮',
-    title: 'Arena Beast',
-    description: '8 mini-juegos estilo Squid Game / MrBeast. Red Light, Trivia, Ddakji, Glass Bridge y más.',
+    title: 'Arena',
+    description: '8 mini-juegos Red Light, Trivia, Ddakji, Glass Bridge y más.',
     points: 'Hasta +200 BP por juego',
     rules: ['1 juego de cada tipo por día', 'Confetti al ganar 🎉', 'Algunos juegos pueden restar puntos']
   },
   tienda: {
     emoji: '🛍️',
-    title: 'Tienda Beast',
-    description: 'Canjea tus Beast Points por premios sociales de bajo costo. Nada caro — puro drama entre amigos.',
+    title: 'Tienda',
+    description: 'Canjea tus puntos por premios sociales de bajo costo. Nada caro — puro drama entre amigos.',
     points: 'Gastas BP al canjear',
     rules: ['Premios se entregan el 29 de agosto', 'Burger, pizza, cervezas, corona…', 'Necesitas BP suficientes']
   },
@@ -111,6 +112,13 @@ export const HUB_ACTION_INFO: Record<HubActionKey, ActionInfo> = {
     points: '+20 BP',
     rules: ['Máximo 500 caracteres', 'Anónimo hasta el 29 de agosto', 'El admin puede leerlas antes']
   },
+  chat: {
+    emoji: '💬',
+    title: 'Chat del grupo',
+    description: 'Habla en tiempo real con todos los miembros del Reto. Declaraciones, alianzas, drama — todo queda aquí.',
+    points: '—',
+    rules: ['Visible para todos los miembros', 'Máximo 500 caracteres por mensaje', 'Se actualiza automáticamente']
+  },
   eventos: {
     emoji: '📅',
     title: 'Calendario de eventos',
@@ -120,7 +128,7 @@ export const HUB_ACTION_INFO: Record<HubActionKey, ActionInfo> = {
   },
   cofre: {
     emoji: '📦',
-    title: 'Cofre Beast',
+    title: 'Cofre',
     description: 'Cada ciclo de 10 días puedes abrir un cofre con pistas sobre el reto final y puntos extra.',
     points: '+100 BP por cofre',
     rules: ['1 cofre por ciclo', 'Las pistas se acumulan', 'Barra de progreso hacia el 29 ago']
@@ -151,10 +159,10 @@ export const GAME_ACTION_INFO: Record<GameActionKey, ActionInfo> = {
   },
   trivia: {
     emoji: '🧠',
-    title: 'Trivia Beast',
+    title: 'Trivia',
     description: 'Preguntas rápidas sobre el grupo y el reto. Responde bien para sumar puntos.',
     points: 'Correcta: +100 BP · Fallo: +10 BP',
-    rules: ['1 partida por día', 'Preguntas del universo LOS 4', 'Siempre ganas algo']
+    rules: ['1 partida por día', 'Preguntas del grupo', 'Siempre ganas algo']
   },
   ddakji: {
     emoji: '🎯',
@@ -187,7 +195,7 @@ export const GAME_ACTION_INFO: Record<GameActionKey, ActionInfo> = {
   coin: {
     emoji: '🪙',
     title: 'Coin Flip',
-    description: 'Apuesta tus Beast Points en cara o cruz. Ganas el doble o pierdes la apuesta.',
+    description: 'Apuesta tus puntos en cara o cruz. Ganas el doble o pierdes la apuesta.',
     points: '± apuesta (default 50 BP)',
     rules: ['1 partida por día', 'Necesitas BP para apostar', 'Alto riesgo, alta recompensa']
   },
@@ -245,9 +253,9 @@ export const REWARD_INFO: Record<string, ActionInfo> = {
   },
   crown: {
     emoji: '👑',
-    title: 'Corona Beast',
+    title: 'Corona',
     description: 'El canjeador elige el reto principal del gran día. El premio más codiciado.',
     points: '1000 BP',
-    rules: ['Requiere muchos BP', 'Poder absoluto el 29 ago', 'Solo para el más Beast']
+    rules: ['Requiere muchos BP', 'Poder absoluto el 29 ago', 'Solo para el más dedicado']
   }
 };

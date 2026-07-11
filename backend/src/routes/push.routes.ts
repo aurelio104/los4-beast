@@ -46,7 +46,7 @@ pushRouter.post('/broadcast', authMiddleware, requireMaster, async (req: Request
 pushRouter.post('/test', authMiddleware, async (req: Request, res: Response) => {
   const userId = (req as Request & { user: { userId: string } }).user.userId;
   const result = await sendPushToUser(userId, {
-    title: '🔥 LOS 4 Beast',
+    title: '🔥 Reto',
     body: '¡Notificaciones activadas! Te avisaremos de cada evento.',
     url: '/'
   });

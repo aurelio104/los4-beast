@@ -52,9 +52,9 @@ export function ActionInfoModal({
         <p className="text-sm text-white/75 leading-relaxed mb-4">{info.description}</p>
 
         {info.points && info.points !== '—' && (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-beast-gold/15 border border-beast-gold/30 mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-reto-gold/15 border border-reto-gold/30 mb-4">
             <span className="text-xs text-white/50 uppercase tracking-wider">Puntos</span>
-            <span className="text-sm font-bold text-beast-gold">{info.points}</span>
+            <span className="text-sm font-bold text-reto-gold">{info.points}</span>
           </div>
         )}
 
@@ -63,7 +63,7 @@ export function ActionInfoModal({
           <ul className="space-y-2">
             {info.rules.map((rule) => (
               <li key={rule} className="flex items-start gap-2 text-sm text-white/65">
-                <span className="text-beast-cyan mt-0.5">•</span>
+                <span className="text-reto-cyan mt-0.5">•</span>
                 <span>{rule}</span>
               </li>
             ))}

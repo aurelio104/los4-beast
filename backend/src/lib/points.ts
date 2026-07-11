@@ -9,7 +9,7 @@ export async function awardPoints(
 ) {
   const updated = await prisma.user.update({
     where: { id: userId },
-    data: { beastPoints: pointsDelta >= 0 ? { increment: pointsDelta } : { decrement: Math.abs(pointsDelta) } }
+    data: { points: pointsDelta >= 0 ? { increment: pointsDelta } : { decrement: Math.abs(pointsDelta) } }
   });
 
   await prisma.gameAction.create({
@@ -22,7 +22,7 @@ export async function awardPoints(
     }
   });
 
-  return { beastPoints: Math.max(0, updated.beastPoints), points: pointsDelta };
+  return { points: Math.max(0, updated.points), gained: pointsDelta };
 }
 
 export async function playedMiniGameToday(userId: string, type: string): Promise<boolean> {

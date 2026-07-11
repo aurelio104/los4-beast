@@ -6,7 +6,7 @@ import {
 } from '@simplewebauthn/server';
 import { prisma } from './prisma.js';
 
-const WEBAUTHN_RP_NAME = process.env.WEBAUTHN_RP_NAME || 'LOS 4 Beast';
+const WEBAUTHN_RP_NAME = process.env.WEBAUTHN_RP_NAME || 'Reto';
 const WEBAUTHN_ORIGIN = process.env.WEBAUTHN_ORIGIN || 'http://localhost:3011';
 
 function getRpId(): string {

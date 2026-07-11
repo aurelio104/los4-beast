@@ -30,7 +30,7 @@ adminRouter.get('/dashboard', async (_req, res) => {
   res.json({
     success: true,
     stats: { players, actions, redemptions, confessions, votes, pushSubs },
-    inviteCode: process.env.INVITE_CODE || 'BEAST2026',
+    inviteCode: process.env.INVITE_CODE || 'RETO2026',
     challengeDate: process.env.CHALLENGE_DATE || '2026-08-29T20:00:00-04:00',
     redemptions: redemptionsList.map((r) => ({
       ...r,
@@ -59,7 +59,7 @@ adminRouter.patch('/redemptions/:id', async (req: Request, res: Response) => {
 
 adminRouter.post('/notify-event', async (_req, res) => {
   const result = await broadcastPush({
-    title: '⚡ Evento Beast activo',
+    title: '⚡ Evento activo',
     body: 'Nuevo ciclo de 10 días — entra y compite por BP',
     url: '/eventos'
   });

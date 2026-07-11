@@ -1,7 +1,7 @@
 {
   "name": "los4",
   "version": "1.0.0",
-  "description": "LOS 4 — Beast Protocol PWA",
+  "description": "Reto PWA",
   "private": true,
   "workspaces": ["backend", "frontend"],
   "scripts": {

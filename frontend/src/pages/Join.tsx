@@ -8,7 +8,7 @@ import { api } from '../lib/api';
 import { User } from '../types';
 
 export default function Join() {
-  const { code = 'BEAST2026' } = useParams();
+  const { code = 'RETO2026' } = useParams();
   const navigate = useNavigate();
   const [valid, setValid] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,7 +49,7 @@ export default function Join() {
     return (
       <AppShell background="beach">
         <div className="min-h-dvh flex items-center justify-center">
-          <Loader2 className="animate-spin text-beast-pink" size={40} />
+          <Loader2 className="animate-spin text-reto-pink" size={40} />
         </div>
       </AppShell>
     );
@@ -61,7 +61,7 @@ export default function Join() {
         <div className="min-h-dvh flex flex-col items-center justify-center px-4 text-center">
           <p className="text-2xl mb-4">🚫</p>
           <p className="text-white/60">Código de invitación inválido</p>
-          <Link to="/login" className="mt-4 text-beast-pink">Ir al login</Link>
+          <Link to="/login" className="mt-4 text-reto-pink">Ir al login</Link>
         </div>
       </AppShell>
     );
@@ -71,7 +71,7 @@ export default function Join() {
     <AppShell background="beach">
       <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-12">
         <motion.div initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-center mb-8">
-          <Flame size={40} className="mx-auto text-beast-gold mb-2" />
+          <Flame size={40} className="mx-auto text-reto-gold mb-2" />
           <h1 className="text-3xl font-black gradient-text">Únete al Reto</h1>
           <p className="text-white/40 text-sm mt-1">Código: {code}</p>
         </motion.div>
@@ -106,7 +106,7 @@ export default function Join() {
               <label className="text-xs text-white/40 mb-1 block">Contraseña</label>
               <input type="password" value={form.password} onChange={(e) => set('password', e.target.value)} required minLength={8} />
             </div>
-            {error && <p className="text-beast-red text-sm">{error}</p>}
+            {error && <p className="text-reto-red text-sm">{error}</p>}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -116,11 +116,11 @@ export default function Join() {
               style={{ background: 'linear-gradient(135deg, #ffbe0b, #ff006e)' }}
             >
               {loading ? <Loader2 className="animate-spin" /> : <UserPlus size={20} />}
-              Entrar al Beast Protocol
+              Entrar al Reto
             </motion.button>
           </form>
           <p className="text-center text-sm text-white/40 mt-4">
-            ¿Ya tienes cuenta? <Link to="/login" className="text-beast-cyan">Login</Link>
+            ¿Ya tienes cuenta? <Link to="/login" className="text-reto-cyan">Login</Link>
           </p>
         </GlassCard>
       </div>

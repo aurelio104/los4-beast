@@ -86,9 +86,15 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
           muted
           loop
           playsInline
-          preload={isHero ? 'auto' : 'metadata'}
+          preload={isHero ? 'auto' : 'auto'}
           poster={POSTER}
-          onLoadedData={() => setVideoReady(true)}
+          onLoadedData={() => {
+            setVideoReady(true);
+            videoRef.current?.play().catch(() => {});
+          }}
+          onCanPlay={() => {
+            videoRef.current?.play().catch(() => {});
+          }}
         >
           <source src={VIDEO} type="video/mp4" />
         </video>

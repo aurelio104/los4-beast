@@ -6,7 +6,7 @@ export interface User {
   displayName: string;
   nickname?: string | null;
   gender: string;
-  beastPoints: number;
+  points: number;
   avatarEmoji?: string;
   hasPasskey: boolean;
 }
@@ -26,10 +26,10 @@ export interface Player {
   displayName: string;
   nickname?: string | null;
   gender: string;
-  beastPoints: number;
+  points: number;
 }
 
-export interface BeastEvent {
+export interface RetoEvent {
   cycleIndex: number;
   name: string;
   emoji: string;
@@ -47,7 +47,7 @@ export interface PlayerContext {
   featuredGame: string | null;
   achievements: { id: string; emoji: string; title: string; unlocked: boolean }[];
   gender: string;
-  teamStats: { gender: string; totalBp: number; players: number }[];
+  teamStats: { gender: string; totalPoints: number; players: number }[];
 }
 
 export interface TriviaQuestion {
@@ -65,7 +65,7 @@ export const REWARDS = [
   { id: 'coffee', emoji: '☕', title: 'Cafecito', cost: 100, desc: 'El perdedor invita un café' },
   { id: 'dj', emoji: '🎵', title: 'DJ del día', cost: 200, desc: 'El perdedor elige la playlist' },
   { id: 'photo', emoji: '📸', title: 'Foto vergonzosa', cost: 150, desc: 'Cambio de avatar 24h' },
-  { id: 'crown', emoji: '👑', title: 'Corona Beast', cost: 1000, desc: 'Eliges el reto del gran día' }
+  { id: 'crown', emoji: '👑', title: 'Corona', cost: 1000, desc: 'Eliges el reto del gran día' }
 ] as const;
 
 export const ACTION_LABELS: Record<string, string> = {

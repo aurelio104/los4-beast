@@ -50,7 +50,7 @@ export default function Cofre() {
 
         <motion.div animate={{ rotate: [0, -3, 3, 0], scale: [1, 1.05, 1] }} transition={{ duration: 4, repeat: Infinity }} className="text-center mb-8">
           <span className="text-8xl block mb-4">{daysLeft <= 1 ? '🔓' : '📦'}</span>
-          <h2 className="text-2xl font-black gradient-text">Cofre Beast</h2>
+          <h2 className="text-2xl font-black gradient-text">Cofre</h2>
           <p className="text-white/40 text-sm mt-1">{daysLeft} días para la gran revelación</p>
         </motion.div>
 
@@ -79,7 +79,7 @@ export default function Cofre() {
           ) : clues.map((c, i) => (
             <motion.div key={c.cycleIndex} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
               <GlassCard glow="purple" className="p-4">
-                <p className="text-xs text-beast-gold mb-1">Ciclo {c.cycleIndex}</p>
+                <p className="text-xs text-reto-gold mb-1">Ciclo {c.cycleIndex}</p>
                 <p className="text-sm">{c.clue}</p>
               </GlassCard>
             </motion.div>

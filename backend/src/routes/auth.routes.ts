@@ -37,7 +37,7 @@ function sanitizeUser(user: {
   displayName: string;
   nickname: string | null;
   gender: string;
-  beastPoints: number;
+  points: number;
   passkeyRegistered: boolean;
   avatarEmoji?: string;
 }) {
@@ -49,7 +49,7 @@ function sanitizeUser(user: {
     displayName: user.displayName,
     nickname: user.nickname,
     gender: user.gender,
-    beastPoints: user.beastPoints,
+    points: user.points,
     avatarEmoji: user.avatarEmoji ?? '😎',
     hasPasskey: user.passkeyRegistered
   };
@@ -67,14 +67,14 @@ function bearerUserId(req: Request): string | null {
 }
 
 authRouter.get('/invite/:code', async (req: Request, res: Response) => {
-  const valid = req.params.code === (process.env.INVITE_CODE || 'BEAST2026');
+  const valid = req.params.code === (process.env.INVITE_CODE || 'RETO2026');
   res.json({ success: true, valid, challengeDate: process.env.CHALLENGE_DATE || '2026-08-29T20:00:00-04:00' });
 });
 
 authRouter.post('/join', async (req: Request, res: Response) => {
   try {
     const data = joinSchema.parse(req.body);
-    if (data.inviteCode !== (process.env.INVITE_CODE || 'BEAST2026')) {
+    if (data.inviteCode !== (process.env.INVITE_CODE || 'RETO2026')) {
       return res.status(403).json({ success: false, error: 'Código de invitación inválido' });
     }
 
@@ -109,7 +109,7 @@ authRouter.post('/join', async (req: Request, res: Response) => {
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { beastPoints: { increment: 50 } }
+      data: { points: { increment: 50 } }
     });
 
     const token = jwt.sign({ userId: user.id, role: user.role }, getJwtSecret(), { expiresIn: '30d' });
@@ -217,10 +217,10 @@ authRouter.get('/players', authMiddleware, async (_req, res) => {
       displayName: true,
       nickname: true,
       gender: true,
-      beastPoints: true,
+      points: true,
       passkeyRegistered: true
     },
-    orderBy: { beastPoints: 'desc' }
+    orderBy: { points: 'desc' }
   });
   res.json({ success: true, players });
 });
@@ -234,7 +234,7 @@ authRouter.get('/admin/stats', authMiddleware, requireMaster, async (_req, res) 
   res.json({
     success: true,
     stats: { players, actions, redemptions },
-    inviteCode: process.env.INVITE_CODE || 'BEAST2026',
+    inviteCode: process.env.INVITE_CODE || 'RETO2026',
     challengeDate: process.env.CHALLENGE_DATE || '2026-08-29T20:00:00-04:00'
   });
 });

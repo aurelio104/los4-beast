@@ -53,9 +53,9 @@ export function useInstallPrompt() {
 
 export async function shareInvite(code: string) {
   const url = `${window.location.origin}/join/${code}`;
-  const text = '🔥 Únete al reto LOS 4 Beast Protocol — 29 de agosto';
+  const text = '🔥 Únete a Reto — 29 de agosto';
   if (navigator.share) {
-    await navigator.share({ title: 'LOS 4 Beast', text, url });
+    await navigator.share({ title: 'Reto', text, url });
     return true;
   }
   await navigator.clipboard.writeText(url);

@@ -13,7 +13,7 @@ export function PointsBadge({ points }: { points: number }) {
         animate={{ rotate: [0, 15, -15, 0] }}
         transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
       >
-        <Zap size={20} className="text-beast-gold fill-beast-gold" />
+        <Zap size={20} className="text-reto-gold fill-reto-gold" />
       </motion.div>
       <span className="text-lg font-black text-glow-gold tabular-nums">{points.toLocaleString()}</span>
       <span className="text-xs text-white/50 font-medium">BP</span>

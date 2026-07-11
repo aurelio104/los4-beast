@@ -72,17 +72,17 @@ export async function getPlayerContext(userId: string) {
   });
   const counts = Object.fromEntries(actionCounts.map((a) => [a.type, a._count.type]));
 
-  const achievements = buildAchievements(user.beastPoints, streak, counts);
+  const achievements = buildAchievements(user.points, streak, counts);
 
   const teamRaw = await prisma.user.groupBy({
     by: ['gender'],
     where: { role: 'PLAYER', isActive: true },
-    _sum: { beastPoints: true },
+    _sum: { points: true },
     _count: { id: true }
   });
   const teamStats = teamRaw.map((t) => ({
     gender: t.gender,
-    totalBp: t._sum.beastPoints ?? 0,
+    totalPoints: t._sum.points ?? 0,
     players: t._count.id
   }));
 
@@ -107,15 +107,15 @@ export async function getPlayerContext(userId: string) {
   };
 }
 
-function buildAchievements(beastPoints: number, streak: number, counts: Record<string, number>) {
+function buildAchievements(points: number, streak: number, counts: Record<string, number>) {
   const list: { id: string; emoji: string; title: string; unlocked: boolean }[] = [
     { id: 'first_continue', emoji: '✅', title: 'Primer check-in', unlocked: (counts.CONTINUE ?? 0) >= 1 },
     { id: 'streak_3', emoji: '🔥', title: 'Racha 3 días', unlocked: streak >= 3 },
     { id: 'streak_7', emoji: '💥', title: 'Racha 7 días', unlocked: streak >= 7 },
     { id: 'betrayer', emoji: '💀', title: 'Primera traición', unlocked: (counts.BETRAY ?? 0) >= 1 },
     { id: 'arena', emoji: '🎮', title: 'Guerrero Arena', unlocked: ['RED_LIGHT', 'TRIVIA', 'DDAKJI', 'GLASS_BRIDGE', 'HONEYCOMB', 'MYSTERY_BOX', 'COIN_FLIP', 'TUG_WAR'].some((t) => (counts[t] ?? 0) > 0) },
-    { id: 'bp_500', emoji: '⭐', title: '500 BP', unlocked: beastPoints >= 500 },
-    { id: 'bp_1000', emoji: '👑', title: '1000 BP', unlocked: beastPoints >= 1000 },
+    { id: 'bp_500', emoji: '⭐', title: '500 BP', unlocked: points >= 500 },
+    { id: 'bp_1000', emoji: '👑', title: '1000 BP', unlocked: points >= 1000 },
     { id: 'confession', emoji: '🤐', title: 'Confesor', unlocked: (counts.CONFESSION ?? 0) >= 1 }
   ];
   return list;
@@ -132,7 +132,7 @@ export async function getTriviaQuestions() {
     { q: '¿Mejor comida para el reto final?', options: ['Burger 🍔', 'Pizza 🍕', 'Arepas'], correct: 0 },
     { q: '¿Traicionarías por 150 BP?', options: ['Obvio 👀', 'Nunca', 'Depende'], correct: 0 },
     { q: '¿Reto ideal en grupo?', options: ['Comida', 'Verdad o reto', 'Deporte'], correct: 0 },
-    { q: '¿Quién gana el 29 de agosto?', options: ['El más Beast 🔥', 'El más listo', 'El de suerte'], correct: 0 }
+    { q: '¿Quién gana el 29 de agosto?', options: ['El más dedicado 🔥', 'El más listo', 'El de suerte'], correct: 0 }
   ];
 
   const dynamic = players.map((p) => ({

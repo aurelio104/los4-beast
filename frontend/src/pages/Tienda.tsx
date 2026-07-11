@@ -34,7 +34,7 @@ export default function Tienda() {
     if (res.success) {
       celebrateWin(-cost);
       setToast('¡Canjeado! Se entrega el 29 de agosto 🎉');
-      const u = { ...user!, beastPoints: res.beastPoints };
+      const u = { ...user!, points: res.points };
       setUser(u);
       localStorage.setItem('user', JSON.stringify(u));
     } else {
@@ -54,22 +54,22 @@ export default function Tienda() {
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-black gradient-text">Tienda Beast</h2>
+            <h2 className="text-2xl font-black gradient-text">Tienda</h2>
             <p className="text-xs text-white/40">Premios sociales · bajo costo</p>
           </div>
-          <PointsBadge points={user.beastPoints} />
+          <PointsBadge points={user.points} />
         </div>
 
         <GlassCard glow="gold" className="p-4 mb-6">
           <p className="text-sm text-white/70">
-            🎯 Los canjes se <strong className="text-beast-gold">entregan en persona</strong> el 29 de agosto.
+            🎯 Los canjes se <strong className="text-reto-gold">entregan en persona</strong> el 29 de agosto.
             La idea es reunirse y compartir — nada caro, puro drama amistoso.
           </p>
         </GlassCard>
 
         <div className="space-y-4">
           {REWARDS.map((r, i) => {
-            const canAfford = user.beastPoints >= r.cost;
+            const canAfford = user.points >= r.cost;
             return (
               <motion.div
                 key={r.id}
@@ -97,7 +97,7 @@ export default function Tienda() {
                       <p className="text-xs text-white/50">{r.desc}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-black text-beast-gold tabular-nums">{r.cost}</p>
+                      <p className="font-black text-reto-gold tabular-nums">{r.cost}</p>
                       <p className="text-[10px] text-white/30">BP</p>
                     </div>
                   </div>
@@ -113,7 +113,7 @@ export default function Tienda() {
             animate={{ opacity: 1, y: 0 }}
             className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl font-semibold z-50 flex items-center gap-2"
           >
-            <Sparkles size={16} className="text-beast-gold" />
+            <Sparkles size={16} className="text-reto-gold" />
             {toast}
           </motion.div>
         )}
@@ -125,17 +125,17 @@ export default function Tienda() {
               onClose={() => setInfoRewardId(null)}
               onConfirm={() => {
                 const reward = REWARDS.find((x) => x.id === infoRewardId);
-                if (reward && user && user.beastPoints >= reward.cost) {
+                if (reward && user && user.points >= reward.cost) {
                   redeem(reward.id, reward.cost);
                 }
                 setInfoRewardId(null);
               }}
               confirmLabel={
-                user && REWARDS.find((x) => x.id === infoRewardId) && user.beastPoints >= REWARDS.find((x) => x.id === infoRewardId)!.cost
+                user && REWARDS.find((x) => x.id === infoRewardId) && user.points >= REWARDS.find((x) => x.id === infoRewardId)!.cost
                   ? `Canjear (${REWARDS.find((x) => x.id === infoRewardId)!.cost} BP)`
                   : 'BP insuficientes'
               }
-              disabled={!user || !REWARDS.find((x) => x.id === infoRewardId) || user.beastPoints < REWARDS.find((x) => x.id === infoRewardId)!.cost}
+              disabled={!user || !REWARDS.find((x) => x.id === infoRewardId) || user.points < REWARDS.find((x) => x.id === infoRewardId)!.cost}
             />
           )}
         </AnimatePresence>

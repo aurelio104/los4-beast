@@ -1,5 +1,5 @@
 self.addEventListener('push', (event) => {
-  let data = { title: 'LOS 4 Beast', body: 'Nueva actividad en el reto', url: '/' };
+  let data = { title: 'Reto', body: 'Nueva actividad en el reto', url: '/' };
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch { /* ignore */ }

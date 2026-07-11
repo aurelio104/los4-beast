@@ -14,9 +14,9 @@ export default defineConfig({
         importScripts: ['push-handler.js']
       },
       manifest: {
-        name: 'LOS 4 — Beast Protocol',
-        short_name: 'LOS 4',
-        description: 'Reto Beast Edition — 29 de agosto',
+        name: 'Reto',
+        short_name: 'Reto',
+        description: 'Reto — 29 de agosto',
         theme_color: '#0a0a0f',
         background_color: '#0a0a0f',
         display: 'standalone',

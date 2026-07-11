@@ -65,7 +65,7 @@ export default function Confesion() {
         <div className="space-y-3">
           {list.map((c, i) => (
             <motion.div key={c.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}>
-              <GlassCard className={`p-4 ${c.isOwn ? 'border-beast-cyan/30' : ''}`}>
+              <GlassCard className={`p-4 ${c.isOwn ? 'border-reto-cyan/30' : ''}`}>
                 <p className="text-xs text-white/40 mb-2">{c.revealed ? c.author : '🔒 Anónimo'}{c.isOwn ? ' (tuya)' : ''}</p>
                 <p className="text-sm text-white/90">{c.revealed ? c.message : '••••••••••••••••'}</p>
               </GlassCard>

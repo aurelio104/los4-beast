@@ -19,14 +19,14 @@ async function main() {
       username,
       email,
       passwordHash,
-      displayName: 'Admin Beast',
+      displayName: 'Admin',
       role: 'MASTER',
-      beastPoints: 9999
+      points: 9999
     }
   });
 
   console.log('✅ Admin creado:', username, '/', password);
-  console.log('🔗 Invite code:', process.env.INVITE_CODE || 'BEAST2026');
+  console.log('🔗 Invite code:', process.env.INVITE_CODE || 'RETO2026');
 }
 
 main()

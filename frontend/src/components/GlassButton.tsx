@@ -41,7 +41,7 @@ export function GlassButton({ icon: Icon, label, sublabel, onClick, disabled, va
         </span>
       )}
       {badge && (
-        <span className="absolute top-2 left-2 min-w-[18px] h-[18px] px-1 rounded-full bg-beast-pink text-[10px] font-black flex items-center justify-center animate-pulse">
+        <span className="absolute top-2 left-2 min-w-[18px] h-[18px] px-1 rounded-full bg-reto-pink text-[10px] font-black flex items-center justify-center animate-pulse">
           {typeof badge === 'boolean' ? '!' : badge}
         </span>
       )}

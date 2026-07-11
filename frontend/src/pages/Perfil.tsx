@@ -12,7 +12,7 @@ import { getPreferences, setPreferences, UserPreferences } from '../lib/preferen
 import { User, PlayerContext } from '../types';
 
 const EMOJIS = ['😎', '🔥', '👑', '💀', '🤡', '😈', '🦸', '🎭', '🐺', '🦁'];
-const INVITE = 'BEAST2026';
+const INVITE = 'RETO2026';
 
 export default function Perfil() {
   const navigate = useNavigate();
@@ -102,8 +102,8 @@ export default function Perfil() {
             {user.avatarEmoji || '😎'}
           </motion.span>
           <h2 className="text-xl font-black">{user.displayName}</h2>
-          <p className="text-white/40 text-sm">@{user.username} · {user.beastPoints} BP</p>
-          {alliance && <p className="text-xs text-beast-purple mt-2">🤝 Aliado: {alliance.name}</p>}
+          <p className="text-white/40 text-sm">@{user.username} · {user.points} BP</p>
+          {alliance && <p className="text-xs text-reto-purple mt-2">🤝 Aliado: {alliance.name}</p>}
         </div>
 
         <GlassCard className="p-5 mb-4 space-y-4">
@@ -115,7 +115,7 @@ export default function Perfil() {
                   const res = await api.updateProfile({ avatarEmoji: e });
                   if (res.success) { setUser(res.user as User); localStorage.setItem('user', JSON.stringify(res.user)); }
                 }}
-                  className={`text-2xl p-2 rounded-xl ${user.avatarEmoji === e ? 'glass-strong ring-2 ring-beast-pink' : 'bg-white/5'}`}>{e}</button>
+                  className={`text-2xl p-2 rounded-xl ${user.avatarEmoji === e ? 'glass-strong ring-2 ring-reto-pink' : 'bg-white/5'}`}>{e}</button>
               ))}
             </div>
           </div>
@@ -130,15 +130,15 @@ export default function Perfil() {
           <p className="text-xs uppercase tracking-widest text-white/40">Preferencias</p>
           <button type="button" onClick={() => togglePref('sound')} className="w-full flex items-center justify-between py-2">
             <span className="flex items-center gap-2 text-sm"><Volume2 size={16} /> Sonidos</span>
-            <span className="text-xs text-beast-cyan">{prefs.sound ? 'ON' : 'OFF'}</span>
+            <span className="text-xs text-reto-cyan">{prefs.sound ? 'ON' : 'OFF'}</span>
           </button>
           <button type="button" onClick={() => togglePref('haptics')} className="w-full flex items-center justify-between py-2">
             <span className="flex items-center gap-2 text-sm"><Vibrate size={16} /> Vibración</span>
-            <span className="text-xs text-beast-cyan">{prefs.haptics ? 'ON' : 'OFF'}</span>
+            <span className="text-xs text-reto-cyan">{prefs.haptics ? 'ON' : 'OFF'}</span>
           </button>
           <button type="button" onClick={() => togglePref('reducedMotion')} className="w-full flex items-center justify-between py-2">
             <span className="text-sm">Reducir animaciones</span>
-            <span className="text-xs text-beast-cyan">{prefs.reducedMotion ? 'ON' : 'OFF'}</span>
+            <span className="text-xs text-reto-cyan">{prefs.reducedMotion ? 'ON' : 'OFF'}</span>
           </button>
         </GlassCard>
 
@@ -153,7 +153,7 @@ export default function Perfil() {
                 {passkeyLoading ? <Loader2 className="animate-spin" size={16} /> : 'Activar'}
               </button>
             ) : (
-              <button type="button" onClick={removePasskey} className="glass-btn px-3 py-2 rounded-xl text-sm text-beast-red flex items-center gap-1">
+              <button type="button" onClick={removePasskey} className="glass-btn px-3 py-2 rounded-xl text-sm text-reto-red flex items-center gap-1">
                 <Trash2 size={14} /> Quitar
               </button>
             )}
@@ -182,7 +182,7 @@ export default function Perfil() {
           <Share2 size={18} /> Invitar amigos
         </button>
 
-        <button type="button" onClick={logout} className="w-full py-4 rounded-2xl font-semibold text-beast-red flex items-center justify-center gap-2 border border-beast-red/30">
+        <button type="button" onClick={logout} className="w-full py-4 rounded-2xl font-semibold text-reto-red flex items-center justify-center gap-2 border border-reto-red/30">
           <LogOut size={18} /> Cerrar sesión
         </button>
 

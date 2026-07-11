@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --color-beast-pink: #ff006e;
-  --color-beast-purple: #8338ec;
-  --color-beast-gold: #ffbe0b;
-  --color-beast-cyan: #06d6a0;
-  --color-beast-red: #ef233c;
+  --color-reto-pink: #ff006e;
+  --color-reto-purple: #8338ec;
+  --color-reto-gold: #ffbe0b;
+  --color-reto-cyan: #06d6a0;
+  --color-reto-red: #ef233c;
   --font-display: "SF Pro Display", "Inter", system-ui, sans-serif;
 }
 
