@@ -119,22 +119,25 @@ export default function Admin() {
           <h2 className="text-2xl font-black gradient-text">Panel Admin</h2>
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate('/admin/users')}
-          className="w-full mb-3 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 glass-btn border border-reto-gold/30"
-        >
-          <UserCog size={20} className="text-reto-gold" /> Gestión de usuarios
-        </button>
-
-        <button
-          type="button"
-          onClick={() => navigate('/admin/whatsapp')}
-          className="w-full mb-4 py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
-        >
-          <MessageCircle size={20} /> WhatsApp — conectar y gestionar
-        </button>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <button
+            type="button"
+            onClick={() => navigate('/admin/users')}
+            className="py-4 px-3 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 text-center glass-btn border border-reto-gold/30 min-h-[5.5rem]"
+          >
+            <UserCog size={22} className="text-reto-gold shrink-0" />
+            <span className="text-xs sm:text-sm leading-tight">Gestión de usuarios</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/whatsapp')}
+            className="py-4 px-3 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 text-center min-h-[5.5rem]"
+            style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+          >
+            <MessageCircle size={22} className="shrink-0" />
+            <span className="text-xs sm:text-sm leading-tight">WhatsApp</span>
+          </button>
+        </div>
 
         <div className="grid grid-cols-3 gap-2 mb-6">
           {[
