@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Copy, Shield, Users, Zap, Bell, Eye, Megaphone, Send, UserPlus } from 'lucide-react';
+import { ArrowLeft, Copy, Shield, Users, Zap, Bell, Eye, Megaphone, Send, UserPlus, KeyRound } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
+import { PasswordInput } from '../components/PasswordInput';
+import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 import { api } from '../lib/api';
+import { isPasswordStrongEnough } from '../lib/passwordStrength';
 import { shareInviteLink } from '../lib/inviteShare';
 import { REWARDS } from '../types';
 
@@ -19,14 +22,24 @@ export default function Admin() {
   const [toast, setToast] = useState('');
   const [pushTitle, setPushTitle] = useState('🔥 Reto');
   const [pushBody, setPushBody] = useState('¡Entra al Hub y compite!');
+  const [adminUsers, setAdminUsers] = useState<{ id: string; username: string; email: string; displayName: string; nickname: string | null; role: string }[]>([]);
+  const [resetUserId, setResetUserId] = useState('');
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetting, setResetting] = useState(false);
 
-  const load = () => api.adminDashboard().then((r) => {
-    if (r.success) {
-      setStats(r.stats);
-      setChallengeDate(r.challengeDate);
-      setRedemptions(r.redemptions as typeof redemptions);
-    }
-  });
+  const load = () => {
+    api.adminDashboard().then((r) => {
+      if (r.success) {
+        setStats(r.stats);
+        setChallengeDate(r.challengeDate);
+        setRedemptions(r.redemptions as typeof redemptions);
+      }
+    });
+    api.adminUsers().then((r) => {
+      if (r.success) setAdminUsers(r.users);
+    });
+  };
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -60,6 +73,26 @@ export default function Admin() {
     } finally {
       setCreatingInvite(false);
       setTimeout(() => setToast(''), 3000);
+    }
+  };
+
+  const resetUserPassword = async () => {
+    if (!resetUserId) { setToast('Elige un usuario'); return; }
+    if (!isPasswordStrongEnough(resetPassword)) { setToast('Contraseña no suficientemente segura'); return; }
+    if (resetPassword !== resetConfirm) { setToast('Las contraseñas no coinciden'); return; }
+    setResetting(true);
+    try {
+      const r = await api.adminResetPassword(resetUserId, resetPassword);
+      if (!r.success) throw new Error(r.error || 'Error al resetear');
+      const name = r.user?.displayName || r.user?.username || 'Usuario';
+      setResetPassword('');
+      setResetConfirm('');
+      setToast(`Contraseña actualizada para ${name}`);
+    } catch (e) {
+      setToast((e as Error).message);
+    } finally {
+      setResetting(false);
+      setTimeout(() => setToast(''), 4000);
     }
   };
 
@@ -117,6 +150,40 @@ export default function Admin() {
               </button>
             )}
           </div>
+        </GlassCard>
+
+        <GlassCard glow="pink" className="p-5 mb-4 space-y-3">
+          <p className="text-sm font-bold flex items-center gap-2"><KeyRound size={16} /> Restablecer contraseña</p>
+          <p className="text-xs text-white/50">Si alguien olvidó su contraseña, asígnale una nueva y compártela por privado.</p>
+          <div>
+            <label className="text-xs text-white/40 mb-1 block">Usuario</label>
+            <select value={resetUserId} onChange={(e) => setResetUserId(e.target.value)}>
+              <option value="">Seleccionar…</option>
+              {adminUsers.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.displayName} (@{u.username}){u.role === 'MASTER' ? ' · Admin' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-white/40 mb-1 block">Nueva contraseña</label>
+            <PasswordInput value={resetPassword} onChange={setResetPassword} autoComplete="new-password" placeholder="Mínimo 10 caracteres" />
+          </div>
+          {resetPassword && <PasswordStrengthMeter password={resetPassword} />}
+          <div>
+            <label className="text-xs text-white/40 mb-1 block">Confirmar contraseña</label>
+            <PasswordInput value={resetConfirm} onChange={setResetConfirm} autoComplete="new-password" placeholder="Repite la contraseña" />
+          </div>
+          <button
+            type="button"
+            onClick={resetUserPassword}
+            disabled={resetting || !resetUserId || !isPasswordStrongEnough(resetPassword) || resetPassword !== resetConfirm}
+            className="w-full py-3 rounded-xl font-bold disabled:opacity-40"
+            style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
+          >
+            {resetting ? 'Guardando…' : 'Actualizar contraseña'}
+          </button>
         </GlassCard>
 
         <GlassCard className="p-5 mb-4 space-y-3">

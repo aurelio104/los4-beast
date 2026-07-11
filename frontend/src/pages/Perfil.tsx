@@ -10,6 +10,7 @@ import { startRegistration } from '@simplewebauthn/browser';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
 import { Avatar } from '../components/Avatar';
+import { PasswordInput } from '../components/PasswordInput';
 import { api } from '../lib/api';
 import { compressImageFile } from '../lib/image';
 import { usePushNotifications } from '../hooks/usePushNotifications';
@@ -394,11 +395,11 @@ export default function Perfil() {
           </p>
           <div>
             <label className="text-xs text-white/40 mb-1 block">Contraseña actual</label>
-            <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} autoComplete="current-password" />
+            <PasswordInput value={currentPassword} onChange={setCurrentPassword} autoComplete="current-password" />
           </div>
           <div>
             <label className="text-xs text-white/40 mb-1 block">Nueva contraseña</label>
-            <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" minLength={8} />
+            <PasswordInput value={newPassword} onChange={setNewPassword} autoComplete="new-password" minLength={8} />
           </div>
           <p className="text-[11px] text-white/35">Déjalas vacías si no quieres cambiarla. Se guarda con el botón de arriba.</p>
 

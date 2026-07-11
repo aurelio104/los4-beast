@@ -115,5 +115,14 @@ export const api = {
   adminRevealConfessions: () => request<{ success: boolean }>('/admin/reveal-confessions', { method: 'POST' }),
   adminNotifyEvent: () => request<{ success: boolean; sent: number }>('/admin/notify-event', { method: 'POST' }),
   adminUpdateRedemption: (id: string, status: string) => request<{ success: boolean }>(`/admin/redemptions/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  adminUsers: () =>
+    request<{ success: boolean; users: { id: string; username: string; email: string; displayName: string; nickname: string | null; role: string }[] }>(
+      '/admin/users'
+    ),
+  adminResetPassword: (userId: string, newPassword: string) =>
+    request<{ success: boolean; user?: { id: string; username: string; displayName: string }; error?: string }>(
+      `/admin/users/${userId}/reset-password`,
+      { method: 'POST', body: JSON.stringify({ newPassword }) }
+    ),
   adminStats: () => request<{ success: boolean; stats: { players: number; actions: number; redemptions: number }; challengeDate: string }>('/auth/admin/stats')
 };

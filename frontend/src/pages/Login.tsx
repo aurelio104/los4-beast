@@ -6,6 +6,7 @@ import { RetoLogo } from '../components/RetoLogo';
 import { startAuthentication } from '@simplewebauthn/browser';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
+import { PasswordInput } from '../components/PasswordInput';
 import { api } from '../lib/api';
 import { User } from '../types';
 import { isSetupDone } from '../lib/setup';
@@ -94,7 +95,7 @@ export default function Login() {
             </div>
             <div>
               <label className="text-xs text-white/40 mb-1 block">Contraseña</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <PasswordInput value={password} onChange={setPassword} required autoComplete="current-password" />
             </div>
             {error && (
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-reto-red text-sm">
@@ -117,6 +118,9 @@ export default function Login() {
           <p className="text-center text-sm text-white/40 mt-6 leading-relaxed">
             ¿Nuevo en el grupo?{' '}
             <span className="text-white/50">Solo puedes registrarte con un link de invitación de un integrante.</span>
+          </p>
+          <p className="text-center text-xs text-white/35 mt-3">
+            ¿Olvidaste tu contraseña? Contacta a <strong className="text-white/50">Aurelio</strong> (admin) para restablecerla.
           </p>
         </GlassCard>
       </div>

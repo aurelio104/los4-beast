@@ -11,6 +11,7 @@ import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
 import { Avatar } from '../components/Avatar';
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
+import { PasswordInput } from '../components/PasswordInput';
 import { api } from '../lib/api';
 import { compressImageFile } from '../lib/image';
 import { isPasswordStrongEnough } from '../lib/passwordStrength';
@@ -269,10 +270,9 @@ export default function Join() {
                 <p className="text-sm font-bold flex items-center gap-2"><Lock size={16} /> Contraseña segura</p>
                 <div>
                   <label className="text-xs text-white/40 mb-1 block">Contraseña</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={setPassword}
                     autoComplete="new-password"
                     placeholder="Mínimo 10 caracteres"
                   />
@@ -280,10 +280,9 @@ export default function Join() {
                 <PasswordStrengthMeter password={password} />
                 <div>
                   <label className="text-xs text-white/40 mb-1 block">Confirmar contraseña</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={setConfirmPassword}
                     autoComplete="new-password"
                     placeholder="Repite la contraseña"
                   />

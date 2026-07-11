@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma.js';
 import { authMiddleware, requireMaster } from '../middleware/auth.js';
 import { broadcastPush } from '../lib/push.js';
@@ -37,6 +38,48 @@ adminRouter.get('/dashboard', async (_req, res) => {
       ...r,
       userName: userMap[r.userId] || r.userId
     }))
+  });
+});
+
+adminRouter.get('/users', async (_req, res) => {
+  const users = await prisma.user.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      displayName: true,
+      nickname: true,
+      role: true
+    },
+    orderBy: [{ role: 'asc' }, { displayName: 'asc' }]
+  });
+  res.json({ success: true, users });
+});
+
+adminRouter.post('/users/:userId/reset-password', async (req: Request, res: Response) => {
+  const userId = String(req.params.userId);
+  const { newPassword } = req.body as { newPassword?: string };
+
+  if (!newPassword || newPassword.length < 8) {
+    return res.status(400).json({ success: false, error: 'Contraseña mínimo 8 caracteres' });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || !user.isActive) {
+    return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+
+  res.json({
+    success: true,
+    user: {
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName
+    }
   });
 });
 
