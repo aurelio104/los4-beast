@@ -31,6 +31,7 @@ export default function Hub() {
   const location = useLocation();
   const push = usePushNotifications();
   const [user, setUser] = useState<UserType | null>(null);
+  const [booting, setBooting] = useState(true);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [toast, setToast] = useState('');
@@ -53,7 +54,6 @@ export default function Hub() {
   const load = useCallback(async () => {
     const stored = localStorage.getItem('user');
     if (!stored) { navigate('/login'); return; }
-    setUser(JSON.parse(stored));
 
     const [me, feedRes, playersRes, status, votesRes, bribe] = await Promise.all([
       api.me(), api.feed(), api.players(), api.gameStatus(), api.votes(), api.bribe()
@@ -62,6 +62,8 @@ export default function Hub() {
     if (me.success) {
       setUser(me.user as UserType);
       localStorage.setItem('user', JSON.stringify(me.user));
+    } else {
+      setUser(JSON.parse(stored));
     }
     setFeed((feedRes.feed || []) as FeedItem[]);
     setPlayers((playersRes.players || []) as Player[]);
@@ -71,6 +73,7 @@ export default function Hub() {
     if (status.player) setPlayerCtx(status.player);
     if (votesRes.success) setVoteTally(votesRes.tally || []);
     if (bribe.success) setBribeOffer({ ...bribe.offer, alreadyAccepted: bribe.alreadyAccepted });
+    setBooting(false);
   }, [navigate]);
 
   useEffect(() => { load(); }, [load]);
@@ -106,7 +109,15 @@ export default function Hub() {
     }
   };
 
-  if (!user) return null;
+  if (booting || !user) {
+    return (
+      <AppShell>
+        <div className="min-h-dvh flex items-center justify-center">
+          <RetoLogo size="lg" animate glow />
+        </div>
+      </AppShell>
+    );
+  }
 
   const openInfo = (key: HubActionKey) => setInfoKey(key);
 
