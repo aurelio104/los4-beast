@@ -12,6 +12,7 @@ import {
   sendWhatsAppMessage,
   isWhatsAppAutoSendEnabled
 } from '../lib/whatsapp.js';
+import { resolvePublicName } from '../lib/user-display.js';
 
 export const gameRouter = Router();
 
@@ -40,7 +41,7 @@ gameRouter.get('/feed', authMiddleware, async (_req, res) => {
   const actions = await prisma.gameAction.findMany({
     take: 40,
     orderBy: { createdAt: 'desc' },
-    include: { user: { select: { displayName: true, nickname: true, avatarEmoji: true, avatarUrl: true } } }
+    include: { user: { select: { displayName: true, nickname: true, username: true, avatarEmoji: true, avatarUrl: true } } }
   });
   res.json({
     success: true,
@@ -49,7 +50,7 @@ gameRouter.get('/feed', authMiddleware, async (_req, res) => {
       type: a.type,
       pointsDelta: a.pointsDelta,
       isAnonymous: a.isAnonymous,
-      displayName: a.isAnonymous ? 'Alguien 👀' : (a.user.nickname || a.user.displayName),
+      displayName: a.isAnonymous ? 'Alguien 👀' : resolvePublicName(a.user),
       avatarEmoji: a.isAnonymous ? '👀' : a.user.avatarEmoji,
       avatarUrl: a.isAnonymous ? null : a.user.avatarUrl,
       metadata: a.metadata,
@@ -160,14 +161,14 @@ gameRouter.get('/votes', authMiddleware, async (_req, res) => {
   const votes = await prisma.vote.findMany({
     where: { cycleIndex },
     include: {
-      voter: { select: { displayName: true, nickname: true } },
-      target: { select: { displayName: true, nickname: true } }
+      voter: { select: { displayName: true, nickname: true, username: true } },
+      target: { select: { displayName: true, nickname: true, username: true } }
     }
   });
 
   const tally: Record<string, { count: number; name: string }> = {};
   for (const v of votes) {
-    if (!tally[v.targetId]) tally[v.targetId] = { count: 0, name: v.target.nickname || v.target.displayName };
+    if (!tally[v.targetId]) tally[v.targetId] = { count: 0, name: resolvePublicName(v.target) };
     tally[v.targetId].count++;
   }
 

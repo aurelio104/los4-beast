@@ -20,6 +20,7 @@ import {
 import { normalizePhone } from '../lib/phone.js';
 import { buildJoinCredentialsMessage, sendWhatsAppMessage } from '../lib/whatsapp.js';
 import { generateUsernameFromEmail, isAcceptableUserPassword } from '../lib/user-credentials.js';
+import { isGenericDisplayName, resolvePublicName } from '../lib/user-display.js';
 
 export const authRouter = Router();
 
@@ -105,6 +106,7 @@ authRouter.get('/invite/:code', async (req: Request, res: Response) => {
     success: true,
     valid: result.valid,
     expired: 'expired' in result ? result.expired : false,
+    guestName: result.valid ? result.guestName : undefined,
     inviterName: result.valid ? result.inviterName : undefined,
     inviterEmoji: result.valid ? result.inviterEmoji : undefined,
     inviterAvatarUrl: result.valid ? result.inviterAvatarUrl : undefined,
@@ -160,12 +162,18 @@ authRouter.post('/join', async (req: Request, res: Response) => {
     const passwordHash = await bcrypt.hash(data.password, 10);
     const phone = data.phone ? normalizePhone(data.phone) : null;
 
+    const inviteRow = await prisma.invite.findUnique({ where: { code: data.inviteCode } });
+    let displayName = data.displayName.trim();
+    if (isGenericDisplayName(displayName) && inviteRow?.guestName?.trim()) {
+      displayName = inviteRow.guestName.trim();
+    }
+
     const user = await prisma.user.create({
       data: {
         username,
         email: data.email,
         passwordHash,
-        displayName: data.displayName,
+        displayName,
         nickname: data.nickname,
         gender: data.gender,
         phone,
@@ -301,6 +309,7 @@ authRouter.get('/players', authMiddleware, async (_req, res) => {
     where: { role: 'PLAYER', isActive: true },
     select: {
       id: true,
+      username: true,
       displayName: true,
       nickname: true,
       gender: true,
@@ -312,7 +321,13 @@ authRouter.get('/players', authMiddleware, async (_req, res) => {
     },
     orderBy: { points: 'desc' }
   });
-  res.json({ success: true, players });
+  res.json({
+    success: true,
+    players: players.map((p) => ({
+      ...p,
+      displayName: resolvePublicName(p)
+    }))
+  });
 });
 
 authRouter.get('/admin/stats', authMiddleware, requireMaster, async (_req, res) => {

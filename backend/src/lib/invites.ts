@@ -7,7 +7,7 @@ function randomCode(): string {
   return crypto.randomBytes(9).toString('base64url').slice(0, 12);
 }
 
-export async function createMemberInvite(inviterId: string) {
+export async function createMemberInvite(inviterId: string, opts?: { guestName?: string }) {
   const inviter = await prisma.user.findUnique({
     where: { id: inviterId },
     select: { id: true, isActive: true, displayName: true, nickname: true }
@@ -18,12 +18,13 @@ export async function createMemberInvite(inviterId: string) {
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + INVITE_TTL_DAYS);
+  const guestName = opts?.guestName?.trim() || null;
 
   let code = randomCode();
   for (let i = 0; i < 5; i++) {
     try {
       const invite = await prisma.invite.create({
-        data: { code, inviterId, expiresAt }
+        data: { code, inviterId, expiresAt, guestName }
       });
       return {
         code: invite.code,
@@ -59,6 +60,7 @@ export async function validateInviteCode(code: string) {
     inviterName: invite.inviter.nickname || invite.inviter.displayName,
     inviterEmoji: invite.inviter.avatarEmoji,
     inviterAvatarUrl: invite.inviter.avatarUrl,
+    guestName: invite.guestName,
     expiresAt: invite.expiresAt
   };
 }

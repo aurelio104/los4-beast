@@ -21,7 +21,9 @@ export async function sendWhatsAppInviteLink(params: {
     throw new Error('Número de WhatsApp inválido (ej. 04141234567)');
   }
 
-  const invite = await createMemberInvite(params.inviterId);
+  const invite = await createMemberInvite(params.inviterId, {
+    guestName: params.guestName?.trim()
+  });
   const joinUrl = `${APP_URL.replace(/\/$/, '')}/join/${invite.code}`;
 
   const waMsg = buildWhatsAppInviteLinkMessage({

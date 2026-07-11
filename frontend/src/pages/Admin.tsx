@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Copy, Shield, Users, Zap, Bell, Eye, Megaphone, Send, UserPlus, KeyRound, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Copy, Shield, Users, Zap, Bell, Eye, Megaphone, Send, UserPlus, MessageCircle, UserCog } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
-import { PasswordInput } from '../components/PasswordInput';
-import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 import { api } from '../lib/api';
-import { isPasswordOrPinValid, passwordHint } from '../lib/pinPassword';
 import { shareInviteLink } from '../lib/inviteShare';
 import { openWaMe, WhatsAppResult } from '../lib/whatsapp';
 import { REWARDS } from '../types';
@@ -23,21 +20,6 @@ export default function Admin() {
   const [toast, setToast] = useState('');
   const [pushTitle, setPushTitle] = useState('🔥 Reto');
   const [pushBody, setPushBody] = useState('¡Entra al Hub y compite!');
-  const [adminUsers, setAdminUsers] = useState<{
-    id: string;
-    username: string;
-    email: string;
-    displayName: string;
-    nickname: string | null;
-    role: string;
-    phone?: string | null;
-    whatsappOptIn?: boolean;
-  }[]>([]);
-  const [resetUserId, setResetUserId] = useState('');
-  const [resetPassword, setResetPassword] = useState('');
-  const [resetConfirm, setResetConfirm] = useState('');
-  const [resetting, setResetting] = useState(false);
-  const [lastWaReset, setLastWaReset] = useState<WhatsAppResult | null>(null);
   const [waInviteName, setWaInviteName] = useState('');
   const [waInvitePhone, setWaInvitePhone] = useState('');
   const [waInviting, setWaInviting] = useState(false);
@@ -52,16 +34,11 @@ export default function Admin() {
         setRedemptions(r.redemptions as typeof redemptions);
       }
     });
-    api.adminUsers().then((r) => {
-      if (r.success) setAdminUsers(r.users);
-    });
   };
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user.role !== 'MASTER') { navigate('/'); return; }
     load();
-  }, [navigate]);
+  }, []);
 
   const act = async (label: string, fn: () => Promise<{ success: boolean; sent?: number }>) => {
     const r = await fn();
@@ -89,39 +66,6 @@ export default function Admin() {
     } finally {
       setCreatingInvite(false);
       setTimeout(() => setToast(''), 3000);
-    }
-  };
-
-  const resetUserPassword = async () => {
-    if (!resetUserId) { setToast('Elige un usuario'); return; }
-    if (!isPasswordOrPinValid(resetPassword)) { setToast(passwordHint()); return; }
-    if (resetPassword !== resetConfirm) { setToast('Las contraseñas no coinciden'); return; }
-    setResetting(true);
-    setLastWaReset(null);
-    try {
-      const r = await api.adminResetPassword(resetUserId, resetPassword);
-      if (!r.success) throw new Error(r.error || 'Error al resetear');
-      const name = r.user?.displayName || r.user?.username || 'Usuario';
-      setResetPassword('');
-      setResetConfirm('');
-      if (r.whatsapp) {
-        setLastWaReset(r.whatsapp);
-        if (!r.whatsapp.sent && r.whatsapp.waMeUrl) {
-          openWaMe(r.whatsapp.waMeUrl);
-          setToast(`Contraseña actualizada · Abre WhatsApp para enviar a ${name}`);
-        } else if (r.whatsapp.sent) {
-          setToast(`Contraseña actualizada y enviada por WhatsApp a ${name}`);
-        } else {
-          setToast(`Contraseña actualizada para ${name} (sin WhatsApp)`);
-        }
-      } else {
-        setToast(`Contraseña actualizada para ${name}`);
-      }
-    } catch (e) {
-      setToast((e as Error).message);
-    } finally {
-      setResetting(false);
-      setTimeout(() => setToast(''), 4000);
     }
   };
 
@@ -174,6 +118,14 @@ export default function Admin() {
           <Shield className="text-reto-gold" size={28} />
           <h2 className="text-2xl font-black gradient-text">Panel Admin</h2>
         </div>
+
+        <button
+          type="button"
+          onClick={() => navigate('/admin/users')}
+          className="w-full mb-3 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 glass-btn border border-reto-gold/30"
+        >
+          <UserCog size={20} className="text-reto-gold" /> Gestión de usuarios
+        </button>
 
         <button
           type="button"
@@ -281,49 +233,6 @@ export default function Admin() {
               className="w-full glass-btn py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 text-[#25D366]"
             >
               <MessageCircle size={16} /> Reenviar por WhatsApp
-            </button>
-          )}
-        </GlassCard>
-
-        <GlassCard glow="pink" className="p-5 mb-4 space-y-3">
-          <p className="text-sm font-bold flex items-center gap-2"><KeyRound size={16} /> Restablecer contraseña</p>
-          <p className="text-xs text-white/50">Si alguien olvidó su contraseña, asígnale una nueva. Se reenvía automáticamente por WhatsApp si tiene número.</p>
-          <div>
-            <label className="text-xs text-white/40 mb-1 block">Usuario</label>
-            <select value={resetUserId} onChange={(e) => { setResetUserId(e.target.value); setLastWaReset(null); }}>
-              <option value="">Seleccionar…</option>
-              {adminUsers.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.displayName} (@{u.username}){u.role === 'MASTER' ? ' · Admin' : ''}{u.phone ? ` · ${u.whatsappOptIn ? 'WA ✓' : 'WA ○'}` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-white/40 mb-1 block">Nueva contraseña</label>
-            <PasswordInput value={resetPassword} onChange={setResetPassword} autoComplete="new-password" placeholder={passwordHint()} />
-          </div>
-          {resetPassword && !/^\d{4,6}$/.test(resetPassword) && <PasswordStrengthMeter password={resetPassword} />}
-          <div>
-            <label className="text-xs text-white/40 mb-1 block">Confirmar contraseña</label>
-            <PasswordInput value={resetConfirm} onChange={setResetConfirm} autoComplete="new-password" placeholder="Repite la contraseña" />
-          </div>
-          <button
-            type="button"
-            onClick={resetUserPassword}
-            disabled={resetting || !resetUserId || !isPasswordOrPinValid(resetPassword) || resetPassword !== resetConfirm}
-            className="w-full py-3 rounded-xl font-bold disabled:opacity-40"
-            style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
-          >
-            {resetting ? 'Guardando…' : 'Actualizar contraseña'}
-          </button>
-          {lastWaReset?.waMeUrl && !lastWaReset.sent && (
-            <button
-              type="button"
-              onClick={() => openWaMe(lastWaReset.waMeUrl!)}
-              className="w-full glass-btn py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 text-[#25D366]"
-            >
-              <MessageCircle size={16} /> Reenviar credenciales por WhatsApp
             </button>
           )}
         </GlassCard>

@@ -13,6 +13,11 @@ import {
 import { getRetoPersistenceReport } from '../lib/deploy-persistence.js';
 import { sendWhatsAppInviteLink } from '../lib/admin-invite.js';
 import { isAcceptableUserPassword } from '../lib/user-credentials.js';
+import {
+  adminDeleteUser,
+  adminResetUserPasskey,
+  adminSetUserActive
+} from '../lib/user-admin.js';
 
 export const adminRouter = Router();
 
@@ -59,9 +64,10 @@ adminRouter.get('/dashboard', async (_req, res) => {
   });
 });
 
-adminRouter.get('/users', async (_req, res) => {
+adminRouter.get('/users', async (req: Request, res: Response) => {
+  const includeInactive = req.query.includeInactive === '1';
   const users = await prisma.user.findMany({
-    where: { isActive: true },
+    where: includeInactive ? {} : { isActive: true },
     select: {
       id: true,
       username: true,
@@ -70,7 +76,11 @@ adminRouter.get('/users', async (_req, res) => {
       nickname: true,
       role: true,
       phone: true,
-      whatsappOptIn: true
+      whatsappOptIn: true,
+      passkeyRegistered: true,
+      points: true,
+      isActive: true,
+      createdAt: true
     },
     orderBy: [{ role: 'asc' }, { displayName: 'asc' }]
   });
@@ -118,6 +128,41 @@ adminRouter.post('/users/:userId/reset-password', async (req: Request, res: Resp
     },
     whatsapp
   });
+});
+
+adminRouter.post('/users/:userId/reset-passkey', async (req: Request, res: Response) => {
+  const userId = String(req.params.userId);
+  try {
+    const result = await adminResetUserPasskey(userId);
+    res.json({ success: true, ...result });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message });
+  }
+});
+
+adminRouter.patch('/users/:userId', async (req: Request, res: Response) => {
+  const userId = String(req.params.userId);
+  const { isActive } = req.body as { isActive?: boolean };
+  if (typeof isActive !== 'boolean') {
+    return res.status(400).json({ success: false, error: 'isActive requerido' });
+  }
+  try {
+    const result = await adminSetUserActive(userId, isActive);
+    res.json({ success: true, ...result });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message });
+  }
+});
+
+adminRouter.delete('/users/:userId', async (req: Request, res: Response) => {
+  const userId = String(req.params.userId);
+  const adminId = (req as Request & { user: { userId: string } }).user.userId;
+  try {
+    await adminDeleteUser(userId, adminId);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message });
+  }
 });
 
 adminRouter.post('/invites', async (req: Request, res: Response) => {

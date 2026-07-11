@@ -67,6 +67,7 @@ model Invite {
   code      String    @unique
   inviterId String
   inviter   User      @relation("InvitesSent", fields: [inviterId], references: [id], onDelete: Cascade)
+  guestName String?
   usedById  String?
   usedAt    DateTime?
   expiresAt DateTime

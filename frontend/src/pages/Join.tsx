@@ -33,6 +33,7 @@ export default function Join() {
   const [inviterName, setInviterName] = useState('');
   const [inviterEmoji, setInviterEmoji] = useState('😎');
   const [inviterAvatarUrl, setInviterAvatarUrl] = useState<string | null>(null);
+  const [suggestedName, setSuggestedName] = useState('');
 
   const [step, setStep] = useState<Step>(0);
   const [loading, setLoading] = useState(false);
@@ -60,6 +61,11 @@ export default function Join() {
         setInviterName(r.inviterName || 'Un miembro');
         setInviterEmoji(r.inviterEmoji || '😎');
         setInviterAvatarUrl(r.inviterAvatarUrl || null);
+        const guest = (r as { guestName?: string }).guestName?.trim();
+        if (guest) {
+          setSuggestedName(guest);
+          setForm((f) => (f.displayName ? f : { ...f, displayName: guest }));
+        }
       }
     });
   }, [code]);
@@ -209,7 +215,10 @@ export default function Join() {
                 <p className="text-sm font-bold flex items-center gap-2"><UserRound size={16} /> Tus datos</p>
                 <div>
                   <label className="text-xs text-white/40 mb-1 block">Nombre completo</label>
-                  <input value={form.displayName} onChange={(e) => set('displayName', e.target.value)} required placeholder="Ej. Juan Pérez" />
+                  <input value={form.displayName} onChange={(e) => set('displayName', e.target.value)} required placeholder={suggestedName ? suggestedName : 'Ej. Juan Pérez'} autoComplete="name" />
+                  {suggestedName && !form.displayName && (
+                    <p className="text-[10px] text-reto-cyan mt-1">Sugerido: {suggestedName}</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs text-white/40 mb-1 block">Apodo (opcional)</label>

@@ -6,6 +6,7 @@ import { PwaInstallGate } from './components/PwaInstallGate';
 import { SetupGate } from './components/SetupGate';
 import { RouteFallback } from './components/RouteFallback';
 import { SwUpdateToast } from './components/SwUpdateToast';
+import { MasterRoute } from './components/MasterRoute';
 import { isSetupDone } from './lib/setup';
 
 const Join = lazy(() => import('./pages/Join'));
@@ -14,6 +15,7 @@ const Hub = lazy(() => import('./pages/Hub'));
 const Arena = lazy(() => import('./pages/Arena'));
 const Tienda = lazy(() => import('./pages/Tienda'));
 const Admin = lazy(() => import('./pages/Admin'));
+const AdminUsers = lazy(() => import('./pages/AdminUsers'));
 const WhatsAppAdmin = lazy(() => import('./pages/WhatsAppAdmin'));
 const Eventos = lazy(() => import('./pages/Eventos'));
 const Cofre = lazy(() => import('./pages/Cofre'));
@@ -61,8 +63,9 @@ function AppRoutes() {
         <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
         <Route path="/perfil" element={<PrivateRoute><Perfil /></PrivateRoute>} />
         <Route path="/finale" element={<PrivateRoute><Finale /></PrivateRoute>} />
-        <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
-        <Route path="/admin/whatsapp" element={<PrivateRoute><WhatsAppAdmin /></PrivateRoute>} />
+        <Route path="/admin" element={<PrivateRoute><MasterRoute><Lazy><Admin /></Lazy></MasterRoute></PrivateRoute>} />
+        <Route path="/admin/users" element={<PrivateRoute><MasterRoute><Lazy><AdminUsers /></Lazy></MasterRoute></PrivateRoute>} />
+        <Route path="/admin/whatsapp" element={<PrivateRoute><MasterRoute><Lazy><WhatsAppAdmin /></Lazy></MasterRoute></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

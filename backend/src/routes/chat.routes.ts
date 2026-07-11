@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { resolvePublicName } from '../lib/user-display.js';
 
 export const chatRouter = Router();
 
@@ -22,7 +23,7 @@ chatRouter.get('/messages', async (req: Request, res: Response) => {
     take: limit,
     include: {
       user: {
-        select: { id: true, displayName: true, nickname: true, avatarEmoji: true, avatarUrl: true }
+        select: { id: true, displayName: true, nickname: true, username: true, avatarEmoji: true, avatarUrl: true }
       }
     }
   });
@@ -38,7 +39,7 @@ chatRouter.get('/messages', async (req: Request, res: Response) => {
       isOwn: m.userId === me,
       user: {
         id: m.user.id,
-        name: m.user.nickname || m.user.displayName,
+        name: resolvePublicName(m.user),
         emoji: m.user.avatarEmoji,
         avatarUrl: m.user.avatarUrl
       }
@@ -59,7 +60,7 @@ chatRouter.post('/messages', async (req: Request, res: Response) => {
       data: { userId, body },
       include: {
         user: {
-          select: { id: true, displayName: true, nickname: true, avatarEmoji: true, avatarUrl: true }
+          select: { id: true, displayName: true, nickname: true, username: true, avatarEmoji: true, avatarUrl: true }
         }
       }
     });
@@ -73,14 +74,14 @@ chatRouter.post('/messages', async (req: Request, res: Response) => {
         isOwn: true,
         user: {
           id: msg.user.id,
-          name: msg.user.nickname || msg.user.displayName,
+          name: resolvePublicName(msg.user),
           emoji: msg.user.avatarEmoji,
           avatarUrl: msg.user.avatarUrl
         }
       }
     });
 
-    const senderName = msg.user.nickname || msg.user.displayName;
+    const senderName = resolvePublicName(msg.user);
     void (async () => {
       const { sendPushToUser } = await import('../lib/push.js');
       const subs = await prisma.pushSubscription.findMany({

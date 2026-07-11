@@ -147,7 +147,7 @@ export const api = {
   adminRevealConfessions: () => request<{ success: boolean }>('/admin/reveal-confessions', { method: 'POST' }),
   adminNotifyEvent: () => request<{ success: boolean; sent: number }>('/admin/notify-event', { method: 'POST' }),
   adminUpdateRedemption: (id: string, status: string) => request<{ success: boolean }>(`/admin/redemptions/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  adminUsers: () =>
+  adminUsers: (includeInactive = false) =>
     request<{
       success: boolean;
       users: {
@@ -159,8 +159,12 @@ export const api = {
         role: string;
         phone?: string | null;
         whatsappOptIn?: boolean;
+        passkeyRegistered?: boolean;
+        points?: number;
+        isActive?: boolean;
+        createdAt?: string;
       }[];
-    }>('/admin/users'),
+    }>(`/admin/users${includeInactive ? '?includeInactive=1' : ''}`),
   adminResetPassword: (userId: string, newPassword: string) =>
     request<{
       success: boolean;
@@ -168,6 +172,18 @@ export const api = {
       whatsapp?: import('./whatsapp').WhatsAppResult;
       error?: string;
     }>(`/admin/users/${userId}/reset-password`, { method: 'POST', body: JSON.stringify({ newPassword }) }),
+  adminResetPasskey: (userId: string) =>
+    request<{ success: boolean; passkeyRegistered?: boolean; error?: string }>(
+      `/admin/users/${userId}/reset-passkey`,
+      { method: 'POST' }
+    ),
+  adminSetUserActive: (userId: string, isActive: boolean) =>
+    request<{ success: boolean; isActive?: boolean; error?: string }>(
+      `/admin/users/${userId}`,
+      { method: 'PATCH', body: JSON.stringify({ isActive }) }
+    ),
+  adminDeleteUser: (userId: string) =>
+    request<{ success: boolean; error?: string }>(`/admin/users/${userId}`, { method: 'DELETE' }),
 
   radioCurrent: () =>
     request<{
