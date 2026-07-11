@@ -67,6 +67,7 @@ function sanitizeUser(user: {
   bgUrl?: string | null;
   phone?: string | null;
   whatsappOptIn?: boolean;
+  pushOptIn?: boolean;
 }) {
   return {
     id: user.id,
@@ -84,6 +85,7 @@ function sanitizeUser(user: {
     bgUrl: user.bgUrl ?? null,
     phone: user.phone ?? null,
     whatsappOptIn: user.whatsappOptIn ?? false,
+    pushOptIn: user.pushOptIn ?? false,
     hasPasskey: user.passkeyRegistered
   };
 }

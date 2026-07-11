@@ -6,6 +6,7 @@ import { PwaInstallGate } from './components/PwaInstallGate';
 import { SetupGate } from './components/SetupGate';
 import { RouteFallback } from './components/RouteFallback';
 import { SwUpdateToast } from './components/SwUpdateToast';
+import { PushAutoSync } from './components/PushAutoSync';
 import { MasterRoute } from './components/MasterRoute';
 import { isSetupDone } from './lib/setup';
 
@@ -76,6 +77,7 @@ export default function App() {
   return (
     <>
       <BackgroundMusic />
+      <PushAutoSync />
       <SwUpdateToast />
       <AppRoutes />
     </>

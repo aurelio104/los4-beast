@@ -10,6 +10,7 @@ import { PasswordInput } from '../components/PasswordInput';
 import { api } from '../lib/api';
 import { User } from '../types';
 import { isSetupDone } from '../lib/setup';
+import { hydratePushFromServer } from '../hooks/usePushNotifications';
 
 export default function Login() {
   const navigate = useNavigate();

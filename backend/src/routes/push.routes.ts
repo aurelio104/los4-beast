@@ -21,11 +21,14 @@ pushRouter.post('/subscribe', authMiddleware, async (req: Request, res: Response
     if (!endpoint || !keys?.p256dh || !keys?.auth) {
       return res.status(400).json({ success: false, error: 'Suscripción inválida' });
     }
-    await prisma.pushSubscription.upsert({
-      where: { userId },
-      update: { endpoint, p256dh: keys.p256dh, auth: keys.auth },
-      create: { userId, endpoint, p256dh: keys.p256dh, auth: keys.auth }
-    });
+    await prisma.$transaction([
+      prisma.pushSubscription.upsert({
+        where: { userId },
+        update: { endpoint, p256dh: keys.p256dh, auth: keys.auth },
+        create: { userId, endpoint, p256dh: keys.p256dh, auth: keys.auth }
+      }),
+      prisma.user.update({ where: { id: userId }, data: { pushOptIn: true } })
+    ]);
     res.json({ success: true });
   } catch {
     res.status(500).json({ success: false, error: 'Error al suscribir' });
@@ -34,8 +37,28 @@ pushRouter.post('/subscribe', authMiddleware, async (req: Request, res: Response
 
 pushRouter.post('/unsubscribe', authMiddleware, async (req: Request, res: Response) => {
   const userId = (req as Request & { user: { userId: string } }).user.userId;
-  await prisma.pushSubscription.deleteMany({ where: { userId } });
+  await prisma.$transaction([
+    prisma.pushSubscription.deleteMany({ where: { userId } }),
+    prisma.user.update({ where: { id: userId }, data: { pushOptIn: false } })
+  ]);
   res.json({ success: true });
+});
+
+pushRouter.get('/status', authMiddleware, async (req: Request, res: Response) => {
+  const userId = (req as Request & { user: { userId: string } }).user.userId;
+  const [sub, user] = await Promise.all([
+    prisma.pushSubscription.findUnique({ where: { userId } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { pushOptIn: true } })
+  ]);
+  const pushOptIn = user?.pushOptIn === true || !!sub;
+  if (sub && user && !user.pushOptIn) {
+    await prisma.user.update({ where: { id: userId }, data: { pushOptIn: true } });
+  }
+  res.json({
+    success: true,
+    serverSubscribed: !!sub,
+    pushOptIn
+  });
 });
 
 pushRouter.post('/broadcast', authMiddleware, requireMaster, async (req: Request, res: Response) => {

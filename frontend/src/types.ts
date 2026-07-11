@@ -14,6 +14,7 @@ export interface User {
   bgUrl?: string | null;
   phone?: string | null;
   whatsappOptIn?: boolean;
+  pushOptIn?: boolean;
   hasPasskey: boolean;
 }
 

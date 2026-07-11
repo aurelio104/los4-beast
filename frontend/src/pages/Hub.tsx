@@ -23,6 +23,7 @@ import { HUB_ACTION_INFO, HubActionKey } from '../lib/actionInfo';
 import { User as UserType, FeedItem, Player, RetoEvent, PlayerContext } from '../types';
 import { celebrateWin, celebrateBetrayal, celebrateCoin } from '../lib/celebrate';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { hydratePushFromServer } from '../hooks/usePushNotifications';
 import { useLivePoll } from '../hooks/useLivePoll';
 import { useNotifications } from '../components/NotificationProvider';
 import { shareMemberInvite } from '../lib/inviteShare';
@@ -68,6 +69,7 @@ export default function Hub() {
     if (me.success) {
       setUser(me.user as UserType);
       localStorage.setItem('user', JSON.stringify(me.user));
+      void hydratePushFromServer(me.user as UserType);
     } else {
       setUser(JSON.parse(stored));
     }

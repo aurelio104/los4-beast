@@ -126,6 +126,7 @@ export const api = {
 
   pushVapidPublic: () => request<{ success: boolean; publicKey?: string; error?: string }>('/push/vapid-public'),
   pushSubscribe: (body: { endpoint: string; keys: { p256dh: string; auth: string } }) => request<{ success: boolean }>('/push/subscribe', { method: 'POST', body: JSON.stringify(body) }),
+  pushStatus: () => request<{ success: boolean; serverSubscribed?: boolean; pushOptIn?: boolean }>('/push/status'),
   pushUnsubscribe: () => request<{ success: boolean }>('/push/unsubscribe', { method: 'POST' }),
   pushTest: () => request<{ success: boolean }>('/push/test', { method: 'POST' }),
   pushBroadcast: (title: string, body: string) => request<{ success: boolean; sent: number }>('/push/broadcast', { method: 'POST', body: JSON.stringify({ title, body }) }),

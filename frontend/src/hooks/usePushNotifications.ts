@@ -1,11 +1,41 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import {
+  ensurePushPersisted,
+  getPushOptIn,
+  setPushOptIn,
+  shouldKeepPushActive,
+  syncPushSubscription
+} from '../lib/push-sync';
 
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = window.atob(base64);
-  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem('user') || '{}') as { id?: string; pushOptIn?: boolean };
+  } catch {
+    return {};
+  }
+}
+
+function patchStoredUser(partial: { pushOptIn?: boolean }) {
+  try {
+    const user = getStoredUser();
+    localStorage.setItem('user', JSON.stringify({ ...user, ...partial }));
+  } catch {
+    /* ignore */
+  }
+}
+
+async function readSubscribedState(): Promise<boolean> {
+  const user = getStoredUser();
+  if (Notification.permission === 'denied') return false;
+  if (shouldKeepPushActive(user)) return true;
+  try {
+    const reg = await navigator.serviceWorker?.ready;
+    const sub = await reg?.pushManager.getSubscription();
+    return !!sub;
+  } catch {
+    return false;
+  }
 }
 
 export function usePushNotifications() {
@@ -13,12 +43,14 @@ export function usePushNotifications() {
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const refresh = useCallback(async () => {
+    setSubscribed(await readSubscribedState());
+  }, []);
+
   useEffect(() => {
     setSupported('Notification' in window && 'serviceWorker' in navigator);
-    navigator.serviceWorker?.ready.then((reg) =>
-      reg.pushManager.getSubscription().then((sub) => setSubscribed(!!sub))
-    ).catch(() => {});
-  }, []);
+    void refresh();
+  }, [refresh]);
 
   const subscribe = useCallback(async () => {
     if (!supported || loading) return false;
@@ -27,22 +59,16 @@ export function usePushNotifications() {
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') return false;
 
-      const reg = await navigator.serviceWorker.ready;
-      const vapid = await api.pushVapidPublic();
-      if (!vapid.success || !vapid.publicKey) return false;
+      const ok = await syncPushSubscription();
+      if (!ok) return false;
 
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapid.publicKey)
-      });
+      const user = getStoredUser();
+      if (user.id) setPushOptIn(user.id, true);
+      patchStoredUser({ pushOptIn: true });
 
-      const json = sub.toJSON();
-      await api.pushSubscribe({
-        endpoint: json.endpoint!,
-        keys: { p256dh: json.keys!.p256dh!, auth: json.keys!.auth! }
-      });
       await api.pushTest();
       setSubscribed(true);
+
       const { playNotificationSound } = await import('../lib/sounds');
       const { haptic } = await import('../lib/haptics');
       const { syncAppBadge } = await import('../lib/notification-center');
@@ -65,6 +91,11 @@ export function usePushNotifications() {
       const sub = await reg.pushManager.getSubscription();
       if (sub) await sub.unsubscribe();
       await api.pushUnsubscribe();
+
+      const user = getStoredUser();
+      if (user.id) setPushOptIn(user.id, false);
+      patchStoredUser({ pushOptIn: false });
+
       setSubscribed(false);
       return true;
     } catch {
@@ -74,5 +105,16 @@ export function usePushNotifications() {
     }
   }, [loading]);
 
-  return { supported, subscribed, loading, subscribe, unsubscribe };
+  return { supported, subscribed, loading, subscribe, unsubscribe, refresh };
+}
+
+/** Sincroniza pushOptIn desde /me y re-registra si el usuario ya lo tenía activo. */
+export async function hydratePushFromServer(user: { id: string; pushOptIn?: boolean }) {
+  if (user.pushOptIn) {
+    setPushOptIn(user.id, true);
+    patchStoredUser({ pushOptIn: true });
+  } else if (getPushOptIn(user.id)) {
+    patchStoredUser({ pushOptIn: true });
+  }
+  await ensurePushPersisted(user);
 }
