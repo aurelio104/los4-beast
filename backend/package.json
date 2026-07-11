@@ -7,6 +7,7 @@
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
     "db:seed": "tsx src/prisma/seed.ts",
+    "db:reset": "tsx src/prisma/reset.ts",
     "db:push": "prisma db push",
     "vapid:generate": "tsx scripts/generate-vapid.ts"
   },

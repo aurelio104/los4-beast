@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma.js';
 import { authMiddleware, requireMaster } from '../middleware/auth.js';
 import { broadcastPush } from '../lib/push.js';
 import { createMemberInvite } from '../lib/invites.js';
+import { resetGameToZero } from '../lib/resetGame.js';
 
 export const adminRouter = Router();
 
@@ -65,6 +66,23 @@ adminRouter.patch('/redemptions/:id', async (req: Request, res: Response) => {
   if (!status) return res.status(400).json({ success: false, error: 'status requerido' });
   await prisma.redemption.update({ where: { id }, data: { status } });
   res.json({ success: true });
+});
+
+adminRouter.post('/reset-all', async (req: Request, res: Response) => {
+  const { confirm } = req.body as { confirm?: string };
+  if (confirm !== 'RETO_ZERO') {
+    return res.status(400).json({
+      success: false,
+      error: 'Confirma con { "confirm": "RETO_ZERO" }'
+    });
+  }
+
+  try {
+    const summary = await resetGameToZero();
+    res.json({ success: true, message: 'Producción reseteada a cero', summary });
+  } catch (e) {
+    res.status(500).json({ success: false, error: (e as Error).message });
+  }
 });
 
 adminRouter.post('/notify-event', async (_req, res) => {

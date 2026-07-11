@@ -21,7 +21,7 @@ async function main() {
       passwordHash,
       displayName: 'Admin',
       role: 'MASTER',
-      points: 9999
+      points: 0
     }
   });
 
