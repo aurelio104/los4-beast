@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { serviceWorkerReady } from '../lib/chunkRecovery';
 import { isIOS, isStandalone } from '../lib/pwa';
 import {
   ensurePushPersisted,
@@ -32,7 +33,7 @@ async function readSubscribedState(): Promise<boolean> {
   if (Notification.permission === 'denied') return false;
   if (shouldKeepPushActive(user)) return true;
   try {
-    const reg = await navigator.serviceWorker?.ready;
+    const reg = await serviceWorkerReady();
     const sub = await reg?.pushManager.getSubscription();
     return !!sub;
   } catch {
@@ -114,7 +115,8 @@ export function usePushNotifications() {
     if (loading) return false;
     setLoading(true);
     try {
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await serviceWorkerReady();
+      if (!reg) return false;
       const sub = await reg.pushManager.getSubscription();
       if (sub) await sub.unsubscribe();
       await api.pushUnsubscribe();

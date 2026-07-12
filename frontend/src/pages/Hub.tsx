@@ -80,41 +80,46 @@ export default function Hub() {
     storyGroupsWithContent.some((g) => g.userId === storyViewerId);
 
   const load = useCallback(async () => {
-    const stored = localStorage.getItem('user');
-    if (!stored) { navigate('/login'); return; }
-
-    let cached: UserType;
     try {
-      cached = JSON.parse(stored) as UserType;
-    } catch {
-      navigate('/login');
-      return;
-    }
-
-    setUser((prev) => prev ?? cached);
-
-    try {
-      const snap = await api.hubSnapshot();
-
-      if (snap.success) {
-        setLoadError(null);
-        setUser(snap.user as UserType);
-        localStorage.setItem('user', JSON.stringify(snap.user));
-        void hydratePushFromServer(snap.user as UserType);
-        setFeed((snap.feed || []) as FeedItem[]);
-        setPlayers((snap.players || []) as Player[]);
-        setDaysLeft(snap.daysUntilChallenge);
-        setEventActive(snap.isEventActive);
-        setCurrentEvent(snap.event as RetoEvent);
-        if (snap.player) setPlayerCtx(snap.player);
-        setVoteTally(snap.tally || []);
-        setBribeOffer({ ...snap.bribe.offer, alreadyAccepted: snap.bribe.alreadyAccepted });
-        setStoryGroups(snap.stories || []);
-      } else {
-        setLoadError((snap as { error?: string }).error || 'No se pudieron actualizar los datos');
+      const stored = localStorage.getItem('user');
+      if (!stored) {
+        navigate('/login');
+        return;
       }
-    } catch {
-      setLoadError('Sin conexión — mostrando datos guardados');
+
+      let cached: UserType;
+      try {
+        cached = JSON.parse(stored) as UserType;
+      } catch {
+        navigate('/login');
+        return;
+      }
+
+      setUser((prev) => prev ?? cached);
+
+      try {
+        const snap = await api.hubSnapshot();
+
+        if (snap.success) {
+          setLoadError(null);
+          setUser(snap.user as UserType);
+          localStorage.setItem('user', JSON.stringify(snap.user));
+          void hydratePushFromServer(snap.user as UserType);
+          setFeed((snap.feed || []) as FeedItem[]);
+          setPlayers((snap.players || []) as Player[]);
+          setDaysLeft(snap.daysUntilChallenge);
+          setEventActive(snap.isEventActive);
+          setCurrentEvent(snap.event as RetoEvent);
+          if (snap.player) setPlayerCtx(snap.player);
+          setVoteTally(snap.tally || []);
+          setBribeOffer({ ...snap.bribe.offer, alreadyAccepted: snap.bribe.alreadyAccepted });
+          setStoryGroups(snap.stories || []);
+        } else {
+          setLoadError((snap as { error?: string }).error || 'No se pudieron actualizar los datos');
+        }
+      } catch {
+        setLoadError('Sin conexión — mostrando datos guardados');
+      }
     } finally {
       setStoriesLoading(false);
       setBooting(false);

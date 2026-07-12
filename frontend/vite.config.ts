@@ -25,7 +25,9 @@ export default defineConfig({
         importScripts: ['push-handler.js'],
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/api\//],
-        navigationPreload: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigationPreload: false,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,avif,woff2,webmanifest}'],
         globIgnores: [
           '**/wallpapers/*.mp4',
@@ -63,8 +65,8 @@ export default defineConfig({
             handler: 'NetworkFirst',
             options: {
               cacheName: 'reto-pages',
-              networkTimeoutSeconds: 4,
-              expiration: { maxEntries: 12, maxAgeSeconds: 60 * 60 * 24 }
+              networkTimeoutSeconds: 10,
+              expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 6 }
             }
           }
         ]

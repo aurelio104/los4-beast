@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { ensurePushPersisted } from '../lib/push-sync';
+import { isIOS, isStandalone } from '../lib/pwa';
 
 type UpdateSW = (reloadPage?: boolean) => Promise<void>;
 
@@ -34,6 +35,12 @@ export function SwUpdateToast() {
           const fn = registerSW({
             immediate: true,
             onNeedRefresh() {
+              if (isIOS() || isStandalone()) {
+                void ensurePushPersisted(getStoredUser()).finally(() => {
+                  void fn(true);
+                });
+                return;
+              }
               setNeedRefresh(true);
             },
             onRegisteredSW(_swUrl, registration) {
