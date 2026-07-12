@@ -4,6 +4,7 @@
  * Requiere: dev server + build opcional. Uso: node scripts/e2e-mobile.mjs
  */
 import { chromium, devices } from 'playwright';
+import { buildIphoneDeviceMatrix, assertBottomNavAtFloor } from './e2e-iphone-devices.mjs';
 
 const WEB = process.env.WEB_BASE || 'http://127.0.0.1:3011';
 const API = process.env.API_BASE || 'http://127.0.0.1:3010/api';
@@ -169,20 +170,15 @@ async function main() {
     await page.close();
   }
 
-  // --- Multi-dispositivo: barra pegada al fondo en todas las rutas con tab bar ---
-  const DEVICE_MATRIX = [
-    { label: 'iPhone SE', key: 'iPhone SE' },
-    { label: 'iPhone 13', key: 'iPhone 13' },
-    { label: 'iPhone 14 Pro Max', key: 'iPhone 14 Pro Max' },
-    { label: 'Pixel 5', key: 'Pixel 5' },
-    { label: 'Galaxy S9+', key: 'Galaxy S9+' }
-  ];
+  // --- Multi-dispositivo: iPhone 15–17 + Android — nav al fondo desde el primer frame ---
+  const DEVICE_MATRIX = buildIphoneDeviceMatrix(devices);
   const TAB_PATHS = ['/', '/arena', '/cofre', '/tienda', '/perfil'];
 
-  for (const { label, key } of DEVICE_MATRIX) {
-    const device = devices[key];
+  for (const entry of DEVICE_MATRIX) {
+    const device = entry.device ?? devices[entry.key];
+    const label = entry.label;
     if (!device) {
-      bad(`Dispositivo ${label}`, 'no encontrado en Playwright');
+      bad(`Dispositivo ${label}`, 'no encontrado');
       continue;
     }
     const ctx = await browser.newContext({ ...device, locale: 'es-ES' });
@@ -197,28 +193,12 @@ async function main() {
         { token, user }
       );
       await page.goto(`${WEB}${path}`, { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(600);
-      const nav = page.locator('.bottom-nav-bar');
-      if (!(await nav.isVisible())) {
-        bad(`${label} ${path}: nav visible`);
-        await page.close();
-        continue;
-      }
-      const metrics = await nav.evaluate((el) => {
-        const style = getComputedStyle(el);
-        const rect = el.getBoundingClientRect();
-        const vh = window.innerHeight;
-        return {
-          bottom: style.bottom,
-          position: style.position,
-          gap: Math.round(vh - rect.bottom)
-        };
-      });
-      if (metrics.position === 'fixed' && metrics.bottom === '0px' && metrics.gap <= 2) {
-        ok(`${label} ${path}: nav al fondo`, `gap=${metrics.gap}px`);
-      } else {
-        bad(`${label} ${path}: nav al fondo`, JSON.stringify(metrics));
-      }
+      const instant = await assertBottomNavAtFloor(page, label, path, { immediate: true });
+      if (instant.ok) ok(`${label} ${path}: nav abajo al abrir`, instant.detail);
+      else bad(`${label} ${path}: nav abajo al abrir`, instant.detail);
+      const settled = await assertBottomNavAtFloor(page, label, path);
+      if (settled.ok) ok(`${label} ${path}: nav al fondo`, settled.detail);
+      else bad(`${label} ${path}: nav al fondo`, settled.detail);
       await page.close();
     }
     await ctx.close();

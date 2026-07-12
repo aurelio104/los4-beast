@@ -328,6 +328,10 @@ async function testMobileReadiness() {
     ['TabBarHost portal', existsSync(join(process.cwd(), 'frontend', 'src', 'components', 'TabBarHost.tsx')) && readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'TabBarHost.tsx'), 'utf8').includes('createPortal')],
     ['MainTabLayout portal shell', readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'MainTabLayout.tsx'), 'utf8').includes('createPortal')],
     ['Safe area sync lib', existsSync(join(process.cwd(), 'frontend', 'src', 'lib', 'safeArea.ts'))],
+    ['iPhone 15–17 E2E matrix', existsSync(join(process.cwd(), 'scripts', 'e2e-iphone-devices.mjs'))],
+    ['iPhone 16 Pro startup splash', readFileSync(join(process.cwd(), 'frontend', 'index.html'), 'utf8').includes('device-width: 402px') && readFileSync(join(process.cwd(), 'frontend', 'index.html'), 'utf8').includes('device-height: 874px')],
+    ['iPhone 16 Pro Max startup splash', readFileSync(join(process.cwd(), 'frontend', 'index.html'), 'utf8').includes('device-width: 440px') && readFileSync(join(process.cwd(), 'frontend', 'index.html'), 'utf8').includes('device-height: 956px')],
+    ['iPhone 15 startup splash', readFileSync(join(process.cwd(), 'frontend', 'index.html'), 'utf8').includes('device-width: 393px') && readFileSync(join(process.cwd(), 'frontend', 'index.html'), 'utf8').includes('device-height: 852px')],
     ['beach wallpaper asset', existsSync(join(process.cwd(), 'frontend', 'public', 'wallpapers', 'beach-poster.jpg')) || existsSync(join(process.cwd(), 'frontend', 'dist', 'wallpapers', 'beach-poster.jpg'))],
     ['no beast URL in backend', !readFileSync(join(process.cwd(), 'backend', 'src', 'lib', 'whatsapp.ts'), 'utf8').includes('beast')]
   ];

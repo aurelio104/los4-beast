@@ -29,6 +29,10 @@ export function syncSafeAreaInsets() {
 
 export function installSafeAreaListeners() {
   syncSafeAreaInsets();
+  requestAnimationFrame(() => {
+    syncSafeAreaInsets();
+    requestAnimationFrame(syncSafeAreaInsets);
+  });
   const run = () => syncSafeAreaInsets();
   window.addEventListener('resize', run, { passive: true });
   window.addEventListener('orientationchange', () => window.setTimeout(run, 80));
