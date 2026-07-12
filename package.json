@@ -15,10 +15,14 @@
     "db:push": "pnpm -C backend exec prisma db push",
     "db:seed": "pnpm -C backend db:seed",
     "test:smoke": "node scripts/smoke-test.mjs",
+    "test:e2e": "node scripts/e2e-mobile.mjs",
+    "test:e2e:story": "node scripts/e2e-story-open.mjs",
+    "test:all": "node scripts/smoke-test.mjs && node scripts/e2e-mobile.mjs",
     "install:all": "pnpm install"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
+    "playwright": "1.49.1",
     "wait-on": "^9.0.10"
   },
   "engines": {

@@ -314,6 +314,15 @@ async function testMobileReadiness() {
     ['Story viewer portal + dialog', readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'StoryViewerModal.tsx'), 'utf8').includes('createPortal') && readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'StoryViewerModal.tsx'), 'utf8').includes('role="dialog"')],
     ['Story strip opens viewer', readFileSync(join(process.cwd(), 'frontend', 'src', 'pages', 'Hub.tsx'), 'utf8').includes('setStoryViewerId') && readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'StoryStrip.tsx'), 'utf8').includes('onOpenViewer')],
     ['Story viewer no reset on poll', !readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'StoryViewerModal.tsx'), 'utf8').includes('[initialUserId, groups]')],
+    ['Story open guard', readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'StoryViewerModal.tsx'), 'utf8').includes('OPEN_GUARD_MS')],
+    ['Story black background', readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').includes('.story-viewer__stage') && readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').match(/story-viewer__stage[\s\S]*background:\s*#000/)],
+    ['Hub video app-shell-bg', readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').includes('.app-shell-bg') && readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'AppShell.tsx'), 'utf8').includes('app-shell-bg')],
+    ['Hub layout transparent', readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').includes('hub-layout') && readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').includes('background: transparent')],
+    ['Video full auto-play', readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'BeachVideoBackground.tsx'), 'utf8').includes("variant === 'full'")],
+    ['Story cleanup body class', readFileSync(join(process.cwd(), 'frontend', 'src', 'pages', 'Hub.tsx'), 'utf8').includes('remove(\'story-viewer-open\')')],
+    ['BottomNav component', existsSync(join(process.cwd(), 'frontend', 'src', 'components', 'BottomNav.tsx'))],
+    ['MainTabLayout', existsSync(join(process.cwd(), 'frontend', 'src', 'components', 'MainTabLayout.tsx'))],
+    ['beach wallpaper asset', existsSync(join(process.cwd(), 'frontend', 'public', 'wallpapers', 'beach-poster.jpg')) || existsSync(join(process.cwd(), 'frontend', 'dist', 'wallpapers', 'beach-poster.jpg'))],
     ['no beast URL in backend', !readFileSync(join(process.cwd(), 'backend', 'src', 'lib', 'whatsapp.ts'), 'utf8').includes('beast')]
   ];
   for (const [name, ok] of checks) {

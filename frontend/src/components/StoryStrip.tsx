@@ -22,7 +22,7 @@ export function StoryStrip({
   const others = groups.filter((g) => !g.isOwn);
 
   const handleOwnClick = () => {
-    if (ownGroup?.stories.length) onOpenViewer(currentUser.id);
+    if (ownGroup?.stories.length) onOpenViewer(ownGroup.userId);
     else onOpenCreate();
   };
 

@@ -53,7 +53,9 @@ export function AppShell({
       {skipFullBackground ? (
         <div className="app-shell-static" aria-hidden />
       ) : (
-        <BackgroundLayer mode={mode} customUrl={customUrl} variant="full" />
+        <div className="app-shell-bg" aria-hidden>
+          <BackgroundLayer mode={mode} customUrl={customUrl} variant="full" />
+        </div>
       )}
       <div className="noise-overlay" />
       <div className="relative z-10 min-h-dvh">{children}</div>

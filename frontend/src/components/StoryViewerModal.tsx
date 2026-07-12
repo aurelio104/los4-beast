@@ -6,10 +6,11 @@ import { StoryUserGroup, StoryViewer } from '../types';
 import { Avatar } from './Avatar';
 import { api } from '../lib/api';
 import { STORY_REACTIONS, storyReactionGlyph } from '../lib/storyReactions';
-import { useModalBackClose } from '../hooks/useModalBackClose';
+import { useModalBackClose, popModalHistory } from '../hooks/useModalBackClose';
 
 const STORY_DURATION_MS = 5000;
 const HOLD_PAUSE_MS = 180;
+const OPEN_GUARD_MS = 400;
 
 function igTimeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -46,9 +47,9 @@ export function StoryViewerModal({
   onGroupsChange,
   onAddStory
 }: StoryViewerModalProps) {
-  useModalBackClose(true, onClose);
-  const resolvedIndex = groups.findIndex((g) => g.userId === initialUserId);
-  const [userIndex, setUserIndex] = useState(() => Math.max(0, resolvedIndex));
+  const [userIndex, setUserIndex] = useState(() =>
+    Math.max(0, groups.findIndex((g) => g.userId === initialUserId))
+  );
   const [storyIndex, setStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [deleting, setDeleting] = useState(false);
@@ -61,16 +62,30 @@ export function StoryViewerModal({
   const [held, setHeld] = useState(false);
   const [floatEmoji, setFloatEmoji] = useState<string | null>(null);
   const [sentToast, setSentToast] = useState<string | null>(null);
+  const [inputReady, setInputReady] = useState(false);
   const sentToastTimer = useRef<number | null>(null);
   const timerRef = useRef<number | null>(null);
   const holdRef = useRef<number | null>(null);
   const viewedRef = useRef<Set<string>>(new Set());
   const touchStartY = useRef<number | null>(null);
 
-  const group = groups[userIndex];
-  const story = group?.stories[storyIndex];
-  const paused = showViewers || deleting || reacting || held || menuOpen;
+  const userIdx = groups.findIndex((g) => g.userId === initialUserId);
+  const activeUserIndex = userIdx >= 0 ? userIdx : userIndex;
+  const group = groups[activeUserIndex];
+  const safeStoryIndex =
+    group && group.stories.length
+      ? Math.min(storyIndex, group.stories.length - 1)
+      : 0;
+  const story = group?.stories[safeStoryIndex];
+  const paused = !inputReady || showViewers || deleting || reacting || held || menuOpen;
   const firstName = group?.displayName.split(' ')[0] ?? group?.displayName ?? '';
+
+  useModalBackClose(true, onClose);
+
+  const handleClose = useCallback(() => {
+    popModalHistory();
+    onClose();
+  }, [onClose]);
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -109,42 +124,68 @@ export function StoryViewerModal({
   }, [groups, onGroupsChange]);
 
   const goNext = useCallback(() => {
-    if (!group) return;
+    if (!group || !inputReady) return;
     setShowViewers(false);
     setMenuOpen(false);
-    if (storyIndex < group.stories.length - 1) {
+    if (safeStoryIndex < group.stories.length - 1) {
       setStoryIndex((i) => i + 1);
       setProgress(0);
       return;
     }
-    if (userIndex < groups.length - 1) {
+    if (activeUserIndex < groups.length - 1) {
       setUserIndex((i) => i + 1);
       setStoryIndex(0);
       setProgress(0);
       return;
     }
-    onClose();
-  }, [group, storyIndex, userIndex, groups.length, onClose]);
+    handleClose();
+  }, [group, safeStoryIndex, activeUserIndex, groups.length, handleClose, inputReady]);
 
   const goPrev = useCallback(() => {
+    if (!inputReady) return;
     setShowViewers(false);
     setMenuOpen(false);
-    if (storyIndex > 0) {
+    if (safeStoryIndex > 0) {
       setStoryIndex((i) => i - 1);
       setProgress(0);
       return;
     }
-    if (userIndex > 0) {
-      const prev = groups[userIndex - 1];
+    if (activeUserIndex > 0) {
+      const prev = groups[activeUserIndex - 1];
       setUserIndex((i) => i - 1);
       setStoryIndex(Math.max(0, prev.stories.length - 1));
       setProgress(0);
     }
-  }, [storyIndex, userIndex, groups]);
+  }, [safeStoryIndex, activeUserIndex, groups, inputReady]);
+
+  useEffect(() => {
+    const idx = groups.findIndex((g) => g.userId === initialUserId);
+    if (idx < 0) {
+      onClose();
+      return;
+    }
+    setUserIndex(idx);
+    setStoryIndex(0);
+    setProgress(0);
+    setShowViewers(false);
+    setMenuOpen(false);
+  }, [initialUserId]);
+
+  useEffect(() => {
+    const idx = groups.findIndex((g) => g.userId === initialUserId);
+    if (idx < 0) onClose();
+    else setUserIndex(idx);
+  }, [groups, initialUserId, onClose]);
+
+  useEffect(() => {
+    setInputReady(false);
+    const t = window.setTimeout(() => setInputReady(true), OPEN_GUARD_MS);
+    return () => window.clearTimeout(t);
+  }, [story?.id, initialUserId]);
 
   useEffect(() => {
     if (!story || paused) return;
-    if (!group.isOwn) markViewed(story.id);
+    if (!group?.isOwn) markViewed(story.id);
     setProgress(0);
     clearTimer();
     const started = Date.now();
@@ -156,30 +197,6 @@ export function StoryViewerModal({
     }, 50);
     return clearTimer;
   }, [story?.id, group?.isOwn, markViewed, goNext, paused]);
-
-  useEffect(() => {
-    const idx = groups.findIndex((g) => g.userId === initialUserId);
-    if (idx < 0) return;
-    setUserIndex(idx);
-    setStoryIndex(0);
-    setProgress(0);
-    setShowViewers(false);
-    setMenuOpen(false);
-  }, [initialUserId]);
-
-  useEffect(() => {
-    setUserIndex((prev) => {
-      const gid = groups[prev]?.userId;
-      if (gid === initialUserId) return prev;
-      const idx = groups.findIndex((g) => g.userId === initialUserId);
-      return idx >= 0 ? idx : prev;
-    });
-    setStoryIndex((prev) => {
-      const group = groups.find((g) => g.userId === initialUserId);
-      if (!group?.stories.length) return prev;
-      return Math.min(prev, group.stories.length - 1);
-    });
-  }, [groups, initialUserId]);
 
   useEffect(() => {
     setShowViewers(false);
@@ -203,14 +220,15 @@ export function StoryViewerModal({
   }, [story?.id, group?.isOwn]);
 
   useEffect(() => {
+    if (!story?.id) return;
     document.body.classList.add('story-viewer-open');
     return () => {
       document.body.classList.remove('story-viewer-open');
       if (sentToastTimer.current) window.clearTimeout(sentToastTimer.current);
     };
-  }, []);
+  }, [story?.id]);
 
-  if (resolvedIndex < 0 || !group || !story) return null;
+  if (userIdx < 0 || !group || !story) return null;
 
   const handleDelete = async () => {
     if (!group.isOwn || deleting) return;
@@ -223,7 +241,7 @@ export function StoryViewerModal({
       onGroupsChange(res.users);
       const own = res.users.find((g) => g.userId === group.userId);
       if (!own?.stories.length) {
-        onClose();
+        handleClose();
         return;
       }
       setStoryIndex(Math.min(storyIndex, own.stories.length - 1));
@@ -276,6 +294,7 @@ export function StoryViewerModal({
   };
 
   const onTouchStart = (e: React.TouchEvent) => {
+    if (!inputReady) return;
     touchStartY.current = e.touches[0]?.clientY ?? null;
     clearHold();
     holdRef.current = window.setTimeout(() => setHeld(true), HOLD_PAUSE_MS);
@@ -286,16 +305,18 @@ export function StoryViewerModal({
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
+    if (!inputReady) return;
     clearHold();
     if (touchStartY.current == null) return;
     const endY = e.changedTouches[0]?.clientY ?? touchStartY.current;
     const dy = endY - touchStartY.current;
-    if (dy > 72) onClose();
+    if (dy > 72) handleClose();
     else if (dy < -56 && group.isOwn) openViewers();
     touchStartY.current = null;
   };
 
   const onPointerDown = () => {
+    if (!inputReady) return;
     clearHold();
     holdRef.current = window.setTimeout(() => setHeld(true), HOLD_PAUSE_MS);
   };
@@ -303,14 +324,7 @@ export function StoryViewerModal({
   const onPointerUp = () => clearHold();
 
   return createPortal(
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="story-viewer"
-      role="dialog"
-      aria-modal="true"
-    >
+    <div className="story-viewer" role="dialog" aria-modal="true">
       <div className="story-viewer__veil" aria-hidden />
       <div
         className="story-viewer__stage absolute inset-0"
@@ -322,22 +336,16 @@ export function StoryViewerModal({
         onPointerLeave={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={story.id}
-            src={story.mediaUrl}
-            alt=""
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="story-viewer__img absolute inset-0 select-none"
-            draggable={false}
-          />
-        </AnimatePresence>
+        <img
+          key={story.id}
+          src={story.mediaUrl}
+          alt=""
+          className="story-viewer__img absolute inset-0 select-none"
+          draggable={false}
+        />
       </div>
 
-      {!showViewers && !menuOpen && (
+      {inputReady && !showViewers && !menuOpen && (
         <>
           <button type="button" className="story-viewer__tap story-viewer__tap--left" onClick={goPrev} aria-label="Anterior" />
           <button type="button" className="story-viewer__tap story-viewer__tap--right" onClick={goNext} aria-label="Siguiente" />
@@ -368,7 +376,7 @@ export function StoryViewerModal({
                 <div
                   className="story-viewer__progress-fill"
                   style={{
-                    width: i < storyIndex ? '100%' : i === storyIndex ? `${progress}%` : '0%'
+                    width: i < safeStoryIndex ? '100%' : i === safeStoryIndex ? `${progress}%` : '0%'
                   }}
                 />
               </div>
@@ -432,7 +440,7 @@ export function StoryViewerModal({
                   </AnimatePresence>
                 </div>
               )}
-              <button type="button" onClick={onClose} className="story-viewer__icon-btn" aria-label="Cerrar">
+              <button type="button" onClick={handleClose} className="story-viewer__icon-btn" aria-label="Cerrar">
                 <X size={26} strokeWidth={1.75} />
               </button>
             </div>
@@ -572,7 +580,7 @@ export function StoryViewerModal({
           </>
         )}
       </AnimatePresence>
-    </motion.div>,
+    </div>,
     document.body
   );
 }

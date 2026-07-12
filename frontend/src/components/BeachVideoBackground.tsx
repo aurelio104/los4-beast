@@ -66,6 +66,12 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
     const root = wrapRef.current;
     if (!root || !allowVideo || !motionOk || deferVideo) return;
 
+    if (variant === 'full') {
+      const video = videoRef.current;
+      if (video && !document.hidden) video.play().catch(() => {});
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         const video = videoRef.current;
@@ -81,7 +87,7 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
 
     observer.observe(root);
     return () => observer.disconnect();
-  }, [allowVideo, motionOk, deferVideo]);
+  }, [allowVideo, motionOk, deferVideo, variant]);
 
   useEffect(() => {
     const video = videoRef.current;

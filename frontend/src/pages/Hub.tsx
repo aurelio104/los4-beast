@@ -67,6 +67,18 @@ export default function Hub() {
   const [showCreateStory, setShowCreateStory] = useState(false);
   const nowPlaying = useNowPlaying();
 
+  const closeStoryViewer = useCallback(() => setStoryViewerId(null), []);
+  const openStoryViewer = useCallback((userId: string) => {
+    requestAnimationFrame(() => setStoryViewerId(userId));
+  }, []);
+  const closeCreateStory = useCallback(() => setShowCreateStory(false), []);
+  const openCreateStory = useCallback(() => setShowCreateStory(true), []);
+
+  const storyGroupsWithContent = storyGroups.filter((g) => g.stories.length > 0);
+  const canShowStoryViewer =
+    !!storyViewerId &&
+    storyGroupsWithContent.some((g) => g.userId === storyViewerId);
+
   const load = useCallback(async () => {
     const stored = localStorage.getItem('user');
     if (!stored) { navigate('/login'); return; }
@@ -110,6 +122,11 @@ export default function Hub() {
   }, [navigate]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!storyViewerId) document.body.classList.remove('story-viewer-open');
+  }, [storyViewerId]);
+
   useLivePoll(load, 30000);
 
   const showToast = (msg: string) => showAppToast(msg);
@@ -265,8 +282,8 @@ export default function Hub() {
             currentUser={user}
             groups={storyGroups}
             loading={storiesLoading}
-            onOpenCreate={() => setShowCreateStory(true)}
-            onOpenViewer={(userId) => setStoryViewerId(userId)}
+            onOpenCreate={openCreateStory}
+            onOpenViewer={openStoryViewer}
           />
 
           {eventActive && currentEvent && (
@@ -423,27 +440,29 @@ export default function Hub() {
       <AnimatePresence>
         {showCreateStory && (
           <StoryCreateModal
-            onClose={() => setShowCreateStory(false)}
+            onClose={closeCreateStory}
             onPublished={(groups, openViewer) => {
               setStoryGroups(groups);
-              if (openViewer && user) setStoryViewerId(user.id);
-            }}
-          />
-        )}
-        {storyViewerId && storyGroups.some((g) => g.userId === storyViewerId && g.stories.length > 0) && (
-          <StoryViewerModal
-            key={storyViewerId}
-            groups={storyGroups.filter((g) => g.stories.length > 0)}
-            initialUserId={storyViewerId}
-            onClose={() => setStoryViewerId(null)}
-            onGroupsChange={setStoryGroups}
-            onAddStory={() => {
-              setStoryViewerId(null);
-              setShowCreateStory(true);
+              const ownId = groups.find((g) => g.isOwn)?.userId;
+              if (openViewer && ownId) setStoryViewerId(ownId);
             }}
           />
         )}
       </AnimatePresence>
+
+      {canShowStoryViewer && storyViewerId && (
+        <StoryViewerModal
+          key={storyViewerId}
+          groups={storyGroupsWithContent}
+          initialUserId={storyViewerId}
+          onClose={closeStoryViewer}
+          onGroupsChange={setStoryGroups}
+          onAddStory={() => {
+            setStoryViewerId(null);
+            setShowCreateStory(true);
+          }}
+        />
+      )}
 
       <AnimatePresence>
         {showRenegotiate && (
