@@ -19,7 +19,8 @@ export function getVapidPublicKey() {
 
 export async function sendPushToUser(
   userId: string,
-  payload: { title: string; body: string; url?: string; tag?: string }
+  payload: { title: string; body: string; url?: string; tag?: string },
+  options?: { skipWhatsApp?: boolean }
 ) {
   let pushSent = 0;
   if (isPushConfigured()) {
@@ -46,10 +47,38 @@ export async function sendPushToUser(
     }
   }
 
+  if (options?.skipWhatsApp) {
+    return { sent: pushSent, whatsapp: { sent: false } };
+  }
+
   const { buildChangeAlertMessage, notifyUserWhatsApp } = await import('./whatsapp.js');
   const wa = await notifyUserWhatsApp(userId, buildChangeAlertMessage(payload.title, payload.body, payload.url));
 
   return { sent: pushSent, whatsapp: wa };
+}
+
+/** Avisa a todos (menos el autor) que hay historia nueva — solo push, sin WhatsApp. */
+export async function notifyNewStory(authorId: string, authorName: string) {
+  if (!isPushConfigured()) return { sent: 0, total: 0 };
+
+  const subs = await prisma.pushSubscription.findMany({
+    where: { userId: { not: authorId }, user: { isActive: true } }
+  });
+
+  const payload = {
+    title: `📸 ${authorName}`,
+    body: 'Publicó una nueva historia',
+    url: '/',
+    tag: 'stories'
+  };
+
+  let sent = 0;
+  for (const sub of subs) {
+    const r = await sendPushToUser(sub.userId, payload, { skipWhatsApp: true });
+    sent += r.sent;
+  }
+
+  return { sent, total: subs.length };
 }
 
 export async function broadcastPush(payload: { title: string; body: string; url?: string; tag?: string }) {

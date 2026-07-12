@@ -54,7 +54,7 @@ export default function Chat() {
   useEffect(() => {
     load();
   }, []);
-  useLivePoll(pollNew, 4000);
+  useLivePoll(pollNew, 8000);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });

@@ -55,6 +55,7 @@ export interface StoryUserGroup {
   displayName: string;
   avatarUrl?: string | null;
   avatarEmoji?: string | null;
+  previewUrl?: string | null;
   hasUnseen: boolean;
   isOwn: boolean;
   stories: StoryItem[];

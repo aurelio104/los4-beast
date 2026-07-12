@@ -48,11 +48,13 @@ export async function listStoryGroups(viewerId: string) {
       viewed: s.views.length > 0 || userId === viewerId
     }));
     const hasUnseen = userId !== viewerId && items.some((i) => !i.viewed);
+    const latest = items[items.length - 1];
     return {
       userId,
       displayName: resolvePublicName(u),
       avatarUrl: u.avatarUrl,
       avatarEmoji: u.avatarEmoji,
+      previewUrl: latest?.mediaUrl ?? null,
       hasUnseen,
       isOwn: userId === viewerId,
       stories: items
@@ -80,6 +82,12 @@ export async function createStory(userId: string, dataUrl: string, caption?: str
     throw new Error(`Máximo ${MAX_STORIES_PER_DAY} historias por día`);
   }
 
+  const author = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { displayName: true, nickname: true, username: true }
+  });
+  if (!author) throw new Error('Usuario no encontrado');
+
   const cap = caption?.trim().slice(0, 200) || null;
   const expiresAt = new Date(Date.now() + STORY_TTL_MS);
 
@@ -93,6 +101,10 @@ export async function createStory(userId: string, dataUrl: string, caption?: str
       where: { id: story.id },
       data: { mediaUrl }
     });
+
+    const authorName = resolvePublicName(author);
+    void import('./push.js').then(({ notifyNewStory }) => notifyNewStory(userId, authorName));
+
     return updated;
   } catch (e) {
     await prisma.story.delete({ where: { id: story.id } });

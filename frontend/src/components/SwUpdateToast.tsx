@@ -12,6 +12,14 @@ function getStoredUser() {
   }
 }
 
+function scheduleIdle(fn: () => void) {
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    window.requestIdleCallback(fn, { timeout: 4000 });
+  } else {
+    globalThis.setTimeout(fn, 1500);
+  }
+}
+
 export function SwUpdateToast() {
   const [needRefresh, setNeedRefresh] = useState(false);
   const [updateSW, setUpdateSW] = useState<UpdateSW | null>(null);
@@ -19,28 +27,30 @@ export function SwUpdateToast() {
   useEffect(() => {
     let cancelled = false;
 
-    void import('virtual:pwa-register')
-      .then(({ registerSW }) => {
-        if (cancelled) return;
-        const fn = registerSW({
-          immediate: true,
-          onNeedRefresh() {
-            setNeedRefresh(true);
-          },
-          onRegisteredSW(_swUrl, registration) {
-            registration?.addEventListener('updatefound', () => {
-              const worker = registration.installing;
-              worker?.addEventListener('statechange', () => {
-                if (worker.state === 'activated') {
-                  void ensurePushPersisted(getStoredUser());
-                }
+    scheduleIdle(() => {
+      void import('virtual:pwa-register')
+        .then(({ registerSW }) => {
+          if (cancelled) return;
+          const fn = registerSW({
+            immediate: true,
+            onNeedRefresh() {
+              setNeedRefresh(true);
+            },
+            onRegisteredSW(_swUrl, registration) {
+              registration?.addEventListener('updatefound', () => {
+                const worker = registration.installing;
+                worker?.addEventListener('statechange', () => {
+                  if (worker.state === 'activated') {
+                    void ensurePushPersisted(getStoredUser());
+                  }
+                });
               });
-            });
-          }
-        });
-        setUpdateSW(() => fn);
-      })
-      .catch(() => {});
+            }
+          });
+          setUpdateSW(() => fn);
+        })
+        .catch(() => {});
+    });
 
     return () => {
       cancelled = true;

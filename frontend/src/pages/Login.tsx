@@ -3,8 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Fingerprint, KeyRound, Loader2 } from 'lucide-react';
 import { RetoLogo } from '../components/RetoLogo';
-import { startAuthentication } from '@simplewebauthn/browser';
-import { AppShell } from '../components/AppShell';
+import { AuthBackdrop } from '../components/AuthBackdrop';
 import { GlassCard } from '../components/GlassCard';
 import { PasswordInput } from '../components/PasswordInput';
 import { api } from '../lib/api';
@@ -24,6 +23,7 @@ export default function Login() {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
     void hydratePushFromServer(user);
+    void import('../pages/Hub');
     navigate(isSetupDone(user.id) ? '/' : '/setup', { replace: true });
   };
 
@@ -31,6 +31,7 @@ export default function Login() {
     setPasskeyLoading(true);
     setError('');
     try {
+      const { startAuthentication } = await import('@simplewebauthn/browser');
       const options = await api.passkeyChallenge();
       const credential = await startAuthentication({ optionsJSON: options });
       const res = await api.passkeyVerify(credential);
@@ -59,8 +60,9 @@ export default function Login() {
   };
 
   return (
-    <AppShell background="beach">
-      <div className="auth-screen flex flex-col items-center justify-center py-12 pb-[max(3rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
+    <>
+      <AuthBackdrop />
+      <div className="relative auth-screen flex flex-col items-center justify-center py-12 pb-[max(3rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -126,6 +128,6 @@ export default function Login() {
           </p>
         </GlassCard>
       </div>
-    </AppShell>
+    </>
   );
 }

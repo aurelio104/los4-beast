@@ -8,13 +8,22 @@ interface BeachVideoBackgroundProps {
 }
 
 const POSTER = '/wallpapers/beach-poster.jpg';
-const VIDEO = '/wallpapers/beach-720.mp4';
+const VIDEO_720 = '/wallpapers/beach-720.mp4';
+const VIDEO_480 = '/wallpapers/beach-480.mp4';
 
 function prefersSaveData(): boolean {
   if (typeof navigator === 'undefined') return false;
   const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
   if (conn?.saveData) return true;
-  return conn?.effectiveType === 'slow-2g' || conn?.effectiveType === '2g';
+  return conn?.effectiveType === 'slow-2g' || conn?.effectiveType === '2g' || conn?.effectiveType === '3g';
+}
+
+function pickVideoSrc(): string {
+  if (typeof window === 'undefined') return VIDEO_720;
+  const narrow = window.matchMedia('(max-width: 480px)').matches;
+  const lowMem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  if (narrow || (lowMem != null && lowMem <= 4)) return VIDEO_480;
+  return VIDEO_720;
 }
 
 export function BeachVideoBackground({ variant = 'full', className = '' }: BeachVideoBackgroundProps) {
@@ -23,6 +32,8 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
   const [motionOk, setMotionOk] = useState(true);
   const [videoReady, setVideoReady] = useState(false);
   const [allowVideo, setAllowVideo] = useState(() => !prefersSaveData());
+  const [videoSrc, setVideoSrc] = useState(VIDEO_720);
+  const [deferVideo, setDeferVideo] = useState(variant !== 'hero');
 
   const isHero = variant === 'hero';
 
@@ -31,16 +42,34 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
     : { position: 'fixed', inset: 0, zIndex: 0 };
 
   useEffect(() => {
+    setVideoSrc(pickVideoSrc());
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setMotionOk(!mq.matches);
+    const dataMq = window.matchMedia('(prefers-reduced-data: reduce)');
+    const update = () => {
+      setMotionOk(!mq.matches);
+      if (dataMq.matches || prefersSaveData()) setAllowVideo(false);
+    };
     update();
     mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
+    dataMq.addEventListener('change', update);
+    return () => {
+      mq.removeEventListener('change', update);
+      dataMq.removeEventListener('change', update);
+    };
   }, []);
 
   useEffect(() => {
+    if (isHero || !allowVideo) {
+      setDeferVideo(false);
+      return;
+    }
+    const t = window.setTimeout(() => setDeferVideo(false), 2200);
+    return () => window.clearTimeout(t);
+  }, [isHero, allowVideo]);
+
+  useEffect(() => {
     const root = wrapRef.current;
-    if (!root || !allowVideo || !motionOk) return;
+    if (!root || !allowVideo || !motionOk || deferVideo) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -57,11 +86,11 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
 
     observer.observe(root);
     return () => observer.disconnect();
-  }, [allowVideo, motionOk]);
+  }, [allowVideo, motionOk, deferVideo]);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !motionOk || !allowVideo) return;
+    if (!video || !motionOk || !allowVideo || deferVideo) return;
 
     const play = () => {
       if (!document.hidden) video.play().catch(() => {});
@@ -71,7 +100,9 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
     else video.addEventListener('loadeddata', play, { once: true });
 
     return () => video.removeEventListener('loadeddata', play);
-  }, [motionOk, allowVideo]);
+  }, [motionOk, allowVideo, deferVideo, videoSrc]);
+
+  const showVideo = motionOk && allowVideo && !deferVideo;
 
   return (
     <div ref={wrapRef} className={`overflow-hidden pointer-events-none ${className}`} style={wrapStyle} aria-hidden>
@@ -85,7 +116,7 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
         style={{ filter: 'saturate(1.08) contrast(1.04)' }}
       />
 
-      {motionOk && allowVideo && (
+      {showVideo && (
         <video
           ref={videoRef}
           className="absolute inset-0 w-full h-full object-cover object-center scale-[1.02] transition-opacity duration-700"
@@ -103,7 +134,8 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
             videoRef.current?.play().catch(() => {});
           }}
         >
-          <source src={VIDEO} type="video/mp4" />
+          <source src={videoSrc} type="video/mp4" />
+          {videoSrc !== VIDEO_720 && <source src={VIDEO_720} type="video/mp4" />}
         </video>
       )}
 

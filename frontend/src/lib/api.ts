@@ -50,6 +50,23 @@ export const api = {
   players: () => request<{ success: boolean; players: unknown[] }>('/auth/players'),
 
   gameStatus: () => request<{ success: boolean; cycleIndex: number; nextEventAt: string; daysUntilChallenge: number; event: unknown; isEventActive: boolean; hoursUntilNext: number; player: PlayerContext }>('/game/status'),
+  hubSnapshot: () =>
+    request<{
+      success: boolean;
+      user: import('../types').User;
+      feed: import('../types').FeedItem[];
+      players: import('../types').Player[];
+      cycleIndex: number;
+      nextEventAt: string;
+      daysUntilChallenge: number;
+      event: unknown;
+      isEventActive: boolean;
+      hoursUntilNext: number;
+      player: PlayerContext;
+      tally: { targetId: string; count: number; name: string }[];
+      bribe: { offer: { points: number; penalty: string }; alreadyAccepted: boolean };
+      stories: import('../types').StoryUserGroup[];
+    }>('/game/hub-snapshot'),
   triviaQuestions: () => request<{ success: boolean; questions: TriviaQuestion[] }>('/game/trivia/questions'),
   events: () => request<{ success: boolean; events: unknown[]; current: unknown }>('/game/events'),
   feed: () => request<{ success: boolean; feed: unknown[] }>('/game/feed'),

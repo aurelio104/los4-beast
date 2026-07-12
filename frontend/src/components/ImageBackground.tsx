@@ -22,6 +22,8 @@ export function ImageBackground({
         src={src}
         alt=""
         decoding="async"
+        loading={isHero ? 'eager' : 'lazy'}
+        fetchPriority={isHero ? 'high' : 'low'}
         className="absolute inset-0 w-full h-full object-cover object-center scale-[1.02]"
       />
       <div

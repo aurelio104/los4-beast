@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import Login from './pages/Login';
 import { BackgroundMusic } from './components/BackgroundMusic';
 import { PwaInstallGate } from './components/PwaInstallGate';
 import { SetupGate } from './components/SetupGate';
@@ -8,8 +7,10 @@ import { RouteFallback } from './components/RouteFallback';
 import { SwUpdateToast } from './components/SwUpdateToast';
 import { PushAutoSync } from './components/PushAutoSync';
 import { MasterRoute } from './components/MasterRoute';
+import { useHasSession } from './hooks/useHasSession';
 import { isSetupDone } from './lib/setup';
 
+const Login = lazy(() => import('./pages/Login'));
 const Join = lazy(() => import('./pages/Join'));
 const Setup = lazy(() => import('./pages/Setup'));
 const Hub = lazy(() => import('./pages/Hub'));
@@ -43,6 +44,17 @@ function getUserId(): string | null {
   }
 }
 
+function SessionServices() {
+  const authed = useHasSession();
+  if (!authed) return null;
+  return (
+    <>
+      <BackgroundMusic />
+      <PushAutoSync />
+    </>
+  );
+}
+
 function AppRoutes() {
   const location = useLocation();
   const setupDone = isSetupDone(getUserId());
@@ -50,9 +62,10 @@ function AppRoutes() {
 
   return (
     <>
+      <SessionServices />
       {setupDone && <PwaInstallGate compactBanner={showInstallBanner} />}
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Lazy><Login /></Lazy>} />
         <Route path="/join/:code" element={<Lazy><Join /></Lazy>} />
         <Route path="/setup" element={<PrivateRoute><Setup /></PrivateRoute>} />
         <Route path="/" element={<PrivateRoute><Hub /></PrivateRoute>} />
@@ -76,8 +89,6 @@ function AppRoutes() {
 export default function App() {
   return (
     <>
-      <BackgroundMusic />
-      <PushAutoSync />
       <SwUpdateToast />
       <AppRoutes />
     </>

@@ -64,43 +64,34 @@ export default function Hub() {
   const [showCreateStory, setShowCreateStory] = useState(false);
   const nowPlaying = useNowPlaying();
 
-  const loadStories = useCallback(async () => {
-    const res = await api.stories();
-    if (res.success) setStoryGroups(res.users || []);
-    setStoriesLoading(false);
-  }, []);
-
   const load = useCallback(async () => {
     const stored = localStorage.getItem('user');
     if (!stored) { navigate('/login'); return; }
 
-    const [me, feedRes, playersRes, status, votesRes, bribe, storiesRes] = await Promise.all([
-      api.me(), api.feed(), api.players(), api.gameStatus(), api.votes(), api.bribe(), api.stories()
-    ]);
+    const snap = await api.hubSnapshot();
 
-    if (me.success) {
-      setUser(me.user as UserType);
-      localStorage.setItem('user', JSON.stringify(me.user));
-      void hydratePushFromServer(me.user as UserType);
+    if (snap.success) {
+      setUser(snap.user as UserType);
+      localStorage.setItem('user', JSON.stringify(snap.user));
+      void hydratePushFromServer(snap.user as UserType);
+      setFeed((snap.feed || []) as FeedItem[]);
+      setPlayers((snap.players || []) as Player[]);
+      setDaysLeft(snap.daysUntilChallenge);
+      setEventActive(snap.isEventActive);
+      setCurrentEvent(snap.event as RetoEvent);
+      if (snap.player) setPlayerCtx(snap.player);
+      setVoteTally(snap.tally || []);
+      setBribeOffer({ ...snap.bribe.offer, alreadyAccepted: snap.bribe.alreadyAccepted });
+      setStoryGroups(snap.stories || []);
+      setStoriesLoading(false);
     } else {
       setUser(JSON.parse(stored));
     }
-    setFeed((feedRes.feed || []) as FeedItem[]);
-    setPlayers((playersRes.players || []) as Player[]);
-    setDaysLeft(status.daysUntilChallenge);
-    setEventActive(status.isEventActive);
-    setCurrentEvent(status.event as RetoEvent);
-    if (status.player) setPlayerCtx(status.player);
-    if (votesRes.success) setVoteTally(votesRes.tally || []);
-    if (bribe.success) setBribeOffer({ ...bribe.offer, alreadyAccepted: bribe.alreadyAccepted });
-    if (storiesRes.success) setStoryGroups(storiesRes.users || []);
-    setStoriesLoading(false);
     setBooting(false);
   }, [navigate]);
 
   useEffect(() => { load(); }, [load]);
   useLivePoll(load, 30000);
-  useLivePoll(loadStories, 45000);
 
   const showToast = (msg: string) => {
     setToast(msg);

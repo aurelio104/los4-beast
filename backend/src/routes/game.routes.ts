@@ -27,6 +27,17 @@ gameRouter.get('/status', authMiddleware, async (req, res) => {
   res.json({ success: true, ...cycle, player });
 });
 
+gameRouter.get('/hub-snapshot', authMiddleware, async (req, res) => {
+  try {
+    const uid = userId(req);
+    const { buildHubSnapshot } = await import('../lib/hubSnapshot.js');
+    const snapshot = await buildHubSnapshot(uid);
+    res.json({ success: true, ...snapshot });
+  } catch (e) {
+    res.status(404).json({ success: false, error: (e as Error).message || 'Error' });
+  }
+});
+
 gameRouter.get('/trivia/questions', authMiddleware, async (_req, res) => {
   const questions = await getTriviaQuestions();
   res.json({ success: true, questions });

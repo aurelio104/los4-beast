@@ -90,6 +90,15 @@ export function useNotificationCenter() {
   // Chat en vivo cuando la app está abierta (sin depender solo del push)
   useEffect(() => {
     if (location.pathname === '/chat') return;
+
+    let pushActive = false;
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}') as { pushOptIn?: boolean };
+      pushActive = !!u.pushOptIn;
+    } catch {
+      pushActive = false;
+    }
+
     let lastAt = localStorage.getItem('reto_chat_cursor') || '';
     const poll = async () => {
       if (document.hidden) return;
@@ -119,7 +128,8 @@ export function useNotificationCenter() {
       }
     };
     void poll();
-    const id = window.setInterval(poll, 5000);
+    const intervalMs = pushActive ? 20_000 : 12_000;
+    const id = window.setInterval(poll, intervalMs);
     return () => window.clearInterval(id);
   }, [location.pathname, refresh, showToast]);
 

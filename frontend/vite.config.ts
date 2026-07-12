@@ -10,43 +10,52 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true,
+        enabled: false,
         type: 'module'
       },
-      includeAssets: ['logoR.png', 'favicon.png', 'apple-touch-icon.png', 'wallpapers/beach-poster.jpg'],
+      includeAssets: [
+        'favicon.png',
+        'apple-touch-icon.png',
+        'pwa-192.png',
+        'pwa-512.png',
+        'wallpapers/beach-poster.jpg',
+        'wallpapers/celosia-dark-640.avif'
+      ],
       workbox: {
         importScripts: ['push-handler.js'],
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/api\//],
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2,webmanifest}'],
-        globIgnores: ['**/wallpapers/*.mp4', '**/audio/**'],
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        navigationPreload: true,
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,avif,woff2,webmanifest}'],
+        globIgnores: [
+          '**/wallpapers/*.mp4',
+          '**/audio/**',
+          '**/logoR.png',
+          '**/*Admin*.js',
+          '**/qrcode-*.js',
+          '**/WhatsAppAdmin*.js'
+        ],
+        maximumFileSizeToCacheInBytes: 512 * 1024,
         runtimeCaching: [
           {
-            urlPattern: ({ request }) => request.destination === 'image' || /\.(?:png|jpg|jpeg|webp|svg|gif)$/i.test(request.url),
+            urlPattern: ({ request }) =>
+              request.destination === 'image' || /\.(?:png|jpg|jpeg|webp|avif|svg|gif)$/i.test(request.url),
             handler: 'CacheFirst',
             options: {
               cacheName: 'reto-images',
-              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30 }
+              expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 * 24 * 30 }
             }
           },
           {
-            urlPattern: ({ url }) => url.pathname.startsWith('/wallpapers/') || url.pathname.startsWith('/audio/'),
+            urlPattern: ({ url }) =>
+              url.pathname.endsWith('.mp4') ||
+              url.pathname.startsWith('/wallpapers/') ||
+              url.pathname.startsWith('/audio/'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'reto-media',
-              expiration: { maxEntries: 16, maxAgeSeconds: 60 * 60 * 24 * 14 },
-              cacheableResponse: { statuses: [0, 200] }
-            }
-          },
-          {
-            urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'reto-api',
-              networkTimeoutSeconds: 10,
-              expiration: { maxEntries: 64, maxAgeSeconds: 60 * 5 },
-              cacheableResponse: { statuses: [0, 200] }
+              expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 24 * 14 },
+              cacheableResponse: { statuses: [200] }
             }
           },
           {
@@ -54,13 +63,16 @@ export default defineConfig({
             handler: 'NetworkFirst',
             options: {
               cacheName: 'reto-pages',
-              networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 16, maxAgeSeconds: 60 * 60 * 24 }
+              networkTimeoutSeconds: 4,
+              expiration: { maxEntries: 12, maxAgeSeconds: 60 * 60 * 24 }
             }
           }
         ]
       },
       manifest: {
+        id: '/',
+        scope: '/',
+        lang: 'es',
         name: 'Reto',
         short_name: 'Reto',
         description: 'Reto — 29 de agosto',
@@ -70,10 +82,13 @@ export default defineConfig({
         orientation: 'portrait',
         start_url: '/',
         icons: [
-          { src: 'logoR.png', sizes: '1024x1024', type: 'image/png', purpose: 'any' },
           { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           { src: 'apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'any' }
+        ],
+        shortcuts: [
+          { name: 'Arena', short_name: 'Arena', url: '/arena', icons: [{ src: 'pwa-192.png', sizes: '192x192' }] },
+          { name: 'Chat', short_name: 'Chat', url: '/chat', icons: [{ src: 'pwa-192.png', sizes: '192x192' }] }
         ]
       }
     })
@@ -82,6 +97,9 @@ export default defineConfig({
     target: 'es2020',
     cssCodeSplit: true,
     sourcemap: false,
+    modulePreload: {
+      polyfill: false
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {

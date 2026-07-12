@@ -33,6 +33,7 @@ export function StoryStrip({
           displayName={currentUser.displayName}
           avatarUrl={currentUser.avatarUrl}
           avatarEmoji={currentUser.avatarEmoji}
+          previewUrl={ownGroup?.previewUrl ?? ownGroup?.stories.at(-1)?.mediaUrl}
           hasStory={!!ownGroup?.stories.length}
           hasUnseen={false}
           isOwn
@@ -51,6 +52,7 @@ export function StoryStrip({
             displayName={group.displayName}
             avatarUrl={group.avatarUrl}
             avatarEmoji={group.avatarEmoji}
+            previewUrl={group.previewUrl ?? group.stories.at(-1)?.mediaUrl}
             hasStory={group.stories.length > 0}
             hasUnseen={group.hasUnseen}
             onClick={() => onOpenViewer(group.userId)}
