@@ -156,8 +156,9 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
                       inputMode="url"
                       autoComplete="off"
                     />
-                    <p className="text-[10px] text-white/35 mt-1">
-                      Extraemos el audio en el servidor. Si YouTube falla, usa la pestaña Archivo.
+                    <p className="text-[10px] text-white/35 mt-1 leading-relaxed">
+                      En el servidor a veces YouTube bloquea el link. Si falla, descarga el audio en tu móvil y usa{' '}
+                      <strong className="text-white/55">Archivo</strong>.
                     </p>
                   </div>
                 )}

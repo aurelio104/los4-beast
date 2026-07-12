@@ -10,6 +10,11 @@ echo "   UPLOAD_DIR=$UPLOAD_DIR"
 echo "   WHATSAPP_AUTH_FOLDER=$WHATSAPP_AUTH_FOLDER"
 echo "   PORT=${PORT:-8000}"
 
+if [ -f /opt/bgutil-pot/server/build/main.js ]; then
+  node /opt/bgutil-pot/server/build/main.js --port 4416 >/tmp/bgutil-pot.log 2>&1 &
+  echo "🎬 YouTube POT provider en :4416 (pid $!)"
+fi
+
 if mount | grep -q ' on /data '; then
   echo "💾 Volumen persistente montado en /data"
 elif [ -d /data ] && [ -w /data ]; then

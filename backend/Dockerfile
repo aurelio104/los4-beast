@@ -9,8 +9,12 @@ RUN npx prisma generate && npm run build
 
 FROM node:20-alpine
 WORKDIR /app
-RUN apk add --no-cache openssl ffmpeg python3 py3-pip deno \
-  && pip3 install --break-system-packages -U yt-dlp \
+RUN apk add --no-cache openssl ffmpeg python3 py3-pip deno git \
+    build-base cairo-dev jpeg-dev pango-dev giflib-dev pixman-dev \
+  && pip3 install --break-system-packages -U yt-dlp bgutil-ytdlp-pot-provider \
+  && git clone --single-branch --branch 1.3.1 --depth 1 \
+       https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /opt/bgutil-pot \
+  && cd /opt/bgutil-pot/server && npm ci && npx tsc \
   && yt-dlp --version
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
