@@ -20,6 +20,9 @@
     <title>Reto</title>
     <style>
       #boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
         min-height: 100%;
         min-height: -webkit-fill-available;
         display: flex;
@@ -48,12 +51,11 @@
     </style>
   </head>
   <body>
-    <div id="root">
-      <div id="boot-splash" aria-hidden="true">
-        <img src="/pwa-192.png" alt="" width="72" height="72" fetchpriority="high" decoding="async" />
-        <div class="bar"></div>
-      </div>
+    <div id="boot-splash" aria-hidden="true">
+      <img src="/pwa-192.png" alt="" width="72" height="72" fetchpriority="high" decoding="async" />
+      <div class="bar"></div>
     </div>
+    <div id="root"></div>
     <script>
       (function () {
         var RELOAD_KEY = 'reto_boot_reload';
@@ -86,6 +88,20 @@
             return;
           }
           bumpReload();
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              return Promise.all(regs.map(function (r) { return r.unregister(); }));
+            }).finally(function () {
+              if ('caches' in window) {
+                caches.keys().then(function (keys) {
+                  return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+                }).finally(function () { location.reload(); });
+              } else {
+                location.reload();
+              }
+            });
+            return;
+          }
           location.reload();
         }
         window.addEventListener('vite:preloadError', function (e) {

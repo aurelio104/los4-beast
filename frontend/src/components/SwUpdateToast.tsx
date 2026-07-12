@@ -14,10 +14,11 @@ function getStoredUser() {
 }
 
 function scheduleIdle(fn: () => void) {
+  const delay = isIOS() ? 5000 : 1500;
   if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-    window.requestIdleCallback(fn, { timeout: 4000 });
+    window.requestIdleCallback(fn, { timeout: delay + 2000 });
   } else {
-    globalThis.setTimeout(fn, 1500);
+    globalThis.setTimeout(fn, delay);
   }
 }
 
@@ -28,8 +29,9 @@ export function SwUpdateToast() {
   useEffect(() => {
     let cancelled = false;
 
-    scheduleIdle(() => {
-      void import('virtual:pwa-register')
+    const register = () => {
+      scheduleIdle(() => {
+        void import('virtual:pwa-register')
         .then(({ registerSW }) => {
           if (cancelled) return;
           const fn = registerSW({
@@ -57,7 +59,11 @@ export function SwUpdateToast() {
           setUpdateSW(() => fn);
         })
         .catch(() => {});
-    });
+      });
+    };
+
+    if (document.readyState === 'complete') register();
+    else window.addEventListener('load', register, { once: true });
 
     return () => {
       cancelled = true;

@@ -77,16 +77,43 @@ Copia las claves a `backend/.env` y reinicia el backend.
 
 > Passkey y Push **requieren HTTPS**.
 
+### URLs oficiales
+
+| Servicio | URL |
+|----------|-----|
+| **Frontend (Vercel)** | https://los4-beast.vercel.app |
+| **Backend (Koyeb)** | https://los4-game-aurelio104-6f5cac3b.koyeb.app |
+
+> **Importante:** `i--beast.vercel.app` y variantes similares **no existen** (404). Si la PWA se instaló desde una URL vieja, elimínala y reinstala desde `los4-beast.vercel.app`.
+
+### Verificar producción
+
+```bash
+npm run test:smoke:prod
+WEB_BASE=https://los4-beast.vercel.app API_BASE=https://los4-game-aurelio104-6f5cac3b.koyeb.app/api npm run test:e2e:boot
+```
+
 ### Frontend (Vercel)
+
+Proyecto en carpeta `frontend/` (contiene `vercel.json` con proxy `/api` → Koyeb).
+
 ```bash
 cd frontend && vercel --prod
 ```
-Configura `VITE_API_URL` o proxy al backend.
 
-### Backend (Railway / Fly / Render)
-- Subir carpeta `backend/`
-- Variables: `DATABASE_URL`, `JWT_SECRET`, `VAPID_*`, `CHALLENGE_DATE`
-- Puerto `3010`
+Variables en **Koyeb** (backend):
+
+- `FRONTEND_URL=https://los4-beast.vercel.app`
+- `APP_PUBLIC_URL=https://los4-beast.vercel.app`
+- `WEBAUTHN_RP_ID=los4-beast.vercel.app`
+- `WEBAUTHN_ORIGIN=https://los4-beast.vercel.app`
+- `CORS_ORIGINS=https://los4-beast.vercel.app,https://los4-beast-*.vercel.app`
+
+### Backend (Koyeb)
+
+- Imagen/carpeta `backend/` con `start.sh`
+- Volumen `los4-data-fra` montado en `/data`
+- Variables: `DATABASE_URL`, `JWT_SECRET`, `VAPID_*`, `CHALLENGE_DATE`, URLs anteriores
 
 ---
 

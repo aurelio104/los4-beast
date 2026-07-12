@@ -39,8 +39,14 @@ function bumpReloadCount(): number {
   return next;
 }
 
-/** Limpia cachés del SW y fuerza actualización antes de recargar. */
 export async function hardRecoverCaches(): Promise<void> {
+  try {
+    const regs = await navigator.serviceWorker?.getRegistrations();
+    await Promise.all((regs || []).map((reg) => reg.unregister()));
+  } catch {
+    /* ignore */
+  }
+
   try {
     const reg = await navigator.serviceWorker?.getRegistration();
     if (reg) await reg.update();

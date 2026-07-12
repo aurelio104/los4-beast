@@ -10,9 +10,11 @@ import { api } from '../lib/api';
 import { User } from '../types';
 import { isSetupDone } from '../lib/setup';
 import { hydratePushFromServer } from '../hooks/usePushNotifications';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 export default function Login() {
   const navigate = useNavigate();
+  const reducedMotion = useReducedMotion();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -64,7 +66,7 @@ export default function Login() {
       <AuthBackdrop />
       <div className="relative auth-screen flex flex-col items-center justify-center py-12 pb-[max(3rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
+          initial={reducedMotion ? false : { scale: 0.96, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200 }}
           className="mb-8 text-center"
