@@ -97,6 +97,11 @@ export const api = {
   join: (body: Record<string, string>) => request<{ success: boolean; token?: string; user?: unknown; error?: string }>('/auth/join', { method: 'POST', body: JSON.stringify(body) }),
   login: (identifier: string, password: string) => request<{ success: boolean; token?: string; user?: unknown; error?: string; needsPasskey?: boolean }>('/auth/login', { method: 'POST', body: JSON.stringify({ identifier, password }) }),
   me: () => request<{ success: boolean; user: unknown }>('/auth/me'),
+  setupComplete: () =>
+    request<{ success: boolean; user?: import('../types').User; error?: string }>('/auth/setup/complete', {
+      method: 'POST',
+      body: JSON.stringify({})
+    }),
   passkeyChallenge: () => fetch(`${API}/auth/webauthn/challenge`).then((r) => r.json()),
   passkeyVerify: (body: unknown) => request<{ success: boolean; token?: string; user?: unknown; error?: string }>('/auth/webauthn/verify', { method: 'POST', body: JSON.stringify(body) }),
   passkeyRegisterOptions: () => fetch(`${API}/auth/webauthn/register-options`, { headers: { Authorization: `Bearer ${getToken()}` } }).then((r) => r.json()),

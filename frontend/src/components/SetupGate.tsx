@@ -15,7 +15,7 @@ function getStoredUser(): User | null {
 export function SetupGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const user = getStoredUser();
-  const done = isSetupDone(user?.id);
+  const done = isSetupDone(user?.id, user);
 
   if (!done && location.pathname !== '/setup') {
     return <Navigate to="/setup" replace />;

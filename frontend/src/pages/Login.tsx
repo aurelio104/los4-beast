@@ -8,7 +8,7 @@ import { GlassCard } from '../components/GlassCard';
 import { PasswordInput } from '../components/PasswordInput';
 import { api } from '../lib/api';
 import { User } from '../types';
-import { isSetupDone } from '../lib/setup';
+import { isSetupDone, syncSetupFromUser } from '../lib/setup';
 import { hydratePushFromServer } from '../hooks/usePushNotifications';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
@@ -25,8 +25,9 @@ export default function Login() {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
     void hydratePushFromServer(user);
+    void syncSetupFromUser(user);
     void import('../pages/Hub');
-    navigate(isSetupDone(user.id) ? '/' : '/setup', { replace: true });
+    navigate(isSetupDone(user.id, user) ? '/' : '/setup', { replace: true });
   };
 
   const handlePasskey = async () => {

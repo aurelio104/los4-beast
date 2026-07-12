@@ -68,6 +68,7 @@ function sanitizeUser(user: {
   phone?: string | null;
   whatsappOptIn?: boolean;
   pushOptIn?: boolean;
+  setupCompletedAt?: Date | null;
 }) {
   return {
     id: user.id,
@@ -86,7 +87,8 @@ function sanitizeUser(user: {
     phone: user.phone ?? null,
     whatsappOptIn: user.whatsappOptIn ?? false,
     pushOptIn: user.pushOptIn ?? false,
-    hasPasskey: user.passkeyRegistered
+    hasPasskey: user.passkeyRegistered,
+    setupCompleted: !!user.setupCompletedAt
   };
 }
 
@@ -249,6 +251,16 @@ authRouter.get('/me', authMiddleware, async (req: Request, res: Response) => {
   const userId = (req as Request & { user: { userId: string } }).user.userId;
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return res.status(404).json({ success: false, error: 'No encontrado' });
+  res.json({ success: true, user: sanitizeUser(user) });
+});
+
+/** Marca configuración inicial completada (primera vez / setup wizard). */
+authRouter.post('/setup/complete', authMiddleware, async (req: Request, res: Response) => {
+  const userId = (req as Request & { user: { userId: string } }).user.userId;
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { setupCompletedAt: new Date() }
+  });
   res.json({ success: true, user: sanitizeUser(user) });
 });
 

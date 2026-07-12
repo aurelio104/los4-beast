@@ -11,7 +11,7 @@ import { GlassCard } from '../components/GlassCard';
 import { RetoLogo } from '../components/RetoLogo';
 import { api } from '../lib/api';
 import { setPreferences } from '../lib/preferences';
-import { markSetupDone } from '../lib/setup';
+import { markSetupDone, markPwaInstallPromptSeen } from '../lib/setup';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import { usePushNotifications, refreshUserPushState } from '../hooks/usePushNotifications';
 import { User } from '../types';
@@ -23,12 +23,12 @@ type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 export default function Setup() {
   const navigate = useNavigate();
-  const install = useInstallPrompt();
-  const push = usePushNotifications();
   const [step, setStep] = useState<Step>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [user, setUser] = useState<User | null>(null);
+  const install = useInstallPrompt(user?.id);
+  const push = usePushNotifications();
   const [musicOn, setMusicOn] = useState(true);
   const [soundOn, setSoundOn] = useState(true);
   const [hapticsOn, setHapticsOn] = useState(true);
@@ -65,8 +65,13 @@ export default function Setup() {
   const finish = async () => {
     if (!user) return;
     await refreshUserPushState();
-    markSetupDone(user.id);
+    await markSetupDone(user.id);
     navigate('/', { replace: true });
+  };
+
+  const leaveInstallStep = () => {
+    if (user) markPwaInstallPromptSeen(user.id);
+    setStep(1);
   };
 
   const activateExperience = () => {
@@ -212,7 +217,7 @@ export default function Setup() {
                 ) : (
                   <p className="text-xs text-white/40">Continúa en el navegador si prefieres</p>
                 )}
-                <button type="button" onClick={() => setStep(1)} className="w-full glass-btn py-3 rounded-xl font-semibold flex items-center justify-center gap-1">
+                <button type="button" onClick={leaveInstallStep} className="w-full glass-btn py-3 rounded-xl font-semibold flex items-center justify-center gap-1">
                   Continuar <ChevronRight size={18} />
                 </button>
               </motion.div>

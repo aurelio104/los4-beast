@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { BackgroundMusic } from './components/BackgroundMusic';
 import { PwaInstallGate } from './components/PwaInstallGate';
@@ -11,8 +11,9 @@ import { MasterRoute } from './components/MasterRoute';
 import { useHasSession } from './hooks/useHasSession';
 import { TabBarHost } from './components/TabBarHost';
 import { useSafeAreaInsets } from './hooks/useSafeAreaInsets';
-import { isSetupDone } from './lib/setup';
+import { isSetupDone, markPwaInstallPromptSeen, syncSetupFromUser } from './lib/setup';
 import { lazyWithRetry } from './lib/lazyWithRetry';
+import type { User } from './types';
 import Login from './pages/Login';
 import Hub from './pages/Hub';
 import Setup from './pages/Setup';
@@ -43,10 +44,10 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   );
 }
 
-function getUserId(): string | null {
+function getStoredUser(): User | null {
   try {
     const raw = localStorage.getItem('user');
-    return raw ? (JSON.parse(raw).id as string) : null;
+    return raw ? (JSON.parse(raw) as User) : null;
   } catch {
     return null;
   }
@@ -65,8 +66,17 @@ function SessionServices() {
 
 function AppRoutes() {
   const location = useLocation();
-  const setupDone = isSetupDone(getUserId());
+  const user = getStoredUser();
+  const setupDone = isSetupDone(user?.id, user);
   const showInstallBanner = setupDone && location.pathname === '/';
+
+  useEffect(() => {
+    if (!user?.id || !localStorage.getItem('token')) return;
+    if (isSetupDone(user.id, user)) {
+      markPwaInstallPromptSeen(user.id);
+      if (!user.setupCompleted) void syncSetupFromUser(user);
+    }
+  }, [user?.id, user?.setupCompleted]);
 
   return (
     <>

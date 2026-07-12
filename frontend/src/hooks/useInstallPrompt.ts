@@ -1,29 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { canShowInstallUi, getInstallPlatform, isStandalone, type InstallPlatform } from '../lib/pwa';
+import { dismissPwaInstallPrompt, isPwaDismissed, isPwaInstallPromptSeen, isSetupDone } from '../lib/setup';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const DISMISS_KEY = 'pwa_install_dismissed_at';
-const DISMISS_DAYS = 3;
-
-function isDismissedRecently(): boolean {
-  const raw = localStorage.getItem(DISMISS_KEY);
-  if (!raw) return false;
-  const ts = Number(raw);
-  if (!Number.isFinite(ts)) return true;
-  return Date.now() - ts < DISMISS_DAYS * 24 * 60 * 60 * 1000;
-}
-
-export function useInstallPrompt() {
+export function useInstallPrompt(userId?: string | null) {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(isDismissedRecently);
+  const [dismissed, setDismissed] = useState(() => isPwaDismissed(userId));
   const [installed, setInstalled] = useState(isStandalone);
   const [platform, setPlatform] = useState<InstallPlatform>(() => getInstallPlatform());
   const [autoVisible, setAutoVisible] = useState(false);
+  const [manualVisible, setManualVisible] = useState(false);
   const autoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setDismissed(isPwaDismissed(userId));
+  }, [userId]);
 
   useEffect(() => {
     const onPrompt = (e: Event) => {
@@ -34,6 +29,7 @@ export function useInstallPrompt() {
       setInstalled(true);
       setDeferred(null);
       setAutoVisible(false);
+      setManualVisible(false);
       setPlatform('installed');
     };
     window.addEventListener('beforeinstallprompt', onPrompt);
@@ -44,8 +40,13 @@ export function useInstallPrompt() {
     };
   }, []);
 
+  const skipAutoModal = isSetupDone(userId) || isPwaInstallPromptSeen(userId) || installed;
+
   useEffect(() => {
-    if (!canShowInstallUi() || dismissed || installed) return;
+    if (!canShowInstallUi() || skipAutoModal) {
+      setAutoVisible(false);
+      return;
+    }
 
     autoTimer.current = setTimeout(() => {
       setAutoVisible(true);
@@ -54,7 +55,7 @@ export function useInstallPrompt() {
     return () => {
       if (autoTimer.current) clearTimeout(autoTimer.current);
     };
-  }, [dismissed, installed]);
+  }, [skipAutoModal, userId]);
 
   const install = useCallback(async () => {
     if (!deferred) return false;
@@ -64,28 +65,33 @@ export function useInstallPrompt() {
     if (choice.outcome === 'accepted') {
       setInstalled(true);
       setAutoVisible(false);
+      setManualVisible(false);
     }
     return choice.outcome === 'accepted';
   }, [deferred]);
 
   const dismiss = useCallback(() => {
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
+    if (userId) dismissPwaInstallPrompt(userId);
     setDismissed(true);
     setAutoVisible(false);
-  }, []);
+    setManualVisible(false);
+  }, [userId]);
 
-  const showPrompt = useCallback(() => setAutoVisible(true), []);
+  const showPrompt = useCallback(() => setManualVisible(true), []);
 
   const needsIOSGuide = platform === 'ios' && !installed;
   const canNativeInstall = !!deferred && !installed;
+  const canInstall = canShowInstallUi() && !installed && !dismissed && (canNativeInstall || needsIOSGuide);
+  const promptOpen =
+    canInstall && !installed && !dismissed && (manualVisible || (autoVisible && !isSetupDone(userId)));
 
   return {
-    canInstall: canShowInstallUi() && !installed && !dismissed && (canNativeInstall || needsIOSGuide),
+    canInstall,
     canNativeInstall,
     needsIOSGuide,
     installed,
     platform,
-    autoVisible: autoVisible && canShowInstallUi() && !installed && !dismissed,
+    promptOpen,
     install,
     dismiss,
     showPrompt

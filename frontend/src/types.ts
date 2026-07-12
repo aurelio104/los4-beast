@@ -16,6 +16,7 @@ export interface User {
   whatsappOptIn?: boolean;
   pushOptIn?: boolean;
   hasPasskey: boolean;
+  setupCompleted?: boolean;
 }
 
 export interface FeedItem {

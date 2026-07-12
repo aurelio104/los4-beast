@@ -27,6 +27,7 @@ model User {
   phone       String?
   whatsappOptIn Boolean @default(false)
   pushOptIn   Boolean  @default(false)
+  setupCompletedAt DateTime?
   invitedById String?
   invitedBy   User?   @relation("UserInvites", fields: [invitedById], references: [id], onDelete: SetNull)
   invitees    User[]  @relation("UserInvites")
