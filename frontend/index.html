@@ -50,6 +50,28 @@
         <div class="bar"></div>
       </div>
     </div>
+    <script>
+      (function () {
+        function apply() {
+          var el = document.createElement('div');
+          el.style.cssText =
+            'position:fixed;top:0;left:0;visibility:hidden;pointer-events:none;' +
+            'padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+          document.documentElement.appendChild(el);
+          var s = getComputedStyle(el);
+          var root = document.documentElement;
+          root.style.setProperty('--safe-top', s.paddingTop);
+          root.style.setProperty('--safe-right', s.paddingRight);
+          root.style.setProperty('--safe-bottom', s.paddingBottom);
+          root.style.setProperty('--safe-left', s.paddingLeft);
+          root.style.setProperty('--viewport-bottom-gap', '0px');
+          el.remove();
+        }
+        apply();
+        window.addEventListener('resize', apply, { passive: true });
+        window.addEventListener('orientationchange', function () { setTimeout(apply, 80); });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -27,8 +27,8 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
-  /* Pill (~3.25rem) + padding vertical (~0.5rem) + home indicator */
-  --bottom-nav-total: calc(3.75rem + var(--safe-bottom));
+  /* Pill (~3.25rem) + padding vertical (~0.5rem) + home indicator / gap visual */
+  --bottom-nav-total: calc(3.75rem + max(var(--safe-bottom), var(--viewport-bottom-gap, 0px)));
 }
 
 @supports (padding: max(0px)) {
@@ -561,7 +561,14 @@ textarea:focus {
   opacity: 0.75;
 }
 
-/* Hub — viewport fijo: scroll solo en el contenido, nav pegada al borde inferior */
+.page-transition-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  transform: none !important;
+}
+
+/* Hub — viewport fijo en body (portal): scroll en contenido, nav aparte en TabBarHost */
 .hub-layout {
   position: fixed;
   top: 0;
@@ -940,14 +947,18 @@ textarea:focus {
   left: 0;
   right: 0;
   bottom: 0;
+  width: 100%;
   z-index: 50;
   padding-top: 0.25rem;
   padding-left: max(0.75rem, var(--safe-left));
   padding-right: max(0.75rem, var(--safe-right));
   padding-bottom: constant(safe-area-inset-bottom);
-  padding-bottom: max(0px, var(--safe-bottom));
+  padding-bottom: max(var(--safe-bottom), var(--viewport-bottom-gap, 0px));
   background: linear-gradient(0deg, rgba(5, 5, 8, 0.97) 55%, rgba(5, 5, 8, 0.55) 85%, transparent 100%);
   pointer-events: none;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .bottom-nav-bar::after {

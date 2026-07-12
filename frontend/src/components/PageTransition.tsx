@@ -9,7 +9,7 @@ export function PageTransition({ children }: { children: ReactNode }) {
   const reducedMotion = useReducedMotion();
 
   if (reducedMotion) {
-    return <div className="min-h-dvh">{children}</div>;
+    return <div className="page-transition-shell">{children}</div>;
   }
 
   return (
@@ -17,10 +17,11 @@ export function PageTransition({ children }: { children: ReactNode }) {
       <motion.div
         key={location.pathname}
         initial={pageTransition.initial}
-        animate={pageTransition.animate}
+        animate={{ opacity: 1, transform: 'none' }}
         exit={pageTransition.exit}
         transition={pageTransitionConfig}
-        className="min-h-dvh"
+        className="page-transition-shell"
+        style={{ transform: 'none' }}
       >
         {children}
       </motion.div>

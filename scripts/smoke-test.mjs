@@ -325,6 +325,9 @@ async function testMobileReadiness() {
     ['Hub layout no 100svh height', !readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').match(/\.hub-layout\s*\{[^}]*height:\s*100svh/s)],
     ['Bottom nav fixed bottom', readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').includes('.bottom-nav-bar') && readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').match(/\.bottom-nav-bar\s*\{[^}]*bottom:\s*0/s)],
     ['Bottom nav safe area vars', readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').includes('--bottom-nav-total')],
+    ['TabBarHost portal', existsSync(join(process.cwd(), 'frontend', 'src', 'components', 'TabBarHost.tsx')) && readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'TabBarHost.tsx'), 'utf8').includes('createPortal')],
+    ['MainTabLayout portal shell', readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'MainTabLayout.tsx'), 'utf8').includes('createPortal')],
+    ['Safe area sync lib', existsSync(join(process.cwd(), 'frontend', 'src', 'lib', 'safeArea.ts'))],
     ['beach wallpaper asset', existsSync(join(process.cwd(), 'frontend', 'public', 'wallpapers', 'beach-poster.jpg')) || existsSync(join(process.cwd(), 'frontend', 'dist', 'wallpapers', 'beach-poster.jpg'))],
     ['no beast URL in backend', !readFileSync(join(process.cwd(), 'backend', 'src', 'lib', 'whatsapp.ts'), 'utf8').includes('beast')]
   ];

@@ -9,6 +9,8 @@ import { SwUpdateToast } from './components/SwUpdateToast';
 import { PushAutoSync } from './components/PushAutoSync';
 import { MasterRoute } from './components/MasterRoute';
 import { useHasSession } from './hooks/useHasSession';
+import { TabBarHost } from './components/TabBarHost';
+import { useSafeAreaInsets } from './hooks/useSafeAreaInsets';
 import { isSetupDone } from './lib/setup';
 
 const Login = lazy(() => import('./pages/Login'));
@@ -90,9 +92,11 @@ function AppRoutes() {
 }
 
 export default function App() {
+  useSafeAreaInsets();
   return (
     <>
       <SwUpdateToast />
+      <TabBarHost />
       <AppRoutes />
     </>
   );
