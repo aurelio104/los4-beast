@@ -294,6 +294,7 @@ export function StoryViewerModal({
       role="dialog"
       aria-modal="true"
     >
+      <div className="story-viewer__veil" aria-hidden />
       <div
         className="story-viewer__stage absolute inset-0"
         onTouchStart={onTouchStart}

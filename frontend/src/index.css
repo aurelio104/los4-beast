@@ -637,20 +637,41 @@ input:focus, select:focus, textarea:focus {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  height: 100dvh;
-  height: 100svh;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: 100svh;
+  min-height: -webkit-fill-available;
+  height: 100%;
   overflow: hidden;
   touch-action: pan-y;
   background: #000;
+  isolation: isolate;
 }
 
 body.story-viewer-open {
   overflow: hidden;
+  background: #000;
+}
+
+body.story-viewer-open .hub-layout,
+body.story-viewer-open .bottom-nav-bar {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.story-viewer__veil {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .story-viewer__stage {
   touch-action: manipulation;
   background: #000;
+  z-index: 1;
 }
 
 .story-viewer__img {
@@ -661,10 +682,12 @@ body.story-viewer-open {
   display: block;
   user-select: none;
   -webkit-user-drag: none;
+  background: #000;
 }
 
 .story-viewer__chrome {
   z-index: 4;
+  position: relative;
 }
 
 .story-viewer__top {
@@ -698,8 +721,10 @@ body.story-viewer-open {
   bottom: 0;
   z-index: 10001;
   pointer-events: auto;
+  padding-top: 0.75rem;
   padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.45) 75%, transparent 100%);
+  background: #000;
+  box-shadow: 0 -24px 48px 24px #000;
 }
 
 .story-viewer__dock-bar {
