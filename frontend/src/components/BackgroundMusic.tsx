@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { getPreferences } from '../lib/preferences';
 import { api } from '../lib/api';
 
-const FALLBACK_BGM = '/audio/reto-bgm.mp3';
-
 export type NowPlaying = {
   title: string;
   submittedBy: string;
@@ -17,7 +15,7 @@ export function BackgroundMusic() {
   const nodesRef = useRef<{ osc: OscillatorNode[]; gain: GainNode } | null>(null);
   const [on, setOn] = useState(() => getPreferences().music);
   const [booted, setBooted] = useState(false);
-  const [src, setSrc] = useState(FALLBACK_BGM);
+  const [src, setSrc] = useState<string | null>(null);
   const [hasCommunityTrack, setHasCommunityTrack] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
 
@@ -28,11 +26,11 @@ export function BackgroundMusic() {
         setSrc(r.track.audioUrl);
         setHasCommunityTrack(true);
       } else {
-        setSrc(FALLBACK_BGM);
+        setSrc(null);
         setHasCommunityTrack(false);
       }
     } catch {
-      setSrc(FALLBACK_BGM);
+      setSrc(null);
       setHasCommunityTrack(false);
     }
   };
@@ -91,8 +89,13 @@ export function BackgroundMusic() {
     const audio = audioRef.current;
     if (!audio || !booted) return;
     setAudioReady(false);
-    audio.src = src;
-    audio.load();
+    if (src) {
+      audio.src = src;
+      audio.load();
+      return;
+    }
+    audio.pause();
+    audio.removeAttribute('src');
   }, [src, booted]);
 
   const stopAmbient = () => {

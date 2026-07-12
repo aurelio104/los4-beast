@@ -11,6 +11,17 @@ export function ensureUploadDir() {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
+/** Mueve entre rutas; si /tmp y /data son distintos (Koyeb), copia y borra el origen. */
+export function moveFileSync(src: string, dest: string) {
+  try {
+    fs.renameSync(src, dest);
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== 'EXDEV') throw e;
+    fs.copyFileSync(src, dest);
+    fs.unlinkSync(src);
+  }
+}
+
 export function extensionForMime(mime: string): string | null {
   if (mime === 'image/jpeg') return 'jpg';
   if (mime === 'image/png') return 'png';

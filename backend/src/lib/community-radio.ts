@@ -13,6 +13,7 @@ import {
   radioFilePath,
   radioPublicUrl
 } from './radio-storage.js';
+import { moveFileSync } from './uploads.js';
 
 export type RadioTrackPublic = {
   id: string;
@@ -69,7 +70,7 @@ async function finalizeTrack(
   ensureRadioDir();
   const filename = newRadioFilename(userId);
   const dest = radioFilePath(filename);
-  fs.renameSync(optimizedPath, dest);
+  moveFileSync(optimizedPath, dest);
 
   const audioUrl = radioPublicUrl(filename);
 

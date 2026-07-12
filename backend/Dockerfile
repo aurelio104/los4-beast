@@ -9,8 +9,8 @@ RUN npx prisma generate && npm run build
 
 FROM node:20-alpine
 WORKDIR /app
-RUN apk add --no-cache openssl ffmpeg python3 py3-pip \
-  && pip3 install --break-system-packages yt-dlp \
+RUN apk add --no-cache openssl ffmpeg python3 py3-pip deno \
+  && pip3 install --break-system-packages -U yt-dlp \
   && yt-dlp --version
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
