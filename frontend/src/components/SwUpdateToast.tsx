@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { ensurePushPersisted } from '../lib/push-sync';
-import { isIOS, isStandalone } from '../lib/pwa';
 
 type UpdateSW = (reloadPage?: boolean) => Promise<void>;
+
+const SW_RELOAD_KEY = 'reto_sw_reloaded';
 
 function getStoredUser() {
   try {
@@ -14,11 +15,10 @@ function getStoredUser() {
 }
 
 function scheduleIdle(fn: () => void) {
-  const delay = isIOS() ? 5000 : 1500;
   if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-    window.requestIdleCallback(fn, { timeout: delay + 2000 });
+    window.requestIdleCallback(fn, { timeout: 6000 });
   } else {
-    globalThis.setTimeout(fn, delay);
+    globalThis.setTimeout(fn, 2000);
   }
 }
 
@@ -32,33 +32,27 @@ export function SwUpdateToast() {
     const register = () => {
       scheduleIdle(() => {
         void import('virtual:pwa-register')
-        .then(({ registerSW }) => {
-          if (cancelled) return;
-          const fn = registerSW({
-            immediate: true,
-            onNeedRefresh() {
-              if (isIOS() || isStandalone()) {
-                void ensurePushPersisted(getStoredUser()).finally(() => {
-                  void fn(true);
+          .then(({ registerSW }) => {
+            if (cancelled) return;
+            const fn = registerSW({
+              immediate: true,
+              onNeedRefresh() {
+                setNeedRefresh(true);
+              },
+              onRegisteredSW(_swUrl, registration) {
+                registration?.addEventListener('updatefound', () => {
+                  const worker = registration.installing;
+                  worker?.addEventListener('statechange', () => {
+                    if (worker.state === 'activated') {
+                      void ensurePushPersisted(getStoredUser());
+                    }
+                  });
                 });
-                return;
               }
-              setNeedRefresh(true);
-            },
-            onRegisteredSW(_swUrl, registration) {
-              registration?.addEventListener('updatefound', () => {
-                const worker = registration.installing;
-                worker?.addEventListener('statechange', () => {
-                  if (worker.state === 'activated') {
-                    void ensurePushPersisted(getStoredUser());
-                  }
-                });
-              });
-            }
-          });
-          setUpdateSW(() => fn);
-        })
-        .catch(() => {});
+            });
+            setUpdateSW(() => fn);
+          })
+          .catch(() => {});
       });
     };
 
@@ -73,6 +67,11 @@ export function SwUpdateToast() {
   if (!needRefresh || !updateSW) return null;
 
   const applyUpdate = async () => {
+    try {
+      sessionStorage.setItem(SW_RELOAD_KEY, String(Date.now()));
+    } catch {
+      /* ignore */
+    }
     await ensurePushPersisted(getStoredUser());
     await updateSW(true);
   };

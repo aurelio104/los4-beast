@@ -51,7 +51,9 @@ async function request<T>(path: string, options: RequestInit = {}, attempt = 0):
     if (res.status === 401 && !path.includes('/login') && !path.includes('/join')) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/join')) {
+        window.location.href = '/login';
+      }
       return data as T;
     }
 
@@ -315,7 +317,9 @@ export const api = {
     if (res.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/join')) {
+        window.location.href = '/login';
+      }
     }
     return data as {
       success: boolean;

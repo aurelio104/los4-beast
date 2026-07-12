@@ -72,11 +72,12 @@ function AppRoutes() {
 
   useEffect(() => {
     if (!user?.id || !localStorage.getItem('token')) return;
+    if (location.pathname === '/login' || location.pathname.startsWith('/join')) return;
     if (isSetupDone(user.id, user)) {
       markPwaInstallPromptSeen(user.id);
       if (!user.setupCompleted) void syncSetupFromUser(user);
     }
-  }, [user?.id, user?.setupCompleted]);
+  }, [user?.id, user?.setupCompleted, location.pathname]);
 
   return (
     <>

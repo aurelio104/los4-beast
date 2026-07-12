@@ -59,15 +59,9 @@
     <script>
       (function () {
         var RELOAD_KEY = 'reto_boot_reload';
-        var MAX_RELOADS = 3;
+        var MAX_RELOADS = 2;
         function reloadCount() {
           try { return +(sessionStorage.getItem(RELOAD_KEY) || 0); } catch (e) { return 0; }
-        }
-        function bumpReload() {
-          try { sessionStorage.setItem(RELOAD_KEY, String(reloadCount() + 1)); } catch (e) {}
-        }
-        function isChunkErr(msg) {
-          return /failed to fetch|loading chunk|dynamically imported|importing a module script failed/i.test(msg || '');
         }
         function showBootRecovery() {
           var splash = document.getElementById('boot-splash');
@@ -77,46 +71,15 @@
           wrap.style.cssText = 'margin-top:1rem;display:flex;flex-direction:column;align-items:center;gap:0.65rem;max-width:16rem;text-align:center';
           wrap.innerHTML =
             '<p style="color:rgba(255,255,255,0.6);font:500 13px system-ui,sans-serif;line-height:1.35">La app no termina de cargar.</p>' +
-            '<button type="button" style="padding:0.6rem 1.1rem;border-radius:0.75rem;border:none;background:rgba(255,255,255,0.12);color:#fff;font:600 13px system-ui,sans-serif">Recargar app</button>' +
-            '<p style="color:rgba(255,255,255,0.35);font:400 11px system-ui,sans-serif;line-height:1.35">En iOS: cierra la pestaña y vuelve a abrir Reto.</p>';
+            '<button type="button" style="padding:0.6rem 1.1rem;border-radius:0.75rem;border:none;background:rgba(255,255,255,0.12);color:#fff;font:600 13px system-ui,sans-serif">Recargar app</button>';
           wrap.querySelector('button').addEventListener('click', function () { location.reload(); });
           splash.appendChild(wrap);
         }
-        function autoRecover(reason) {
-          if (reloadCount() >= MAX_RELOADS) {
-            showBootRecovery();
-            return;
-          }
-          bumpReload();
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function (regs) {
-              return Promise.all(regs.map(function (r) { return r.unregister(); }));
-            }).finally(function () {
-              if ('caches' in window) {
-                caches.keys().then(function (keys) {
-                  return Promise.all(keys.map(function (k) { return caches.delete(k); }));
-                }).finally(function () { location.reload(); });
-              } else {
-                location.reload();
-              }
-            });
-            return;
-          }
-          location.reload();
-        }
         window.addEventListener('vite:preloadError', function (e) {
           e.preventDefault();
-          autoRecover('preload');
-        });
-        window.addEventListener('error', function (e) {
-          var t = e.target;
-          if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) autoRecover('asset');
-        }, true);
-        window.addEventListener('unhandledrejection', function (e) {
-          if (isChunkErr(e.reason && e.reason.message ? e.reason.message : String(e.reason))) {
-            e.preventDefault();
-            autoRecover('chunk');
-          }
+          if (reloadCount() >= MAX_RELOADS) { showBootRecovery(); return; }
+          try { sessionStorage.setItem(RELOAD_KEY, String(reloadCount() + 1)); } catch (err) {}
+          location.reload();
         });
         setTimeout(function () {
           if (document.getElementById('boot-splash')) showBootRecovery();

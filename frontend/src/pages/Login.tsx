@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Fingerprint, KeyRound, Loader2 } from 'lucide-react';
@@ -20,6 +20,22 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    void api.me().then((res) => {
+      if (res.success && res.user) {
+        const u = res.user as User;
+        localStorage.setItem('user', JSON.stringify(u));
+        void syncSetupFromUser(u);
+        navigate(isSetupDone(u.id, u) ? '/' : '/setup', { replace: true });
+      } else {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    });
+  }, [navigate]);
 
   const finishLogin = (token: string, user: User) => {
     localStorage.setItem('token', token);

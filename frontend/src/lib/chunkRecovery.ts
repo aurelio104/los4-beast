@@ -14,11 +14,14 @@ export function isChunkLoadError(reason: unknown): boolean {
 }
 
 export function clearBootReloadCount() {
-  try {
-    sessionStorage.removeItem(RELOAD_KEY);
-  } catch {
-    /* ignore */
-  }
+  /* No resetear en cada mount — evita bucles infinitos de recarga */
+}
+
+function isModuleAsset(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLScriptElement || target instanceof HTMLLinkElement)) return false;
+  const href = target instanceof HTMLLinkElement ? target.href : target.src;
+  if (!href) return false;
+  return href.includes('/assets/') || href.endsWith('.js') || href.endsWith('.css');
 }
 
 function getReloadCount(): number {
@@ -79,10 +82,8 @@ export function registerChunkRecovery() {
   window.addEventListener(
     'error',
     (event) => {
-      const target = event.target;
-      if (target instanceof HTMLScriptElement || target instanceof HTMLLinkElement) {
-        void reloadWithRecovery();
-      }
+      if (!isModuleAsset(event.target)) return;
+      void reloadWithRecovery();
     },
     true
   );
