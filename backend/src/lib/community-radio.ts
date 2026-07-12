@@ -61,6 +61,24 @@ async function deactivateAllTracks(exceptId?: string) {
   }
 }
 
+async function finishRadioSubmission(
+  userId: string,
+  metadata: Record<string, unknown>
+): Promise<{ track: RadioTrackPublic | null; gained: number; points: number }> {
+  const alreadyDjToday = await playedMiniGameToday(userId, 'RADIO_DJ');
+  if (!alreadyDjToday) {
+    const { gained, points } = await awardPoints(userId, 'RADIO_DJ', RADIO_POINTS, metadata);
+    return { track: await getCurrentRadioTrack(), gained, points };
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { points: true } });
+  return {
+    track: await getCurrentRadioTrack(),
+    gained: 0,
+    points: user?.points ?? 0
+  };
+}
+
 async function finalizeTrack(
   userId: string,
   title: string,
@@ -92,17 +110,7 @@ async function finalizeTrack(
 
   await deactivateAllTracks(track.id);
 
-  const { gained, points } = await awardPoints(userId, 'RADIO_DJ', RADIO_POINTS, {
-    title,
-    sourceType,
-    trackId: track.id
-  });
-
-  return {
-    track: await getCurrentRadioTrack(),
-    gained,
-    points
-  };
+  return finishRadioSubmission(userId, { title, sourceType, trackId: track.id });
 }
 
 export async function submitRadioFromFile(
@@ -113,10 +121,6 @@ export async function submitRadioFromFile(
 ) {
   const cleanTitle = title.trim().slice(0, 120);
   if (cleanTitle.length < 2) throw new Error('Indica el nombre de la canción');
-
-  if (await playedMiniGameToday(userId, 'RADIO_DJ')) {
-    throw new Error('Ya pusiste música hoy — mañana puedes de nuevo (+75 Puntos)');
-  }
 
   ensureRadioDir();
   const tmpOut = path.join(os.tmpdir(), `reto-radio-${userId}-${Date.now()}.mp3`);
@@ -147,10 +151,6 @@ export async function submitRadioFromYoutube(userId: string, title: string, yout
   const videoId = extractYoutubeVideoId(youtubeUrl);
   if (!videoId) throw new Error('Link de YouTube inválido');
 
-  if (await playedMiniGameToday(userId, 'RADIO_DJ')) {
-    throw new Error('Ya pusiste música hoy — mañana puedes de nuevo (+75 Puntos)');
-  }
-
   const track = await prisma.communityRadioTrack.create({
     data: {
       userId,
@@ -167,16 +167,10 @@ export async function submitRadioFromYoutube(userId: string, title: string, yout
 
   await deactivateAllTracks(track.id);
 
-  const { gained, points } = await awardPoints(userId, 'RADIO_DJ', RADIO_POINTS, {
+  return finishRadioSubmission(userId, {
     title: cleanTitle,
     sourceType: 'youtube',
     trackId: track.id,
     youtubeVideoId: videoId
   });
-
-  return {
-    track: await getCurrentRadioTrack(),
-    gained,
-    points
-  };
 }

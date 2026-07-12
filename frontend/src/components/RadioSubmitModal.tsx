@@ -93,8 +93,8 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
                     <Radio size={20} className="text-reto-cyan" /> DJ del Reto
                   </p>
                   <p className="text-xs text-white/50 mt-1 leading-relaxed">
-                    Pega un link de YouTube o sube un archivo. Todos lo escuchan con la música activada en Perfil.{' '}
-                    <strong className="text-reto-gold">+75 Puntos</strong> · 1 vez al día.
+                    Pega un link de YouTube o sube un archivo. Puedes cambiar la canción cuando quieras.{' '}
+                    <strong className="text-reto-gold">+75 Puntos</strong> la primera vez al día.
                   </p>
                 </div>
                 <button type="button" onClick={close} className="glass-btn p-2 rounded-xl" aria-label="Cerrar">
