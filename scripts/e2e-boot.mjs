@@ -111,9 +111,11 @@ async function runDeviceSuite(browser, deviceEntry, session, paths) {
     try {
       await page.goto(`${WEB}/login`, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.waitForTimeout(400);
-      const splash = await page.$('#boot-splash');
-      if (!splash) ok(`${deviceEntry.label} tras reload: sin splash`);
+      const splashGone = await page
+        .waitForFunction(() => !document.getElementById('boot-splash'), { timeout: 15000 })
+        .then(() => true)
+        .catch(() => false);
+      if (splashGone) ok(`${deviceEntry.label} tras reload: sin splash`);
       else bad(`${deviceEntry.label} tras reload: splash persiste`);
     } catch (e) {
       bad(`${deviceEntry.label} tras reload`, (e).message?.slice(0, 60) || 'error');
