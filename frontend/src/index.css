@@ -274,13 +274,14 @@ input:focus, select:focus, textarea:focus {
 /* Hub — viewport fijo: scroll solo en el contenido, nav abajo siempre visible */
 .hub-layout {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 10;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-sizing: border-box;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .hub-layout__scroll {
@@ -290,7 +291,8 @@ input:focus, select:focus, textarea:focus {
   overflow-y: auto;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 1.25rem;
+  /* Espacio para la nav fija + home indicator */
+  padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
 }
 
 .hero-section {
@@ -386,11 +388,14 @@ input:focus, select:focus, textarea:focus {
 }
 
 .bottom-nav-bar {
-  position: relative;
-  flex-shrink: 0;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 50;
-  padding: 0.375rem 0.75rem 0.25rem;
-  background: linear-gradient(0deg, rgba(5, 5, 8, 0.92) 0%, rgba(5, 5, 8, 0.5) 70%, transparent 100%);
+  padding: 0.25rem 0.75rem;
+  padding-bottom: max(0.125rem, env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(0deg, rgba(5, 5, 8, 0.95) 55%, rgba(5, 5, 8, 0.4) 85%, transparent 100%);
   pointer-events: none;
 }
 
@@ -419,7 +424,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .toast-above-nav {
-  bottom: max(4.75rem, calc(3.75rem + env(safe-area-inset-bottom))) !important;
+  bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 .game-light {
