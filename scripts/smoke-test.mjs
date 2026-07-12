@@ -322,6 +322,9 @@ async function testMobileReadiness() {
     ['Story cleanup body class', readFileSync(join(process.cwd(), 'frontend', 'src', 'pages', 'Hub.tsx'), 'utf8').includes('remove(\'story-viewer-open\')')],
     ['BottomNav component', existsSync(join(process.cwd(), 'frontend', 'src', 'components', 'BottomNav.tsx'))],
     ['MainTabLayout', existsSync(join(process.cwd(), 'frontend', 'src', 'components', 'MainTabLayout.tsx'))],
+    ['Hub layout no 100svh height', !readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').match(/\.hub-layout\s*\{[^}]*height:\s*100svh/s)],
+    ['Bottom nav fixed bottom', readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').includes('.bottom-nav-bar') && readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').match(/\.bottom-nav-bar\s*\{[^}]*bottom:\s*0/s)],
+    ['Bottom nav safe area vars', readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').includes('--bottom-nav-total')],
     ['beach wallpaper asset', existsSync(join(process.cwd(), 'frontend', 'public', 'wallpapers', 'beach-poster.jpg')) || existsSync(join(process.cwd(), 'frontend', 'dist', 'wallpapers', 'beach-poster.jpg'))],
     ['no beast URL in backend', !readFileSync(join(process.cwd(), 'backend', 'src', 'lib', 'whatsapp.ts'), 'utf8').includes('beast')]
   ];

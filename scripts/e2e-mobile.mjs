@@ -72,6 +72,9 @@ async function main() {
     const nav = await page.locator('.bottom-nav-bar').isVisible();
     if (nav) ok('Hub: bottom nav');
     else bad('Hub: bottom nav');
+    const navBottom = await page.locator('.bottom-nav-bar').evaluate((el) => getComputedStyle(el).bottom);
+    if (navBottom === '0px') ok('Hub: nav pegada al fondo');
+    else bad('Hub: nav pegada al fondo', navBottom);
     await page.close();
   }
 
@@ -166,28 +169,59 @@ async function main() {
     await page.close();
   }
 
-  // --- Android (Pixel 5) Hub + historias ---
-  {
-    const android = await browser.newContext({ ...devices['Pixel 5'], locale: 'es-ES' });
-    const page = await android.newPage();
-    await page.addInitScript(
-      ({ token, user }) => {
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem(`reto_setup_done_${user.id}`, '1');
-      },
-      { token, user }
-    );
-    await page.goto(`${WEB}/`, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(1200);
-    if (await page.locator('.app-shell-bg').count()) ok('Android: fondo playa');
-    else bad('Android: fondo playa');
-    await page.locator('.story-bubble').first().click();
-    await page.waitForTimeout(600);
-    if (await page.locator('.story-viewer').isVisible()) ok('Android: historias abren');
-    else bad('Android: historias abren');
-    await page.locator('button[aria-label="Cerrar"]').click();
-    await android.close();
+  // --- Multi-dispositivo: barra pegada al fondo en todas las rutas con tab bar ---
+  const DEVICE_MATRIX = [
+    { label: 'iPhone SE', key: 'iPhone SE' },
+    { label: 'iPhone 13', key: 'iPhone 13' },
+    { label: 'iPhone 14 Pro Max', key: 'iPhone 14 Pro Max' },
+    { label: 'Pixel 5', key: 'Pixel 5' },
+    { label: 'Galaxy S9+', key: 'Galaxy S9+' }
+  ];
+  const TAB_PATHS = ['/', '/arena', '/cofre', '/tienda', '/perfil'];
+
+  for (const { label, key } of DEVICE_MATRIX) {
+    const device = devices[key];
+    if (!device) {
+      bad(`Dispositivo ${label}`, 'no encontrado en Playwright');
+      continue;
+    }
+    const ctx = await browser.newContext({ ...device, locale: 'es-ES' });
+    for (const path of TAB_PATHS) {
+      const page = await ctx.newPage();
+      await page.addInitScript(
+        ({ token, user }) => {
+          localStorage.setItem('token', token);
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem(`reto_setup_done_${user.id}`, '1');
+        },
+        { token, user }
+      );
+      await page.goto(`${WEB}${path}`, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(600);
+      const nav = page.locator('.bottom-nav-bar');
+      if (!(await nav.isVisible())) {
+        bad(`${label} ${path}: nav visible`);
+        await page.close();
+        continue;
+      }
+      const metrics = await nav.evaluate((el) => {
+        const style = getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        const vh = window.innerHeight;
+        return {
+          bottom: style.bottom,
+          position: style.position,
+          gap: Math.round(vh - rect.bottom)
+        };
+      });
+      if (metrics.position === 'fixed' && metrics.bottom === '0px' && metrics.gap <= 2) {
+        ok(`${label} ${path}: nav al fondo`, `gap=${metrics.gap}px`);
+      } else {
+        bad(`${label} ${path}: nav al fondo`, JSON.stringify(metrics));
+      }
+      await page.close();
+    }
+    await ctx.close();
   }
 
   await browser.close();

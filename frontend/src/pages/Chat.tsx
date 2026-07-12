@@ -94,7 +94,7 @@ export default function Chat() {
 
   return (
     <AppShell>
-      <div className="h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden">
+      <div className="chat-screen">
       <PageContainer variant="chat" className="flex-1 min-h-0 flex flex-col">
         <PageTopBar onBack={() => navigate('/')} />
 
