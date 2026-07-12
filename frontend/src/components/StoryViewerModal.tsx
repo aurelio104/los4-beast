@@ -1,46 +1,32 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, Trash2, ChevronUp } from 'lucide-react';
+import { X, MoreHorizontal, Eye, Heart } from 'lucide-react';
 import { StoryUserGroup, StoryViewer } from '../types';
 import { Avatar } from './Avatar';
 import { api } from '../lib/api';
 import { STORY_REACTIONS, storyReactionGlyph } from '../lib/storyReactions';
 
 const STORY_DURATION_MS = 5000;
+const HOLD_PAUSE_MS = 180;
 
-function timeAgo(iso: string) {
+function igTimeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 60) return `${Math.max(1, m)}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
+
+function viewerTimeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const h = Math.floor(diff / 3600000);
   if (h < 1) {
     const m = Math.max(1, Math.floor(diff / 60000));
-    return `hace ${m} min`;
+    return `${m}m`;
   }
-  if (h < 24) return `hace ${h} h`;
-  return 'hace 1 día';
-}
-
-function viewersSummary(viewers: StoryViewer[]) {
-  if (!viewers.length) return null;
-  const first = viewers[0].displayName.split(' ')[0];
-  if (viewers.length === 1) return first;
-  const second = viewers[1].displayName.split(' ')[0];
-  if (viewers.length === 2) return `${first} y ${second}`;
-  return `${first}, ${second} y ${viewers.length - 2} más`;
-}
-
-function ViewerAvatarStack({ viewers }: { viewers: StoryViewer[] }) {
-  const shown = viewers.slice(0, 3);
-  if (!shown.length) return null;
-
-  return (
-    <div className="story-viewer-stack" aria-hidden>
-      {shown.map((v, i) => (
-        <span key={v.userId} className="story-viewer-stack__item" style={{ zIndex: shown.length - i }}>
-          <Avatar url={v.avatarUrl} emoji={v.avatarEmoji} name={v.displayName} size="xs" expandable={false} className="!w-7 !h-7 !ring-2 !ring-black" />
-        </span>
-      ))}
-    </div>
-  );
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
 }
 
 type StoryViewerModalProps = {
@@ -65,24 +51,36 @@ export function StoryViewerModal({
   const [progress, setProgress] = useState(0);
   const [deleting, setDeleting] = useState(false);
   const [showViewers, setShowViewers] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [viewers, setViewers] = useState<StoryViewer[]>([]);
   const [viewersLoading, setViewersLoading] = useState(false);
   const [myReaction, setMyReaction] = useState<string | null>(null);
   const [reacting, setReacting] = useState(false);
+  const [held, setHeld] = useState(false);
+  const [floatEmoji, setFloatEmoji] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
+  const holdRef = useRef<number | null>(null);
   const viewedRef = useRef<Set<string>>(new Set());
   const touchStartY = useRef<number | null>(null);
 
   const group = groups[userIndex];
   const story = group?.stories[storyIndex];
-  const paused = showViewers || deleting || reacting;
-  const summary = viewersSummary(viewers);
+  const paused = showViewers || deleting || reacting || held || menuOpen;
+  const firstName = group?.displayName.split(' ')[0] ?? group?.displayName ?? '';
 
   const clearTimer = () => {
     if (timerRef.current) {
       window.clearInterval(timerRef.current);
       timerRef.current = null;
     }
+  };
+
+  const clearHold = () => {
+    if (holdRef.current) {
+      window.clearTimeout(holdRef.current);
+      holdRef.current = null;
+    }
+    setHeld(false);
   };
 
   const loadViewers = useCallback(async (storyId: string) => {
@@ -109,6 +107,7 @@ export function StoryViewerModal({
   const goNext = useCallback(() => {
     if (!group) return;
     setShowViewers(false);
+    setMenuOpen(false);
     if (storyIndex < group.stories.length - 1) {
       setStoryIndex((i) => i + 1);
       setProgress(0);
@@ -125,6 +124,7 @@ export function StoryViewerModal({
 
   const goPrev = useCallback(() => {
     setShowViewers(false);
+    setMenuOpen(false);
     if (storyIndex > 0) {
       setStoryIndex((i) => i - 1);
       setProgress(0);
@@ -158,10 +158,12 @@ export function StoryViewerModal({
     setStoryIndex(0);
     setProgress(0);
     setShowViewers(false);
+    setMenuOpen(false);
   }, [initialUserId, groups]);
 
   useEffect(() => {
     setShowViewers(false);
+    setMenuOpen(false);
     if (group?.isOwn && story?.id) {
       void loadViewers(story.id);
       const id = window.setInterval(() => void loadViewers(story.id), 5000);
@@ -180,31 +182,11 @@ export function StoryViewerModal({
     });
   }, [story?.id, group?.isOwn]);
 
-  const handleReact = async (emoji: string) => {
-    if (!story || group.isOwn || reacting) return;
-    setReacting(true);
-    clearTimer();
-    const res = await api.reactStory(story.id, emoji);
-    if (res.success && res.reaction) {
-      setMyReaction(res.reaction);
-      if (!viewedRef.current.has(story.id)) {
-        viewedRef.current.add(story.id);
-        onGroupsChange(
-          groups.map((g) => ({
-            ...g,
-            stories: g.stories.map((s) => (s.id === story.id ? { ...s, viewed: true } : s)),
-            hasUnseen: g.isOwn ? false : g.stories.some((s) => (s.id === story.id ? false : !s.viewed))
-          }))
-        );
-      }
-    }
-    window.setTimeout(() => setReacting(false), 400);
-  };
-
   if (!group || !story) return null;
 
   const handleDelete = async () => {
     if (!group.isOwn || deleting) return;
+    setMenuOpen(false);
     setDeleting(true);
     clearTimer();
     const res = await api.deleteStory(story.id);
@@ -227,16 +209,60 @@ export function StoryViewerModal({
     void loadViewers(story.id);
   };
 
+  const showFloatReaction = (glyph: string) => {
+    setFloatEmoji(glyph);
+    window.setTimeout(() => setFloatEmoji(null), 900);
+  };
+
+  const handleReact = async (emoji: string) => {
+    if (group.isOwn || reacting) return;
+    const glyph = STORY_REACTIONS.find((r) => r.id === emoji)?.glyph;
+    setReacting(true);
+    clearTimer();
+    const res = await api.reactStory(story.id, emoji);
+    if (res.success && res.reaction) {
+      setMyReaction(res.reaction);
+      if (glyph) showFloatReaction(glyph);
+      if (!viewedRef.current.has(story.id)) {
+        viewedRef.current.add(story.id);
+        onGroupsChange(
+          groups.map((g) => ({
+            ...g,
+            stories: g.stories.map((s) => (s.id === story.id ? { ...s, viewed: true } : s)),
+            hasUnseen: g.isOwn ? false : g.stories.some((s) => (s.id === story.id ? false : !s.viewed))
+          }))
+        );
+      }
+    }
+    window.setTimeout(() => setReacting(false), 350);
+  };
+
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0]?.clientY ?? null;
+    clearHold();
+    holdRef.current = window.setTimeout(() => setHeld(true), HOLD_PAUSE_MS);
+  };
+
+  const onTouchMove = () => {
+    clearHold();
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
-    if (!group.isOwn || touchStartY.current == null) return;
+    clearHold();
+    if (touchStartY.current == null) return;
     const endY = e.changedTouches[0]?.clientY ?? touchStartY.current;
-    if (touchStartY.current - endY > 48) openViewers();
+    const dy = endY - touchStartY.current;
+    if (dy > 72) onClose();
+    else if (dy < -56 && group.isOwn) openViewers();
     touchStartY.current = null;
   };
+
+  const onPointerDown = () => {
+    clearHold();
+    holdRef.current = window.setTimeout(() => setHeld(true), HOLD_PAUSE_MS);
+  };
+
+  const onPointerUp = () => clearHold();
 
   return (
     <motion.div
@@ -249,34 +275,55 @@ export function StoryViewerModal({
     >
       <div
         className="story-viewer__stage absolute inset-0"
-        onTouchStart={group.isOwn ? onTouchStart : undefined}
-        onTouchEnd={group.isOwn ? onTouchEnd : undefined}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
+        onPointerCancel={onPointerUp}
       >
         <AnimatePresence mode="wait">
           <motion.img
             key={story.id}
             src={story.mediaUrl}
             alt=""
-            initial={{ opacity: 0, scale: 1.02 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
             className="story-viewer__img absolute inset-0 select-none"
             draggable={false}
           />
         </AnimatePresence>
       </div>
 
-      {!showViewers && (
+      {!showViewers && !menuOpen && (
         <>
           <button type="button" className="story-viewer__tap story-viewer__tap--left" onClick={goPrev} aria-label="Anterior" />
           <button type="button" className="story-viewer__tap story-viewer__tap--right" onClick={goNext} aria-label="Siguiente" />
         </>
       )}
 
+      <AnimatePresence>
+        {floatEmoji && (
+          <motion.span
+            key={floatEmoji}
+            initial={{ opacity: 0, scale: 0.4, y: 0 }}
+            animate={{ opacity: 1, scale: 1.2, y: -120 }}
+            exit={{ opacity: 0, scale: 0.8, y: -180 }}
+            transition={{ duration: 0.85, ease: 'easeOut' }}
+            className="story-viewer__float-emoji pointer-events-none"
+            aria-hidden
+          >
+            {floatEmoji}
+          </motion.span>
+        )}
+      </AnimatePresence>
+
       <div className="story-viewer__chrome absolute inset-0 flex flex-col pointer-events-none">
-        <div className="story-viewer__top pointer-events-auto shrink-0 pt-[max(0.35rem,env(safe-area-inset-top))]">
-          <div className="story-viewer__progress px-3 flex gap-1 pb-2">
+        <div className="story-viewer__top pointer-events-auto shrink-0">
+          <div className="story-viewer__progress px-2 flex gap-[3px]">
             {group.stories.map((s, i) => (
               <div key={s.id} className="story-viewer__progress-track flex-1">
                 <div
@@ -289,76 +336,115 @@ export function StoryViewerModal({
             ))}
           </div>
 
-          <div className="story-viewer__header px-3 pb-3 flex items-center gap-2.5">
-            <Avatar url={group.avatarUrl} emoji={group.avatarEmoji} name={group.displayName} size="xs" expandable={false} />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold truncate drop-shadow-sm">{group.displayName}</p>
-              <p className="text-[11px] text-white/70">{timeAgo(story.createdAt)}</p>
+          <div className="story-viewer__header px-3 pb-2 flex items-center gap-2">
+            <Avatar
+              url={group.avatarUrl}
+              emoji={group.avatarEmoji}
+              name={group.displayName}
+              size="xs"
+              expandable={false}
+              className="!w-8 !h-8 !ring-[1.5px] !ring-white/30"
+            />
+            <div className="story-viewer__user flex-1 min-w-0 flex items-center gap-1">
+              <span className="text-[13px] font-semibold truncate">{group.displayName}</span>
+              <span className="text-[13px] text-white/55 shrink-0">·</span>
+              <span className="text-[13px] text-white/55 shrink-0">{igTimeAgo(story.createdAt)}</span>
             </div>
-            {group.isOwn && onAddStory && (
-              <button type="button" onClick={onAddStory} className="text-xs font-semibold text-reto-cyan px-1.5 py-1 shrink-0">
-                + Añadir
+
+            <div className="story-viewer__actions flex items-center shrink-0">
+              {group.isOwn && (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setMenuOpen((o) => !o)}
+                    className="story-viewer__icon-btn"
+                    aria-label="Opciones"
+                    aria-expanded={menuOpen}
+                  >
+                    <MoreHorizontal size={24} strokeWidth={1.75} />
+                  </button>
+                  <AnimatePresence>
+                    {menuOpen && (
+                      <>
+                        <button
+                          type="button"
+                          className="fixed inset-0 z-[88] cursor-default"
+                          onClick={() => setMenuOpen(false)}
+                          aria-label="Cerrar menú"
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.92, y: -4 }}
+                          transition={{ duration: 0.12 }}
+                          className="story-viewer__menu absolute right-0 top-full mt-1 z-[89]"
+                        >
+                          {onAddStory && (
+                            <button type="button" onClick={() => { setMenuOpen(false); onAddStory(); }}>
+                              Añadir a tu historia
+                            </button>
+                          )}
+                          <button type="button" onClick={() => void handleDelete()} disabled={deleting} className="story-viewer__menu-danger">
+                            Eliminar
+                          </button>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+              <button type="button" onClick={onClose} className="story-viewer__icon-btn" aria-label="Cerrar">
+                <X size={26} strokeWidth={1.75} />
               </button>
-            )}
-            {group.isOwn && (
-              <button type="button" onClick={handleDelete} disabled={deleting} className="p-1.5 text-white/70 shrink-0" aria-label="Eliminar">
-                <Trash2 size={18} />
-              </button>
-            )}
-            <button type="button" onClick={onClose} className="p-1.5 text-white/85 shrink-0" aria-label="Cerrar">
-              <X size={22} />
-            </button>
+            </div>
           </div>
         </div>
 
         <div className="flex-1 min-h-0" aria-hidden />
 
         {!showViewers && (
-          <div className="story-viewer__bottom pointer-events-auto shrink-0 px-3 pt-6">
+          <div className="story-viewer__bottom pointer-events-auto shrink-0">
             {story.caption && (
-              <p className="story-viewer__caption text-sm text-white text-center mb-3 px-2 leading-snug">{story.caption}</p>
+              <p className="story-viewer__caption px-3 pb-3 text-[15px] text-white leading-snug">{story.caption}</p>
             )}
 
-            {!group.isOwn && (
-              <div className="story-reactions-bar">
-                {STORY_REACTIONS.map((r) => (
-                  <motion.button
-                    key={r.id}
-                    type="button"
-                    onClick={() => void handleReact(r.id)}
-                    disabled={reacting}
-                    aria-label={r.label}
-                    aria-pressed={myReaction === r.id}
-                    className={`story-reaction-btn ${myReaction === r.id ? 'story-reaction-btn--active' : ''}`}
-                    whileTap={{ scale: 1.35 }}
-                    animate={myReaction === r.id ? { scale: [1, 1.25, 1.1] } : { scale: 1 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <span className="story-reaction-btn__glyph" aria-hidden>
-                      {r.glyph}
-                    </span>
-                  </motion.button>
-                ))}
-              </div>
-            )}
-
-            {group.isOwn && (
-              <button
-                type="button"
-                onClick={openViewers}
-                className="story-viewers-bar flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left w-full mb-1"
-              >
-                <ViewerAvatarStack viewers={viewers} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">Visto por</p>
-                  <p className="text-sm font-bold truncate text-white/95">
-                    {viewersLoading && !viewers.length
-                      ? 'Cargando…'
-                      : summary || 'Nadie aún — desliza arriba'}
-                  </p>
-                </div>
-                <ChevronUp size={18} className="text-white/45 shrink-0" />
+            {group.isOwn ? (
+              <button type="button" onClick={openViewers} className="story-viewer__views-pill mx-3 mb-3">
+                <Eye size={15} strokeWidth={2} />
+                <span>{viewersLoading && !viewers.length ? '…' : viewers.length}</span>
               </button>
+            ) : (
+              <div className="story-viewer__composer px-3 pb-3">
+                <div className="story-viewer__quick-reactions">
+                  {STORY_REACTIONS.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => void handleReact(r.id)}
+                      disabled={reacting}
+                      aria-label={r.label}
+                      aria-pressed={myReaction === r.id}
+                      className={`story-viewer__quick-emoji ${myReaction === r.id ? 'story-viewer__quick-emoji--active' : ''}`}
+                    >
+                      {r.glyph}
+                    </button>
+                  ))}
+                </div>
+                <div className="story-viewer__send-row">
+                  <div className="story-viewer__send-input" aria-hidden>
+                    Enviar mensaje a {firstName}…
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleReact('heart')}
+                    disabled={reacting}
+                    className={`story-viewer__send-heart ${myReaction === 'heart' ? 'story-viewer__send-heart--active' : ''}`}
+                    aria-label="Corazón"
+                  >
+                    <Heart size={24} strokeWidth={myReaction === 'heart' ? 2.5 : 1.75} fill={myReaction === 'heart' ? 'currentColor' : 'none'} />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -372,7 +458,7 @@ export function StoryViewerModal({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[86] bg-black/55"
+              className="fixed inset-0 z-[86] bg-black/40"
               onClick={() => setShowViewers(false)}
               aria-label="Cerrar vistas"
             />
@@ -380,35 +466,37 @@ export function StoryViewerModal({
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 340, damping: 32 }}
-              className="story-viewers-sheet fixed inset-x-0 bottom-0 z-[87] rounded-t-3xl bg-[#12121a] border-t border-white/10 max-h-[min(70dvh,32rem)] flex flex-col pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+              transition={{ type: 'spring', stiffness: 380, damping: 36 }}
+              className="story-viewers-sheet fixed inset-x-0 bottom-0 z-[87] flex flex-col"
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.35 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.y > 80 || info.velocity.y > 400) setShowViewers(false);
+              }}
             >
-              <div className="shrink-0 pt-3 pb-2 px-4 border-b border-white/8">
-                <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-3" />
-                <p className="text-center text-sm font-black uppercase tracking-[0.2em] text-white/70">
-                  Visto por · {viewersLoading ? '…' : viewers.length}
-                </p>
-              </div>
+              <div className="story-viewers-sheet__handle" aria-hidden />
+              <p className="story-viewers-sheet__title">
+                Vistas · {viewersLoading ? '…' : viewers.length}
+              </p>
 
-              <div className="flex-1 overflow-y-auto overscroll-contain">
+              <div className="story-viewers-sheet__list flex-1 overflow-y-auto overscroll-contain">
                 {viewersLoading && !viewers.length ? (
-                  <p className="text-center text-sm text-white/45 py-10">Cargando…</p>
+                  <p className="story-viewers-sheet__empty">Cargando…</p>
                 ) : viewers.length === 0 ? (
-                  <p className="text-center text-sm text-white/45 py-10">Nadie ha visto esta historia todavía</p>
+                  <p className="story-viewers-sheet__empty">Nadie ha visto esta historia todavía</p>
                 ) : (
                   <ul>
                     {viewers.map((v) => (
-                      <li key={v.userId} className="flex items-center gap-3 px-4 py-3.5 border-b border-white/5 last:border-0">
-                        <Avatar url={v.avatarUrl} emoji={v.avatarEmoji} name={v.displayName} size="sm" expandable={false} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[15px] font-bold truncate">{v.displayName}</p>
-                        </div>
+                      <li key={v.userId} className="story-viewers-sheet__row">
+                        <Avatar url={v.avatarUrl} emoji={v.avatarEmoji} name={v.displayName} size="sm" expandable={false} className="!w-9 !h-9" />
+                        <span className="story-viewers-sheet__name">{v.displayName}</span>
                         {v.reaction && (
                           <span className="story-viewer-reaction shrink-0" title="Reacción">
                             {storyReactionGlyph(v.reaction)}
                           </span>
                         )}
-                        <span className="text-xs text-white/40 shrink-0">{timeAgo(v.viewedAt)}</span>
+                        <span className="story-viewers-sheet__time">{viewerTimeAgo(v.viewedAt)}</span>
                       </li>
                     ))}
                   </ul>
