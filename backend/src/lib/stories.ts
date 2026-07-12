@@ -4,6 +4,12 @@ import { resolvePublicName } from './user-display.js';
 
 const STORY_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_STORIES_PER_DAY = 10;
+export const STORY_REACTION_IDS = ['heart', 'fire', 'devil'] as const;
+export type StoryReactionId = (typeof STORY_REACTION_IDS)[number];
+
+export function isStoryReactionId(value: string): value is StoryReactionId {
+  return (STORY_REACTION_IDS as readonly string[]).includes(value);
+}
 
 export async function purgeExpiredStories() {
   const expired = await prisma.story.findMany({
@@ -152,6 +158,20 @@ export async function getStoryViewers(storyId: string, requestUserId: string) {
             }
           }
         }
+      },
+      reactions: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+              nickname: true,
+              username: true,
+              avatarUrl: true,
+              avatarEmoji: true
+            }
+          }
+        }
       }
     }
   });
@@ -159,11 +179,39 @@ export async function getStoryViewers(storyId: string, requestUserId: string) {
   if (!story) throw new Error('Historia no encontrada');
   if (story.userId !== requestUserId) throw new Error('No autorizado');
 
+  const reactionByUser = new Map(story.reactions.map((r) => [r.userId, r.emoji]));
+
   return story.views.map((v) => ({
     userId: v.viewer.id,
     displayName: resolvePublicName(v.viewer),
     avatarUrl: v.viewer.avatarUrl,
     avatarEmoji: v.viewer.avatarEmoji,
-    viewedAt: v.viewedAt.toISOString()
+    viewedAt: v.viewedAt.toISOString(),
+    reaction: reactionByUser.get(v.viewer.id) ?? null
   }));
+}
+
+export async function getStoryReaction(storyId: string, userId: string) {
+  const reaction = await prisma.storyReaction.findUnique({
+    where: { storyId_userId: { storyId, userId } }
+  });
+  return reaction?.emoji ?? null;
+}
+
+export async function reactToStory(storyId: string, userId: string, emoji: string) {
+  if (!isStoryReactionId(emoji)) throw new Error('Reacción inválida');
+
+  const story = await prisma.story.findUnique({ where: { id: storyId } });
+  if (!story || story.expiresAt <= new Date()) throw new Error('Historia no disponible');
+  if (story.userId === userId) throw new Error('No puedes reaccionar a tu historia');
+
+  await markStoryViewed(storyId, userId);
+
+  await prisma.storyReaction.upsert({
+    where: { storyId_userId: { storyId, userId } },
+    create: { storyId, userId, emoji },
+    update: { emoji }
+  });
+
+  return emoji;
 }

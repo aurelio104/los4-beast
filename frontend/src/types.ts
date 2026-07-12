@@ -56,6 +56,7 @@ export interface StoryViewer {
   avatarUrl?: string | null;
   avatarEmoji?: string | null;
   viewedAt: string;
+  reaction?: string | null;
 }
 
 export interface StoryUserGroup {

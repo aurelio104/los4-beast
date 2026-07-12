@@ -660,6 +660,30 @@ gameRouter.get('/stories/:id/viewers', authMiddleware, async (req, res) => {
   }
 });
 
+gameRouter.get('/stories/:id/reaction', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  try {
+    const { getStoryReaction } = await import('../lib/stories.js');
+    const reaction = await getStoryReaction(String(req.params.id), uid);
+    res.json({ success: true, reaction });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message || 'Error' });
+  }
+});
+
+gameRouter.post('/stories/:id/react', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  const { emoji } = req.body as { emoji?: string };
+  if (!emoji) return res.status(400).json({ success: false, error: 'Falta la reacción' });
+  try {
+    const { reactToStory } = await import('../lib/stories.js');
+    const reaction = await reactToStory(String(req.params.id), uid, emoji);
+    res.json({ success: true, reaction });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message || 'Error' });
+  }
+});
+
 gameRouter.delete('/stories/:id', authMiddleware, async (req, res) => {
   const uid = userId(req);
   try {

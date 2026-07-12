@@ -704,6 +704,49 @@ input:focus, select:focus, textarea:focus {
   margin-left: 0;
 }
 
+.story-reactions-bar {
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem 0.75rem;
+}
+
+.story-reaction-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.story-reaction-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.story-reaction-btn--active {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.story-reaction-btn__glyph {
+  font-size: 1.65rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.story-viewer-reaction {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 /* —— Rendimiento PWA / móvil —— */
 .offline-banner {
   animation: offline-in 0.25s ease both;

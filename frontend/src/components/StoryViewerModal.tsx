@@ -4,6 +4,7 @@ import { X, Trash2, ChevronUp } from 'lucide-react';
 import { StoryUserGroup, StoryViewer } from '../types';
 import { Avatar } from './Avatar';
 import { api } from '../lib/api';
+import { STORY_REACTIONS, storyReactionGlyph } from '../lib/storyReactions';
 
 const STORY_DURATION_MS = 5000;
 
@@ -66,13 +67,15 @@ export function StoryViewerModal({
   const [showViewers, setShowViewers] = useState(false);
   const [viewers, setViewers] = useState<StoryViewer[]>([]);
   const [viewersLoading, setViewersLoading] = useState(false);
+  const [myReaction, setMyReaction] = useState<string | null>(null);
+  const [reacting, setReacting] = useState(false);
   const timerRef = useRef<number | null>(null);
   const viewedRef = useRef<Set<string>>(new Set());
   const touchStartY = useRef<number | null>(null);
 
   const group = groups[userIndex];
   const story = group?.stories[storyIndex];
-  const paused = showViewers || deleting;
+  const paused = showViewers || deleting || reacting;
   const summary = viewersSummary(viewers);
 
   const clearTimer = () => {
@@ -166,6 +169,37 @@ export function StoryViewerModal({
     }
     setViewers([]);
   }, [story?.id, group?.isOwn, loadViewers]);
+
+  useEffect(() => {
+    if (!story?.id || group?.isOwn) {
+      setMyReaction(null);
+      return;
+    }
+    void api.storyReaction(story.id).then((res) => {
+      if (res.success) setMyReaction(res.reaction);
+    });
+  }, [story?.id, group?.isOwn]);
+
+  const handleReact = async (emoji: string) => {
+    if (!story || group.isOwn || reacting) return;
+    setReacting(true);
+    clearTimer();
+    const res = await api.reactStory(story.id, emoji);
+    if (res.success && res.reaction) {
+      setMyReaction(res.reaction);
+      if (!viewedRef.current.has(story.id)) {
+        viewedRef.current.add(story.id);
+        onGroupsChange(
+          groups.map((g) => ({
+            ...g,
+            stories: g.stories.map((s) => (s.id === story.id ? { ...s, viewed: true } : s)),
+            hasUnseen: g.isOwn ? false : g.stories.some((s) => (s.id === story.id ? false : !s.viewed))
+          }))
+        );
+      }
+    }
+    window.setTimeout(() => setReacting(false), 400);
+  };
 
   if (!group || !story) return null;
 
@@ -280,6 +314,29 @@ export function StoryViewerModal({
         </div>
       )}
 
+      {!group.isOwn && !showViewers && (
+        <div className="story-reactions-bar mx-3 mb-[max(0.5rem,env(safe-area-inset-bottom))]">
+          {STORY_REACTIONS.map((r) => (
+            <motion.button
+              key={r.id}
+              type="button"
+              onClick={() => void handleReact(r.id)}
+              disabled={reacting}
+              aria-label={r.label}
+              aria-pressed={myReaction === r.id}
+              className={`story-reaction-btn ${myReaction === r.id ? 'story-reaction-btn--active' : ''}`}
+              whileTap={{ scale: 1.35 }}
+              animate={myReaction === r.id ? { scale: [1, 1.25, 1.1] } : { scale: 1 }}
+              transition={{ duration: 0.25 }}
+            >
+              <span className="story-reaction-btn__glyph" aria-hidden>
+                {r.glyph}
+              </span>
+            </motion.button>
+          ))}
+        </div>
+      )}
+
       {group.isOwn && !showViewers && (
         <button
           type="button"
@@ -338,6 +395,11 @@ export function StoryViewerModal({
                         <div className="flex-1 min-w-0">
                           <p className="text-[15px] font-bold truncate">{v.displayName}</p>
                         </div>
+                        {v.reaction && (
+                          <span className="story-viewer-reaction shrink-0" title="Reacción">
+                            {storyReactionGlyph(v.reaction)}
+                          </span>
+                        )}
                         <span className="text-xs text-white/40 shrink-0">{timeAgo(v.viewedAt)}</span>
                       </li>
                     ))}

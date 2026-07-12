@@ -116,6 +116,13 @@ export const api = {
     request<{ success: boolean; viewers: import('../types').StoryViewer[]; count: number; error?: string }>(
       `/game/stories/${storyId}/viewers`
     ),
+  storyReaction: (storyId: string) =>
+    request<{ success: boolean; reaction: string | null }>(`/game/stories/${storyId}/reaction`),
+  reactStory: (storyId: string, emoji: string) =>
+    request<{ success: boolean; reaction?: string; error?: string }>(`/game/stories/${storyId}/react`, {
+      method: 'POST',
+      body: JSON.stringify({ emoji })
+    }),
   deleteStory: (storyId: string) =>
     request<{ success: boolean; users?: import('../types').StoryUserGroup[]; error?: string }>(
       `/game/stories/${storyId}`,
