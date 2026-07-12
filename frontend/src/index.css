@@ -669,6 +669,36 @@ input:focus, select:focus, textarea:focus {
   right: 0;
 }
 
+.story-viewers-dock {
+  z-index: 3;
+  padding-top: 0.25rem;
+}
+
+.story-viewers-bar:active {
+  opacity: 0.9;
+  transform: scale(0.99);
+}
+
+.story-viewers-sheet {
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.story-viewer-stack {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  padding-right: 0.35rem;
+}
+
+.story-viewer-stack__item {
+  margin-left: -0.65rem;
+  border-radius: 9999px;
+}
+
+.story-viewer-stack__item:first-child {
+  margin-left: 0;
+}
+
 /* —— Rendimiento PWA / móvil —— */
 .offline-banner {
   animation: offline-in 0.25s ease both;

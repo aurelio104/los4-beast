@@ -50,6 +50,14 @@ export interface StoryItem {
   viewed: boolean;
 }
 
+export interface StoryViewer {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  avatarEmoji?: string | null;
+  viewedAt: string;
+}
+
 export interface StoryUserGroup {
   userId: string;
   displayName: string;

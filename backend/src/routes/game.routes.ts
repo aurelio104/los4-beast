@@ -649,6 +649,17 @@ gameRouter.post('/stories/:id/view', authMiddleware, async (req, res) => {
   res.json({ success: true });
 });
 
+gameRouter.get('/stories/:id/viewers', authMiddleware, async (req, res) => {
+  const uid = userId(req);
+  try {
+    const { getStoryViewers } = await import('../lib/stories.js');
+    const viewers = await getStoryViewers(String(req.params.id), uid);
+    res.json({ success: true, viewers, count: viewers.length });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error).message || 'Error' });
+  }
+});
+
 gameRouter.delete('/stories/:id', authMiddleware, async (req, res) => {
   const uid = userId(req);
   try {

@@ -133,3 +133,37 @@ export async function deleteStory(storyId: string, userId: string) {
   deleteStoryFiles(storyId);
   await prisma.story.delete({ where: { id: storyId } });
 }
+
+export async function getStoryViewers(storyId: string, requestUserId: string) {
+  const story = await prisma.story.findUnique({
+    where: { id: storyId },
+    include: {
+      views: {
+        orderBy: { viewedAt: 'desc' },
+        include: {
+          viewer: {
+            select: {
+              id: true,
+              displayName: true,
+              nickname: true,
+              username: true,
+              avatarUrl: true,
+              avatarEmoji: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  if (!story) throw new Error('Historia no encontrada');
+  if (story.userId !== requestUserId) throw new Error('No autorizado');
+
+  return story.views.map((v) => ({
+    userId: v.viewer.id,
+    displayName: resolvePublicName(v.viewer),
+    avatarUrl: v.viewer.avatarUrl,
+    avatarEmoji: v.viewer.avatarEmoji,
+    viewedAt: v.viewedAt.toISOString()
+  }));
+}

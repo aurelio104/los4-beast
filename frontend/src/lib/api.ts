@@ -112,6 +112,10 @@ export const api = {
     }),
   viewStory: (storyId: string) =>
     request<{ success: boolean }>(`/game/stories/${storyId}/view`, { method: 'POST' }),
+  storyViewers: (storyId: string) =>
+    request<{ success: boolean; viewers: import('../types').StoryViewer[]; count: number; error?: string }>(
+      `/game/stories/${storyId}/viewers`
+    ),
   deleteStory: (storyId: string) =>
     request<{ success: boolean; users?: import('../types').StoryUserGroup[]; error?: string }>(
       `/game/stories/${storyId}`,
