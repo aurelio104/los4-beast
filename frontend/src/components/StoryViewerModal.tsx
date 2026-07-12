@@ -243,46 +243,12 @@ export function StoryViewerModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="story-viewer fixed inset-0 z-[85] bg-black flex flex-col"
+      className="story-viewer fixed inset-0 z-[85] bg-black"
       role="dialog"
       aria-modal="true"
     >
-      <div className="story-viewer__progress px-3 pt-[max(0.5rem,env(safe-area-inset-top))] flex gap-1">
-        {group.stories.map((s, i) => (
-          <div key={s.id} className="story-viewer__progress-track flex-1">
-            <div
-              className="story-viewer__progress-fill"
-              style={{
-                width: i < storyIndex ? '100%' : i === storyIndex ? `${progress}%` : '0%'
-              }}
-            />
-          </div>
-        ))}
-      </div>
-
-      <div className="story-viewer__header px-4 py-2 flex items-center gap-3">
-        <Avatar url={group.avatarUrl} emoji={group.avatarEmoji} name={group.displayName} size="xs" expandable={false} />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold truncate">{group.displayName}</p>
-          <p className="text-[11px] text-white/50">{timeAgo(story.createdAt)}</p>
-        </div>
-        {group.isOwn && onAddStory && (
-          <button type="button" onClick={onAddStory} className="text-xs font-semibold text-reto-cyan px-2 py-1">
-            + Añadir
-          </button>
-        )}
-        {group.isOwn && (
-          <button type="button" onClick={handleDelete} disabled={deleting} className="p-2 text-white/50" aria-label="Eliminar">
-            <Trash2 size={18} />
-          </button>
-        )}
-        <button type="button" onClick={onClose} className="p-2 text-white/70" aria-label="Cerrar">
-          <X size={22} />
-        </button>
-      </div>
-
       <div
-        className="story-viewer__media flex-1 relative min-h-0"
+        className="story-viewer__stage absolute inset-0"
         onTouchStart={group.isOwn ? onTouchStart : undefined}
         onTouchEnd={group.isOwn ? onTouchEnd : undefined}
       >
@@ -295,66 +261,108 @@ export function StoryViewerModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 w-full h-full object-contain bg-black select-none"
+            className="story-viewer__img absolute inset-0 select-none"
             draggable={false}
           />
         </AnimatePresence>
-
-        {!showViewers && (
-          <>
-            <button type="button" className="story-viewer__tap story-viewer__tap--left" onClick={goPrev} aria-label="Anterior" />
-            <button type="button" className="story-viewer__tap story-viewer__tap--right" onClick={goNext} aria-label="Siguiente" />
-          </>
-        )}
       </div>
 
-      {story.caption && !showViewers && (
-        <div className="px-4 py-2">
-          <p className="text-sm text-white/90 text-center">{story.caption}</p>
-        </div>
+      {!showViewers && (
+        <>
+          <button type="button" className="story-viewer__tap story-viewer__tap--left" onClick={goPrev} aria-label="Anterior" />
+          <button type="button" className="story-viewer__tap story-viewer__tap--right" onClick={goNext} aria-label="Siguiente" />
+        </>
       )}
 
-      {!group.isOwn && !showViewers && (
-        <div className="story-reactions-bar mx-3 mb-[max(0.5rem,env(safe-area-inset-bottom))]">
-          {STORY_REACTIONS.map((r) => (
-            <motion.button
-              key={r.id}
-              type="button"
-              onClick={() => void handleReact(r.id)}
-              disabled={reacting}
-              aria-label={r.label}
-              aria-pressed={myReaction === r.id}
-              className={`story-reaction-btn ${myReaction === r.id ? 'story-reaction-btn--active' : ''}`}
-              whileTap={{ scale: 1.35 }}
-              animate={myReaction === r.id ? { scale: [1, 1.25, 1.1] } : { scale: 1 }}
-              transition={{ duration: 0.25 }}
-            >
-              <span className="story-reaction-btn__glyph" aria-hidden>
-                {r.glyph}
-              </span>
-            </motion.button>
-          ))}
-        </div>
-      )}
-
-      {group.isOwn && !showViewers && (
-        <button
-          type="button"
-          onClick={openViewers}
-          className="story-viewers-bar mx-3 mb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center gap-3 px-4 py-3 rounded-2xl glass-strong text-left w-[calc(100%-1.5rem)]"
-        >
-          <ViewerAvatarStack viewers={viewers} />
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] uppercase tracking-wider text-white/45 font-semibold">Visto por</p>
-            <p className="text-sm font-bold truncate text-white/95">
-              {viewersLoading && !viewers.length
-                ? 'Cargando…'
-                : summary || 'Nadie aún — desliza arriba para ver'}
-            </p>
+      <div className="story-viewer__chrome absolute inset-0 flex flex-col pointer-events-none">
+        <div className="story-viewer__top pointer-events-auto shrink-0 pt-[max(0.35rem,env(safe-area-inset-top))]">
+          <div className="story-viewer__progress px-3 flex gap-1 pb-2">
+            {group.stories.map((s, i) => (
+              <div key={s.id} className="story-viewer__progress-track flex-1">
+                <div
+                  className="story-viewer__progress-fill"
+                  style={{
+                    width: i < storyIndex ? '100%' : i === storyIndex ? `${progress}%` : '0%'
+                  }}
+                />
+              </div>
+            ))}
           </div>
-          <ChevronUp size={18} className="text-white/40 shrink-0" />
-        </button>
-      )}
+
+          <div className="story-viewer__header px-3 pb-3 flex items-center gap-2.5">
+            <Avatar url={group.avatarUrl} emoji={group.avatarEmoji} name={group.displayName} size="xs" expandable={false} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold truncate drop-shadow-sm">{group.displayName}</p>
+              <p className="text-[11px] text-white/70">{timeAgo(story.createdAt)}</p>
+            </div>
+            {group.isOwn && onAddStory && (
+              <button type="button" onClick={onAddStory} className="text-xs font-semibold text-reto-cyan px-1.5 py-1 shrink-0">
+                + Añadir
+              </button>
+            )}
+            {group.isOwn && (
+              <button type="button" onClick={handleDelete} disabled={deleting} className="p-1.5 text-white/70 shrink-0" aria-label="Eliminar">
+                <Trash2 size={18} />
+              </button>
+            )}
+            <button type="button" onClick={onClose} className="p-1.5 text-white/85 shrink-0" aria-label="Cerrar">
+              <X size={22} />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 min-h-0" aria-hidden />
+
+        {!showViewers && (
+          <div className="story-viewer__bottom pointer-events-auto shrink-0 px-3 pt-6">
+            {story.caption && (
+              <p className="story-viewer__caption text-sm text-white text-center mb-3 px-2 leading-snug">{story.caption}</p>
+            )}
+
+            {!group.isOwn && (
+              <div className="story-reactions-bar">
+                {STORY_REACTIONS.map((r) => (
+                  <motion.button
+                    key={r.id}
+                    type="button"
+                    onClick={() => void handleReact(r.id)}
+                    disabled={reacting}
+                    aria-label={r.label}
+                    aria-pressed={myReaction === r.id}
+                    className={`story-reaction-btn ${myReaction === r.id ? 'story-reaction-btn--active' : ''}`}
+                    whileTap={{ scale: 1.35 }}
+                    animate={myReaction === r.id ? { scale: [1, 1.25, 1.1] } : { scale: 1 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    <span className="story-reaction-btn__glyph" aria-hidden>
+                      {r.glyph}
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
+            )}
+
+            {group.isOwn && (
+              <button
+                type="button"
+                onClick={openViewers}
+                className="story-viewers-bar flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-left w-full mb-1"
+              >
+                <ViewerAvatarStack viewers={viewers} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] uppercase tracking-wider text-white/50 font-semibold">Visto por</p>
+                  <p className="text-sm font-bold truncate text-white/95">
+                    {viewersLoading && !viewers.length
+                      ? 'Cargando…'
+                      : summary || 'Nadie aún — desliza arriba'}
+                  </p>
+                </div>
+                <ChevronUp size={18} className="text-white/45 shrink-0" />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
       <AnimatePresence>
         {group.isOwn && showViewers && (
