@@ -1,29 +1,42 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CHALLENGE_DATE } from '../types';
+import { fadeUpTransition } from '../lib/motion';
 
 function pad(n: number) {
   return String(n).padStart(2, '0');
 }
 
-function FlipUnit({ value, label }: { value: string; label: string }) {
+type UnitTone = 'gold' | 'pink' | 'purple' | 'cyan';
+
+function FlipUnit({
+  value,
+  label,
+  tone,
+  urgent
+}: {
+  value: string;
+  label: string;
+  tone: UnitTone;
+  urgent?: boolean;
+}) {
   return (
-    <div className="flex flex-col items-center gap-1.5 min-w-0">
+    <div className={`countdown-unit countdown-unit--${tone}`}>
       <div className="relative w-full">
         <motion.div
           key={value}
           initial={{ rotateX: -90, opacity: 0 }}
           animate={{ rotateX: 0, opacity: 1 }}
           exit={{ rotateX: 90, opacity: 0 }}
-          transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-          className="glass-strong countdown-unit-box flex items-center justify-center mx-auto"
+          transition={fadeUpTransition}
+          className={`countdown-unit-box flex items-center justify-center mx-auto ${urgent ? 'countdown-urgent' : ''}`}
           style={{ perspective: '400px' }}
         >
-          <span className="countdown-unit-digit font-black gradient-text tabular-nums">{value}</span>
+          <span className="countdown-unit-digit font-black tabular-nums">{value}</span>
         </motion.div>
-        <div className="absolute inset-x-0 top-1/2 h-px bg-white/10 pointer-events-none" />
+        <div className="countdown-unit-split" aria-hidden />
       </div>
-      <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.2em] text-white/40 font-medium truncate w-full text-center">{label}</span>
+      <span className="countdown-unit-label">{label}</span>
     </div>
   );
 }
@@ -53,11 +66,13 @@ export function CountdownTimer() {
     return () => clearInterval(id);
   }, []);
 
-  const units = [
-    { value: pad(time.days), label: 'Días' },
-    { value: pad(time.hours), label: 'Hrs' },
-    { value: pad(time.minutes), label: 'Min' },
-    { value: pad(time.seconds), label: 'Seg' }
+  const urgent = time.days === 0 && time.hours === 0 && time.minutes < 10;
+
+  const units: { value: string; label: string; tone: UnitTone }[] = [
+    { value: pad(time.days), label: 'Días', tone: 'gold' },
+    { value: pad(time.hours), label: 'Hrs', tone: 'pink' },
+    { value: pad(time.minutes), label: 'Min', tone: 'purple' },
+    { value: pad(time.seconds), label: 'Seg', tone: 'cyan' }
   ];
 
   return (
@@ -65,18 +80,18 @@ export function CountdownTimer() {
       <div className="countdown-row">
         <AnimatePresence mode="popLayout">
           {units.map((u) => (
-            <FlipUnit key={u.label} value={u.value} label={u.label} />
+            <FlipUnit key={u.label} value={u.value} label={u.label} tone={u.tone} urgent={urgent && u.tone === 'cyan'} />
           ))}
         </AnimatePresence>
       </div>
-      <div className="mt-5 sm:mt-6 px-1">
-        <div className="flex justify-between text-[10px] text-white/40 mb-2 uppercase tracking-wider">
-          <span>Camino al reto</span>
-          <span>{Math.round(progress)}%</span>
+      <div className="countdown-progress mt-5 sm:mt-6 px-1">
+        <div className="flex justify-between text-[10px] mb-2 uppercase tracking-wider">
+          <span className="countdown-progress-label">Camino al reto</span>
+          <span className="countdown-progress-pct">{Math.round(progress)}%</span>
         </div>
-        <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+        <div className="countdown-progress-track">
           <motion.div
-            className="h-full rounded-full shimmer-bar"
+            className={`countdown-progress-fill ${urgent ? 'countdown-bar-urgent' : ''}`}
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 1, ease: 'easeOut' }}

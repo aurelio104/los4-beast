@@ -5,18 +5,21 @@
   "private": true,
   "packageManager": "pnpm@10.12.1",
   "scripts": {
-    "dev": "concurrently \"pnpm run dev:backend\" \"pnpm run dev:frontend\"",
+    "dev": "concurrently -k -n backend,frontend -c blue,green \"pnpm run dev:backend\" \"pnpm run dev:frontend:wait\"",
     "dev:backend": "pnpm -C backend dev",
     "dev:frontend": "pnpm -C frontend dev",
+    "dev:frontend:wait": "wait-on -t 60000 http-get://127.0.0.1:3010/api/health && pnpm run dev:frontend",
     "build": "pnpm run build:backend && pnpm run build:frontend",
     "build:backend": "pnpm -C backend build",
     "build:frontend": "pnpm -C frontend build",
     "db:push": "pnpm -C backend exec prisma db push",
     "db:seed": "pnpm -C backend db:seed",
+    "test:smoke": "node scripts/smoke-test.mjs",
     "install:all": "pnpm install"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "wait-on": "^9.0.10"
   },
   "engines": {
     "node": ">=20.0.0"

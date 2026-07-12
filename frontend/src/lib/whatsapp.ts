@@ -1,3 +1,5 @@
+import { isStandalone } from './pwa';
+
 export type WhatsAppResult = {
   sent: boolean;
   via: 'baileys' | 'link' | 'skipped';
@@ -5,8 +7,14 @@ export type WhatsAppResult = {
   error?: string;
 };
 
+/** Abre wa.me — en PWA standalone `window.open` suele fallar en iOS/Android. */
 export function openWaMe(url: string) {
-  window.open(url, '_blank', 'noopener,noreferrer');
+  if (isStandalone()) {
+    window.location.assign(url);
+    return;
+  }
+  const opened = window.open(url, '_blank', 'noopener,noreferrer');
+  if (!opened) window.location.assign(url);
 }
 
 export function whatsAppResultLabel(r: WhatsAppResult): string {

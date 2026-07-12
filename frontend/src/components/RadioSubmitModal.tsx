@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music2, Upload, Link2, Loader2, X, Radio } from 'lucide-react';
 import { GlassCard } from './GlassCard';
 import { api } from '../lib/api';
+import { useModalBackClose } from '../hooks/useModalBackClose';
 
 type Props = {
   open: boolean;
@@ -30,11 +31,13 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
     setMode('youtube');
   };
 
-  const close = () => {
+  const close = useCallback(() => {
     if (loading) return;
     reset();
     onClose();
-  };
+  }, [loading, onClose]);
+
+  useModalBackClose(open, close);
 
   const submit = async () => {
     setError('');
@@ -75,7 +78,7 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 modal-overlay"
           onClick={close}
         >
           <motion.div
@@ -170,8 +173,7 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
                 type="button"
                 disabled={loading}
                 onClick={submit}
-                className="w-full mt-4 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 disabled:opacity-40"
-                style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
+                className="w-full mt-4 py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 disabled:opacity-40 btn-primary"
               >
                 {loading ? <Loader2 className="animate-spin" size={20} /> : <Radio size={20} />}
                 {loading ? (mode === 'youtube' ? 'Guardando…' : 'Optimizando…') : 'Poner para todos'}

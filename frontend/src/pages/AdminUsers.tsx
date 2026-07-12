@@ -24,6 +24,7 @@ import { api } from '../lib/api';
 import { isPasswordOrPinValid, passwordHint } from '../lib/pinPassword';
 import { shareInviteLink } from '../lib/inviteShare';
 import { openWaMe, WhatsAppResult } from '../lib/whatsapp';
+import { useNotifications } from '../components/NotificationProvider';
 
 type AdminUser = {
   id: string;
@@ -42,10 +43,10 @@ type AdminUser = {
 
 export default function AdminUsers() {
   const navigate = useNavigate();
+  const { showAppToast } = useNotifications();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [includeInactive, setIncludeInactive] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(true);
 
   const [resetPassword, setResetPassword] = useState('');
@@ -64,10 +65,7 @@ export default function AdminUsers() {
   const [lastWaInvite, setLastWaInvite] = useState<WhatsAppResult | null>(null);
   const [lastInviteLink, setLastInviteLink] = useState('');
 
-  const showToast = (msg: string, ms = 3500) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), ms);
-  };
+  const showToast = (msg: string) => showAppToast(msg);
 
   const load = () => {
     setLoading(true);
@@ -289,8 +287,7 @@ export default function AdminUsers() {
             type="button"
             onClick={sendWhatsAppInvite}
             disabled={waInviting || !waInvitePhone.trim()}
-            className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-40"
-            style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+            className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-40 btn-whatsapp"
           >
             <MessageCircle size={18} />
             {waInviting ? 'Enviando…' : 'Enviar invitación'}
@@ -401,8 +398,7 @@ export default function AdminUsers() {
                               !isPasswordOrPinValid(resetPassword) ||
                               resetPassword !== resetConfirm
                             }
-                            className="w-full py-2.5 rounded-xl text-sm font-bold disabled:opacity-40"
-                            style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
+                            className="w-full py-2.5 rounded-xl text-sm font-bold disabled:opacity-40 btn-primary"
                           >
                             {resetting ? 'Guardando…' : 'Actualizar contraseña'}
                           </button>
@@ -470,16 +466,7 @@ export default function AdminUsers() {
         {!loading && !users.length && (
           <p className="text-center text-white/30 py-8">No hay usuarios</p>
         )}
-
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl z-50 max-w-[90vw] text-center text-sm"
-          >
-            {toast}
-          </motion.div>
-        )}</PageContainer>
+      </PageContainer>
     </AppShell>
   );
 }

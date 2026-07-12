@@ -1,8 +1,14 @@
 import { playWinSound, playLoseSound, playCoinSound, playAlertSound } from './sounds';
-import { isSoundEnabled } from './preferences';
+import { getPreferences, isSoundEnabled } from './preferences';
 import { haptic } from './haptics';
 
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return getPreferences().reducedMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 async function fireConfetti(options: import('canvas-confetti').Options) {
+  if (prefersReducedMotion()) return;
   const { default: fire } = await import('canvas-confetti');
   fire(options);
 }

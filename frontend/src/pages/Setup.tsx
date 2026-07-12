@@ -206,7 +206,7 @@ export default function Setup() {
                     </ol>
                   </div>
                 ) : install.canNativeInstall ? (
-                  <button type="button" onClick={install.install} className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #ffbe0b, #ff006e)' }}>
+                  <button type="button" onClick={install.install} className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 btn-primary btn-primary-gold">
                     <Download size={20} /> Instalar ahora
                   </button>
                 ) : (
@@ -242,12 +242,15 @@ export default function Setup() {
                         }
                       }
                     }}
-                    className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
+                    className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 btn-primary"
                   >
                     {push.loading ? <Loader2 className="animate-spin" /> : <Bell size={20} />}
                     Activar notificaciones
                   </button>
+                ) : push.needsStandalone ? (
+                  <p className="text-xs text-white/55 leading-relaxed px-2">
+                    En iPhone, añade Reto a la pantalla de inicio (Compartir → Agregar a inicio) para activar alertas push.
+                  </p>
                 ) : (
                   <p className="text-xs text-white/40">No disponibles en este navegador</p>
                 )}
@@ -263,7 +266,7 @@ export default function Setup() {
                 {toggleRow('Música de fondo', 'Ambiente playa en loop', <Music2 size={20} />, musicOn, setMusicOn)}
                 {toggleRow('Sonidos', 'Efectos al ganar Puntos', <Volume2 size={20} />, soundOn, setSoundOn)}
                 {toggleRow('Vibración', 'Feedback táctil', <Vibrate size={20} />, hapticsOn, setHapticsOn)}
-                <button type="button" onClick={activateExperience} className="w-full mt-4 py-4 rounded-2xl font-bold flex items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #06d6a0, #8338ec)' }}>
+                <button type="button" onClick={activateExperience} className="w-full mt-4 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 btn-primary btn-primary-cyan">
                   Guardar y continuar <ChevronRight size={18} />
                 </button>
               </motion.div>
@@ -341,8 +344,7 @@ export default function Setup() {
                   type="button"
                   disabled={loading}
                   onClick={() => saveWhatsApp(true)}
-                  className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
-                  style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+                  className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 btn-whatsapp"
                 >
                   {loading ? <Loader2 className="animate-spin" /> : <MessageCircle size={20} />}
                   {whatsappOptIn && phone.trim() ? 'Activar y continuar' : 'Continuar sin WhatsApp'}
@@ -358,7 +360,7 @@ export default function Setup() {
                 <Sparkles size={44} className="mx-auto text-reto-gold" />
                 <h2 className="text-xl font-black gradient-text">¡Todo configurado!</h2>
                 <p className="text-sm text-white/55">Puedes cambiar todo esto cuando quieras en <strong>Perfil → Configuración</strong>.</p>
-                <button type="button" onClick={finish} className="w-full py-4 rounded-2xl font-bold inline-flex items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #ffbe0b, #ff006e)' }}>
+                <button type="button" onClick={finish} className="w-full py-4 rounded-2xl font-bold inline-flex items-center justify-center gap-2 btn-primary btn-primary-gold">
                   Entrar al Reto <ArrowRight size={18} />
                 </button>
               </motion.div>

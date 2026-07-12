@@ -1,12 +1,35 @@
 import type { PlayerContext, TriviaQuestion } from '../types';
 
 const API = '/api';
+const REQUEST_TIMEOUT_MS = 12_000;
 
 function getToken() {
   return localStorage.getItem('token');
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+function isGetMethod(method?: string) {
+  return !method || method === 'GET';
+}
+
+async function fetchWithTimeout(path: string, options: RequestInit, signal?: AbortSignal): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const onAbort = () => controller.abort();
+  signal?.addEventListener('abort', onAbort);
+
+  try {
+    return await fetch(`${API}${path}`, {
+      ...options,
+      signal: controller.signal,
+      credentials: 'include'
+    });
+  } finally {
+    window.clearTimeout(timeout);
+    signal?.removeEventListener('abort', onAbort);
+  }
+}
+
+async function request<T>(path: string, options: RequestInit = {}, attempt = 0): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -14,14 +37,46 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   };
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API}${path}`, { ...options, headers, credentials: 'include' });
-  const data = await res.json();
-  if (res.status === 401 && !path.includes('/login') && !path.includes('/join')) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    window.location.href = '/login';
+  const maxRetries = isGetMethod(options.method) ? 2 : 0;
+
+  try {
+    const res = await fetchWithTimeout(path, { ...options, headers });
+    let data: unknown;
+    try {
+      data = await res.json();
+    } catch {
+      return { success: false, error: 'Respuesta inválida del servidor' } as T;
+    }
+
+    if (res.status === 401 && !path.includes('/login') && !path.includes('/join')) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      return data as T;
+    }
+
+    if (!res.ok && isGetMethod(options.method) && attempt < maxRetries) {
+      await new Promise((r) => window.setTimeout(r, 300 * (attempt + 1)));
+      return request<T>(path, options, attempt + 1);
+    }
+
+    return data as T;
+  } catch (err) {
+    const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+    const timedOut = err instanceof DOMException && err.name === 'AbortError';
+    const message = offline
+      ? 'Sin conexión — revisa tu red'
+      : timedOut
+        ? 'La solicitud tardó demasiado'
+        : 'Error de conexión';
+
+    if (isGetMethod(options.method) && attempt < maxRetries) {
+      await new Promise((r) => window.setTimeout(r, 400 * (attempt + 1)));
+      return request<T>(path, options, attempt + 1);
+    }
+
+    return { success: false, error: message } as T;
   }
-  return data as T;
 }
 
 export const api = {

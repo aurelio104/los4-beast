@@ -2,7 +2,7 @@ import { createMemberInvite } from './invites.js';
 import { normalizePhone } from './phone.js';
 import { buildWhatsAppInviteLinkMessage, sendWhatsAppMessage } from './whatsapp.js';
 
-const APP_URL = process.env.APP_PUBLIC_URL || process.env.FRONTEND_URL || 'https://los4-beast.vercel.app';
+const APP_URL = process.env.APP_PUBLIC_URL || process.env.FRONTEND_URL || 'http://localhost:3011';
 
 export type WhatsAppInviteLinkResult = {
   invite: { code: string; expiresAt: Date; inviterName: string };

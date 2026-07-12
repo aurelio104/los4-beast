@@ -5,6 +5,7 @@ import { RetoLogo } from './RetoLogo';
 import { PointsBadge } from './PointsBadge';
 import { NotificationBellButton } from './NotificationProvider';
 import { useNotifications } from './NotificationProvider';
+import { fadeUp, fadeUpTransition } from '../lib/motion';
 
 type HubHeaderProps = {
   displayName: string;
@@ -19,8 +20,9 @@ export function HubHeader({ displayName, avatarUrl, avatarEmoji, points }: HubHe
 
   return (
     <motion.header
-      initial={{ opacity: 0, y: -12 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={fadeUp.initial}
+      animate={fadeUp.animate}
+      transition={fadeUpTransition}
       className="mb-3"
     >
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -29,13 +31,15 @@ export function HubHeader({ displayName, avatarUrl, avatarEmoji, points }: HubHe
           onClick={() => navigate('/perfil')}
           className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 text-left"
         >
-          <Avatar url={avatarUrl} emoji={avatarEmoji} name={displayName} size="md" />
+          <div className={`relative shrink-0 ${unread > 0 ? 'avatar-ring-pulse' : ''}`}>
+            <Avatar url={avatarUrl} emoji={avatarEmoji} name={displayName} size="md" />
+          </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <RetoLogo size="xs" glow />
+              <RetoLogo size="xs" glow animate />
               <h1 className="text-sm sm:text-base font-black gradient-text truncate">Reto</h1>
             </div>
-            <p className="text-[11px] sm:text-xs text-white/55 truncate">{displayName}</p>
+            <p className="text-[11px] sm:text-xs text-white/65 truncate">{displayName}</p>
           </div>
         </button>
         <NotificationBellButton unread={unread} onClick={openInbox} />

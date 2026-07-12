@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api';
+import { isIOS, isStandalone } from '../lib/pwa';
 import {
   ensurePushPersisted,
   getPushOptIn,
@@ -41,6 +42,7 @@ async function readSubscribedState(): Promise<boolean> {
 
 export function usePushNotifications() {
   const [supported, setSupported] = useState(false);
+  const [needsStandalone, setNeedsStandalone] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -49,8 +51,28 @@ export function usePushNotifications() {
   }, []);
 
   useEffect(() => {
-    setSupported('Notification' in window && 'serviceWorker' in navigator);
+    const updateSupport = () => {
+      const iosNeedsHome = isIOS() && !isStandalone();
+      setNeedsStandalone(iosNeedsHome);
+      setSupported('Notification' in window && 'serviceWorker' in navigator && !iosNeedsHome);
+    };
+
+    updateSupport();
     void refresh();
+
+    const mq = window.matchMedia('(display-mode: standalone)');
+    const onModeChange = () => {
+      updateSupport();
+      void refresh();
+    };
+
+    mq.addEventListener('change', onModeChange);
+    window.addEventListener('appinstalled', onModeChange);
+
+    return () => {
+      mq.removeEventListener('change', onModeChange);
+      window.removeEventListener('appinstalled', onModeChange);
+    };
   }, [refresh]);
 
   const subscribe = useCallback(async () => {
@@ -114,7 +136,7 @@ export function usePushNotifications() {
     }
   }, [loading]);
 
-  return { supported, subscribed, loading, subscribe, unsubscribe, refresh };
+  return { supported, needsStandalone, subscribed, loading, subscribe, unsubscribe, refresh };
 }
 
 /** Sincroniza pushOptIn desde /me y re-registra si el usuario ya lo tenía activo. */

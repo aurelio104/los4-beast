@@ -74,8 +74,7 @@ export function SwUpdateToast() {
       <button
         type="button"
         onClick={() => void applyUpdate()}
-        className="w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
-        style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
+        className="w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 btn-primary"
       >
         <RefreshCw size={16} /> Actualizar ahora
       </button>

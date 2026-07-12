@@ -6,6 +6,7 @@ import { StoryUserGroup, StoryViewer } from '../types';
 import { Avatar } from './Avatar';
 import { api } from '../lib/api';
 import { STORY_REACTIONS, storyReactionGlyph } from '../lib/storyReactions';
+import { useModalBackClose } from '../hooks/useModalBackClose';
 
 const STORY_DURATION_MS = 5000;
 const HOLD_PAUSE_MS = 180;
@@ -45,9 +46,9 @@ export function StoryViewerModal({
   onGroupsChange,
   onAddStory
 }: StoryViewerModalProps) {
-  const [userIndex, setUserIndex] = useState(() =>
-    Math.max(0, groups.findIndex((g) => g.userId === initialUserId))
-  );
+  useModalBackClose(true, onClose);
+  const resolvedIndex = groups.findIndex((g) => g.userId === initialUserId);
+  const [userIndex, setUserIndex] = useState(() => Math.max(0, resolvedIndex));
   const [storyIndex, setStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [deleting, setDeleting] = useState(false);
@@ -157,12 +158,28 @@ export function StoryViewerModal({
   }, [story?.id, group?.isOwn, markViewed, goNext, paused]);
 
   useEffect(() => {
-    setUserIndex(Math.max(0, groups.findIndex((g) => g.userId === initialUserId)));
+    const idx = groups.findIndex((g) => g.userId === initialUserId);
+    if (idx < 0) return;
+    setUserIndex(idx);
     setStoryIndex(0);
     setProgress(0);
     setShowViewers(false);
     setMenuOpen(false);
-  }, [initialUserId, groups]);
+  }, [initialUserId]);
+
+  useEffect(() => {
+    setUserIndex((prev) => {
+      const gid = groups[prev]?.userId;
+      if (gid === initialUserId) return prev;
+      const idx = groups.findIndex((g) => g.userId === initialUserId);
+      return idx >= 0 ? idx : prev;
+    });
+    setStoryIndex((prev) => {
+      const group = groups.find((g) => g.userId === initialUserId);
+      if (!group?.stories.length) return prev;
+      return Math.min(prev, group.stories.length - 1);
+    });
+  }, [groups, initialUserId]);
 
   useEffect(() => {
     setShowViewers(false);
@@ -193,7 +210,7 @@ export function StoryViewerModal({
     };
   }, []);
 
-  if (!group || !story) return null;
+  if (resolvedIndex < 0 || !group || !story) return null;
 
   const handleDelete = async () => {
     if (!group.isOwn || deleting) return;

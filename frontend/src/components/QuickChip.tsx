@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { tapScale } from '../lib/motion';
 
 type QuickChipProps = {
   icon: LucideIcon;
@@ -11,23 +12,33 @@ type QuickChipProps = {
 };
 
 const accentRing = {
-  gold: 'ring-reto-gold/30 text-reto-gold',
-  pink: 'ring-reto-pink/30 text-reto-pink',
-  cyan: 'ring-reto-cyan/30 text-reto-cyan',
-  default: 'ring-white/10 text-white/70'
+  gold: 'ring-reto-gold/40 text-reto-gold',
+  pink: 'ring-reto-pink/40 text-reto-pink',
+  cyan: 'ring-reto-cyan/40 text-reto-cyan',
+  default: 'ring-white/15 text-white/75'
+};
+
+const accentGlow = {
+  gold: 'shadow-[0_0_20px_rgba(255,190,11,0.2)]',
+  pink: 'shadow-[0_0_20px_rgba(255,0,110,0.2)]',
+  cyan: 'shadow-[0_0_20px_rgba(6,214,160,0.2)]',
+  default: ''
 };
 
 export function QuickChip({ icon: Icon, label, sublabel, onClick, highlight, accent = 'default' }: QuickChipProps) {
   return (
     <motion.button
       type="button"
-      whileTap={{ scale: 0.97 }}
+      whileTap={tapScale.whileTap}
+      whileHover={tapScale.whileHover}
       onClick={onClick}
-      className={`snap-start shrink-0 min-w-[7.5rem] sm:min-w-[8.5rem] glass-btn rounded-2xl px-3.5 py-3 text-left ring-1 ${accentRing[accent]} ${highlight ? 'bg-white/8' : ''}`}
+      className={`hub-tile glass-btn rounded-2xl px-3 py-2.5 text-left ring-1 flex flex-col justify-between ${accentRing[accent]} ${accentGlow[accent]} ${highlight ? 'glass-accent bg-white/10' : ''}`}
     >
-      <Icon size={16} className="mb-1.5" strokeWidth={2} />
-      <p className="text-xs font-bold leading-tight">{label}</p>
-      {sublabel && <p className="text-[10px] text-white/45 mt-0.5 leading-tight">{sublabel}</p>}
+      <Icon size={18} className="shrink-0" strokeWidth={2} />
+      <div className="min-h-0 w-full">
+        <p className="hub-tile-label text-xs font-bold">{label}</p>
+        <p className="hub-tile-sublabel text-[10px] text-white/55 mt-0.5">{sublabel ?? ''}</p>
+      </div>
     </motion.button>
   );
 }

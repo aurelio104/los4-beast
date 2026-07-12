@@ -10,6 +10,7 @@ import { PageContainer } from '../components/PageContainer';
 import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
+import { useNotifications } from '../components/NotificationProvider';
 
 type WaStatus = {
   status: 'disconnected' | 'connecting' | 'qr_ready' | 'connected';
@@ -41,14 +42,11 @@ export default function WhatsAppAdmin() {
   const [tab, setTab] = useState<'status' | 'send' | 'history'>('status');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [message, setMessage] = useState('');
+  const { showAppToast } = useNotifications();
   const [sending, setSending] = useState(false);
-  const [toast, setToast] = useState('');
   const [qrImage, setQrImage] = useState<string | null>(null);
 
-  const flash = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3500);
-  };
+  const flash = (msg: string) => showAppToast(msg);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -199,7 +197,7 @@ export default function WhatsAppAdmin() {
 
             <div className="grid grid-cols-2 gap-2">
               <button type="button" disabled={connecting || status?.isConnected} onClick={connect}
-                className="py-3 rounded-xl font-bold text-sm disabled:opacity-40" style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}>
+                className="py-3 rounded-xl font-bold text-sm disabled:opacity-40 btn-whatsapp">
                 {connecting ? '…' : 'Conectar'}
               </button>
               <button type="button" disabled={cleaning} onClick={clean} className="glass-btn py-3 rounded-xl text-sm font-semibold">
@@ -222,8 +220,7 @@ export default function WhatsAppAdmin() {
             <input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="04141234567" inputMode="tel" />
             <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Mensaje…" rows={5} className="w-full resize-none" />
             <button type="button" disabled={sending || !status?.isConnected} onClick={sendMsg}
-              className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-40"
-              style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}>
+              className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-40 btn-primary">
               {sending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
               Enviar manual
             </button>
@@ -244,10 +241,7 @@ export default function WhatsAppAdmin() {
             ))}
           </GlassCard>
         )}
-
-        {toast && (
-          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-5 py-3 rounded-2xl z-50 text-sm">{toast}</div>
-        )}</PageContainer>
+      </PageContainer>
     </AppShell>
   );
 }

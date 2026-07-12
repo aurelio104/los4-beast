@@ -3,18 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Lock, Unlock } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
+import { MainTabLayout } from '../components/MainTabLayout';
 import { PageContainer } from '../components/PageContainer';
 import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 import { celebrateChest } from '../lib/celebrate';
+import { useNotifications } from '../components/NotificationProvider';
 
 export default function Cofre() {
   const navigate = useNavigate();
+  const { showAppToast } = useNotifications();
   const [clues, setClues] = useState<{ cycleIndex: number; clue: string }[]>([]);
   const [canClaim, setCanClaim] = useState(false);
   const [daysLeft, setDaysLeft] = useState(49);
-  const [toast, setToast] = useState('');
   const [opening, setOpening] = useState(false);
 
   const load = () => api.chest().then((r) => {
@@ -32,20 +34,20 @@ export default function Cofre() {
     const res = await api.claimChest();
     if (res.success) {
       celebrateChest();
-      setToast(`📦 ${res.clue} · +${res.points ?? 100} Puntos`);
+      showAppToast(`${res.clue} · +${res.points ?? 100} Puntos`);
       await load();
     } else {
-      setToast(res.error || 'Error');
+      showAppToast(res.error || 'Error');
     }
     setOpening(false);
-    setTimeout(() => setToast(''), 4000);
   };
 
   const progress = Math.min(100, ((49 - daysLeft) / 49) * 100);
 
   return (
-    <AppShell>
-      <PageContainer>
+    <AppShell background="celosia">
+      <MainTabLayout>
+      <PageContainer variant="tabbar">
         <PageTopBar onBack={() => navigate('/')} />
 
         <motion.div animate={{ rotate: [0, -3, 3, 0], scale: [1, 1.05, 1] }} transition={{ duration: 4, repeat: Infinity }} className="text-center mb-8">
@@ -63,8 +65,7 @@ export default function Cofre() {
 
         {canClaim && (
           <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={claim} disabled={opening}
-            className="w-full py-5 rounded-2xl font-black text-lg mb-6 flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #ffbe0b, #ff006e)' }}>
+            className="w-full py-5 rounded-2xl font-black text-lg mb-6 flex items-center justify-center gap-2 btn-primary btn-primary-gold">
             <Unlock size={22} /> {opening ? 'Abriendo...' : '¡Abrir cofre del ciclo!'}
           </motion.button>
         )}
@@ -85,13 +86,8 @@ export default function Cofre() {
             </motion.div>
           ))}
         </div>
-
-        {toast && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl font-semibold z-50 max-w-xs text-center">
-            {toast}
-          </motion.div>
-        )}</PageContainer>
+      </PageContainer>
+      </MainTabLayout>
     </AppShell>
   );
 }

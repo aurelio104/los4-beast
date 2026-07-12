@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
+import { MainTabLayout } from '../components/MainTabLayout';
 import { PageContainer } from '../components/PageContainer';
+import { PageSkeleton } from '../components/PageSkeleton';
 import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { PointsBadge } from '../components/PointsBadge';
@@ -12,44 +14,56 @@ import { api } from '../lib/api';
 import { REWARDS, User } from '../types';
 import { REWARD_INFO } from '../lib/actionInfo';
 import { celebrateWin } from '../lib/celebrate';
+import { getStoredUser } from '../lib/user';
+import { useNotifications } from '../components/NotificationProvider';
 
 export default function Tienda() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [toast, setToast] = useState('');
+  const { showAppToast } = useNotifications();
+  const [user, setUser] = useState<User | null>(getStoredUser);
+  const [hydrating, setHydrating] = useState(!getStoredUser());
   const [infoRewardId, setInfoRewardId] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (!stored) { navigate('/login'); return; }
-    setUser(JSON.parse(stored));
     api.me().then((r) => {
       if (r.success) {
         setUser(r.user as User);
         localStorage.setItem('user', JSON.stringify(r.user));
       }
-    });
-  }, []);
+    }).finally(() => setHydrating(false));
+  }, [navigate]);
 
   const redeem = async (rewardId: string, cost: number) => {
     const res = await api.redeem(rewardId, cost);
     if (res.success) {
       celebrateWin(-cost);
-      setToast('¡Canjeado! Se entrega el 29 de agosto 🎉');
+      showAppToast('¡Canjeado! Se entrega el 29 de agosto');
       const u = { ...user!, points: res.points };
       setUser(u);
       localStorage.setItem('user', JSON.stringify(u));
     } else {
-      setToast(res.error || 'Error');
+      showAppToast(res.error || 'Error');
     }
-    setTimeout(() => setToast(''), 3000);
   };
+
+  if (hydrating && !user) {
+    return (
+      <AppShell background="celosia">
+        <MainTabLayout>
+          <PageContainer variant="tabbar"><PageSkeleton lines={5} /></PageContainer>
+        </MainTabLayout>
+      </AppShell>
+    );
+  }
 
   if (!user) return null;
 
   return (
-    <AppShell>
-      <PageContainer>
+    <AppShell background="celosia">
+      <MainTabLayout>
+      <PageContainer variant="tabbar">
         <PageTopBar onBack={() => navigate('/')} backLabel="Volver" />
 
         <div className="flex items-center justify-between mb-6">
@@ -107,17 +121,6 @@ export default function Tienda() {
           })}
         </div>
 
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl font-semibold z-50 flex items-center gap-2"
-          >
-            <Sparkles size={16} className="text-reto-gold" />
-            {toast}
-          </motion.div>
-        )}
-
         <AnimatePresence>
           {infoRewardId && REWARD_INFO[infoRewardId] && (
             <ActionInfoModal
@@ -138,7 +141,8 @@ export default function Tienda() {
               disabled={!user || !REWARDS.find((x) => x.id === infoRewardId) || user.points < REWARDS.find((x) => x.id === infoRewardId)!.cost}
             />
           )}
-        </AnimatePresence></PageContainer>
+        </AnimatePresence>      </PageContainer>
+      </MainTabLayout>
     </AppShell>
   );
 }

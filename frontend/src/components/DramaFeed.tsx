@@ -20,7 +20,7 @@ export function DramaFeed({ items }: { items: FeedItem[] }) {
       {items.map((item, i) => {
         const detail = formatFeedDetail(item);
         const animate = !reducedMotion && i < 6;
-        const cls = 'flex items-center gap-3 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] feed-row';
+        const cls = 'flex items-center gap-3 p-3 rounded-2xl glass-subtle feed-row';
 
         const inner = (
           <>

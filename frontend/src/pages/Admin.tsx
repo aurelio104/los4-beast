@@ -1,21 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Users, Zap, Bell, Eye, Megaphone, Send, MessageCircle, UserCog } from 'lucide-react';
+import { Shield, Users, Zap, Bell, Eye, Megaphone, Send, MessageCircle, UserCog, Skull, CalendarDays } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
 import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
+import { useNotifications } from '../components/NotificationProvider';
 import { api } from '../lib/api';
 import { REWARDS } from '../types';
 
 export default function Admin() {
   const navigate = useNavigate();
+  const { showAppToast } = useNotifications();
   const [stats, setStats] = useState<Record<string, number> | null>(null);
   const [challengeDate, setChallengeDate] = useState('');
   const [redemptions, setRedemptions] = useState<{ id: string; rewardId: string; cost: number; userName: string; status: string }[]>([]);
-  const [toast, setToast] = useState('');
-  const [pushTitle, setPushTitle] = useState('🔥 Reto');
+  const [pushTitle, setPushTitle] = useState('Reto');
   const [pushBody, setPushBody] = useState('¡Entra al Hub y compite!');
 
   const load = () => {
@@ -34,15 +35,13 @@ export default function Admin() {
 
   const act = async (label: string, fn: () => Promise<{ success: boolean; sent?: number }>) => {
     const r = await fn();
-    setToast(r.success ? `${label} ✓${r.sent !== undefined ? ` (${r.sent} enviados)` : ''}` : 'Error');
-    setTimeout(() => setToast(''), 3000);
+    showAppToast(r.success ? `${label} ✓${r.sent !== undefined ? ` (${r.sent} enviados)` : ''}` : 'Error');
   };
 
   const updateRedemption = async (id: string, status: string) => {
     await api.adminUpdateRedemption(id, status);
-    setToast(`Canje → ${status}`);
+    showAppToast(`Canje → ${status}`);
     load();
-    setTimeout(() => setToast(''), 2000);
   };
 
   return (
@@ -67,8 +66,7 @@ export default function Admin() {
           <button
             type="button"
             onClick={() => navigate('/admin/whatsapp')}
-            className="py-4 px-3 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 text-center min-h-[5.5rem]"
-            style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+            className="py-4 px-3 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 text-center min-h-[5.5rem] btn-whatsapp"
           >
             <MessageCircle size={22} className="shrink-0" />
             <span className="text-xs sm:text-sm leading-tight">WhatsApp</span>
@@ -103,12 +101,16 @@ export default function Admin() {
         </GlassCard>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <button type="button" onClick={() => act('Notificación evento', api.adminNotifyEvent)} className="glass-btn py-4 rounded-2xl text-sm font-semibold">📢 Notificar evento</button>
-          <button type="button" onClick={() => act('Confesiones reveladas', api.adminRevealConfessions)} className="glass-btn py-4 rounded-2xl text-sm font-semibold">💀 Revelar confesiones</button>
+          <button type="button" onClick={() => act('Notificación evento', api.adminNotifyEvent)} className="glass-btn py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2">
+            <Megaphone size={16} /> Notificar evento
+          </button>
+          <button type="button" onClick={() => act('Confesiones reveladas', api.adminRevealConfessions)} className="glass-btn py-4 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2">
+            <Skull size={16} /> Revelar confesiones
+          </button>
         </div>
 
         <GlassCard className="p-5 mb-4">
-          <p className="text-sm font-bold mb-1">📅 Reto final</p>
+          <p className="text-sm font-bold mb-1 flex items-center gap-2"><CalendarDays size={16} /> Reto final</p>
           <p className="text-white/60 text-sm">{new Date(challengeDate).toLocaleString('es-VE', { dateStyle: 'full', timeStyle: 'short' })}</p>
         </GlassCard>
 
@@ -136,11 +138,7 @@ export default function Admin() {
           })}
           {!redemptions.length && <p className="text-center text-white/30 py-4">Sin canjes aún</p>}
         </div>
-
-        {toast && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl z-50">{toast}</motion.div>
-        )}</PageContainer>
+      </PageContainer>
     </AppShell>
   );
 }

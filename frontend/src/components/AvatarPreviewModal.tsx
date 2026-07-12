@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useModalBackClose } from '../hooks/useModalBackClose';
 
 export function AvatarPreviewModal({
   url,
@@ -10,6 +11,8 @@ export function AvatarPreviewModal({
   name?: string;
   onClose: () => void;
 }) {
+  useModalBackClose(true, onClose);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}

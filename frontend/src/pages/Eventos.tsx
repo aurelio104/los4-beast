@@ -56,8 +56,7 @@ export default function Eventos() {
         {current?.isEventActive && current.event?.game && EVENT_GAME[current.event.game] && (
           <motion.button type="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             onClick={() => navigate(`/arena?game=${EVENT_GAME[current.event.game!]}`)}
-            className="w-full py-4 rounded-2xl font-black mb-6"
-            style={{ background: 'linear-gradient(135deg, #06d6a0, #8338ec)' }}>
+            className="w-full py-4 rounded-2xl font-black mb-6 btn-primary btn-primary-cyan">
             🎮 Jugar {current.event.name} ahora
           </motion.button>
         )}

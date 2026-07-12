@@ -24,11 +24,14 @@ function BackgroundLayer({ mode, customUrl, variant }: { mode: BgMode; customUrl
 
 export function AppShell({
   children,
-  background
+  background,
+  skipFullBackground = false
 }: {
   children: ReactNode;
   /** Si no se pasa, usa la preferencia del perfil */
   background?: BackgroundMode;
+  /** @deprecated Hub ya no usa capa hero duplicada */
+  skipFullBackground?: boolean;
 }) {
   const [resolved, setResolved] = useState(() => resolveMode(background));
 
@@ -47,8 +50,11 @@ export function AppShell({
 
   return (
     <div className="relative min-h-dvh">
-      <BackgroundLayer mode={mode} customUrl={customUrl} variant="full" />
-      {mode === 'orbs' ? null : null}
+      {skipFullBackground ? (
+        <div className="app-shell-static" aria-hidden />
+      ) : (
+        <BackgroundLayer mode={mode} customUrl={customUrl} variant="full" />
+      )}
       <div className="noise-overlay" />
       <div className="relative z-10 min-h-dvh">{children}</div>
     </div>

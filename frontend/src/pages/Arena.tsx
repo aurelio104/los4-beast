@@ -2,10 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppShell } from '../components/AppShell';
+import { MainTabLayout } from '../components/MainTabLayout';
 import { PageContainer } from '../components/PageContainer';
 import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { ActionInfoModal } from '../components/ActionInfoModal';
+import { useNotifications } from '../components/NotificationProvider';
 import { api } from '../lib/api';
 import { celebrateWin, celebrateCoin } from '../lib/celebrate';
 import { playClickSound } from '../lib/sounds';
@@ -25,10 +27,9 @@ const FALLBACK_TRIVIA: TriviaQuestion[] = [
 
 export default function Arena() {
   const navigate = useNavigate();
+  const { showAppToast } = useNotifications();
   const [searchParams] = useSearchParams();
   const [game, setGame] = useState<GameId>('menu');
-  const [toast, setToast] = useState('');
-  const [error, setError] = useState('');
   const [infoGame, setInfoGame] = useState<GameActionKey | null>(null);
 
   useEffect(() => {
@@ -38,13 +39,12 @@ export default function Arena() {
 
   const showResult = (points: number, msg?: string) => {
     celebrateWin(points);
-    setToast(msg || `${points >= 0 ? '+' : ''}${points} Puntos`);
-    setTimeout(() => { setToast(''); setGame('menu'); }, 2500);
+    showAppToast(msg || `${points >= 0 ? '+' : ''}${points} Puntos`);
+    setTimeout(() => setGame('menu'), 2500);
   };
 
   const handleError = (e?: string) => {
-    setError(e || 'Error');
-    setTimeout(() => setError(''), 3000);
+    showAppToast(e || 'Error');
   };
 
   const run = async (
@@ -62,8 +62,9 @@ export default function Arena() {
   };
 
   return (
-    <AppShell>
-      <PageContainer>
+    <AppShell background="celosia">
+      <MainTabLayout>
+      <PageContainer variant="tabbar">
         <PageTopBar
           onBack={() => (game === 'menu' ? navigate('/') : setGame('menu'))}
           backLabel={game === 'menu' ? 'Hub' : 'Arena'}
@@ -103,13 +104,6 @@ export default function Arena() {
           {game === 'tug' && <TugWarGame onFinish={(t) => run(() => api.tugWar(t))} onBack={() => setGame('menu')} />}
         </AnimatePresence>
 
-        {(toast || error) && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className={`fixed left-1/2 -translate-x-1/2 z-50 glass-strong px-6 py-3 rounded-2xl font-semibold toast-above-nav max-w-[min(22rem,calc(100vw-2rem))] text-center ${error ? 'text-reto-red' : ''}`}>
-            {error || toast}
-          </motion.div>
-        )}
-
         <AnimatePresence>
           {infoGame && (
             <ActionInfoModal
@@ -125,6 +119,7 @@ export default function Arena() {
           )}
         </AnimatePresence>
       </PageContainer>
+      </MainTabLayout>
     </AppShell>
   );
 }

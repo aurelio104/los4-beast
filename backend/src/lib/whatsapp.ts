@@ -24,7 +24,7 @@ export {
   isPhoneOnWhatsApp
 };
 
-const APP_URL = process.env.APP_PUBLIC_URL || process.env.FRONTEND_URL || 'https://los4-beast.vercel.app';
+const APP_URL = process.env.APP_PUBLIC_URL || process.env.FRONTEND_URL || 'http://localhost:3011';
 
 export type WhatsAppSendResult = {
   sent: boolean;

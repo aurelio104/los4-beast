@@ -8,7 +8,9 @@ import {
 } from 'lucide-react';
 import { startRegistration } from '@simplewebauthn/browser';
 import { AppShell } from '../components/AppShell';
+import { MainTabLayout } from '../components/MainTabLayout';
 import { PageContainer } from '../components/PageContainer';
+import { PageSkeleton } from '../components/PageSkeleton';
 import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { Avatar } from '../components/Avatar';
@@ -26,6 +28,8 @@ import {
 } from '../lib/preferences';
 import { User, PlayerContext } from '../types';
 import { openWaMe } from '../lib/whatsapp';
+import { getStoredUser } from '../lib/user';
+import { useNotifications } from '../components/NotificationProvider';
 
 const EMOJIS = ['😎', '🔥', '👑', '💀', '🤡', '😈', '🦸', '🎭', '🐺', '🦁', '✨', '🌊', '🎯', '💎'];
 const GENDERS = [
@@ -45,7 +49,8 @@ export default function Perfil() {
   const navigate = useNavigate();
   const photoRef = useRef<HTMLInputElement>(null);
   const bgRef = useRef<HTMLInputElement>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(getStoredUser);
+  const [hydrating, setHydrating] = useState(!getStoredUser());
   const [displayName, setDisplayName] = useState('');
   const [nickname, setNickname] = useState('');
   const [bio, setBio] = useState('');
@@ -59,10 +64,10 @@ export default function Perfil() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingBg, setUploadingBg] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState('');
   const [prefs, setPrefs] = useState<UserPreferences>(getPreferences());
   const [alliance, setAlliance] = useState<PlayerContext['alliance']>(null);
   const push = usePushNotifications();
+  const { showAppToast } = useNotifications();
 
   const applyUser = (u: User) => {
     setUser(u);
@@ -77,10 +82,7 @@ export default function Perfil() {
     setPrefs(getPreferences());
   };
 
-  const flash = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 2500);
-  };
+  const flash = (msg: string) => showAppToast(msg);
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
@@ -92,7 +94,7 @@ export default function Perfil() {
         await refreshUserPushState();
         void push.refresh();
       }
-    });
+    }).finally(() => setHydrating(false));
     api.gameStatus().then((r) => {
       if (r.player?.alliance) setAlliance(r.player.alliance);
     });
@@ -225,13 +227,24 @@ export default function Perfil() {
     setPrefs(setPreferences({ [key]: !prefs[key] }));
   };
 
+  if (hydrating && !user) {
+    return (
+      <AppShell background="celosia">
+        <MainTabLayout>
+          <PageContainer variant="tabbar"><PageSkeleton lines={6} /></PageContainer>
+        </MainTabLayout>
+      </AppShell>
+    );
+  }
+
   if (!user) return null;
 
   const activeBg = (user.bgMode as BgMode) || prefs.bgMode || 'beach';
 
   return (
-    <AppShell>
-      <PageContainer variant="tall">
+    <AppShell background="celosia">
+      <MainTabLayout>
+      <PageContainer variant="tabbar">
         <PageTopBar onBack={() => navigate('/')} />
 
         {/* Foto de perfil */}
@@ -391,8 +404,7 @@ export default function Perfil() {
             type="button"
             onClick={save}
             disabled={saving}
-            className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
+            className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 btn-primary"
           >
             {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
             Guardar cambios
@@ -494,6 +506,15 @@ export default function Perfil() {
           )}
         </GlassCard>
 
+        {push.needsStandalone && (
+          <GlassCard glow="gold" className="p-5 mb-4">
+            <p className="font-bold flex items-center gap-2"><Bell size={18} /> Notificaciones</p>
+            <p className="text-xs text-white/50 mt-1">
+              En iPhone, añade Reto a la pantalla de inicio para activar alertas push.
+            </p>
+          </GlassCard>
+        )}
+
         {push.supported && (
           <GlassCard glow="gold" className="p-5 mb-4">
             <div className="flex items-center justify-between">
@@ -538,16 +559,8 @@ export default function Perfil() {
         <button type="button" onClick={logout} className="w-full py-4 rounded-2xl font-semibold text-reto-red flex items-center justify-center gap-2 border border-reto-red/30">
           <LogOut size={18} /> Cerrar sesión
         </button>
-
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl z-50"
-          >
-            {toast}
-          </motion.div>
-        )}</PageContainer>
+      </PageContainer>
+      </MainTabLayout>
     </AppShell>
   );
 }

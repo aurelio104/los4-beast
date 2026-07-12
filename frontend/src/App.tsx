@@ -4,6 +4,7 @@ import { BackgroundMusic } from './components/BackgroundMusic';
 import { PwaInstallGate } from './components/PwaInstallGate';
 import { SetupGate } from './components/SetupGate';
 import { RouteFallback } from './components/RouteFallback';
+import { PageTransition } from './components/PageTransition';
 import { SwUpdateToast } from './components/SwUpdateToast';
 import { PushAutoSync } from './components/PushAutoSync';
 import { MasterRoute } from './components/MasterRoute';
@@ -64,24 +65,26 @@ function AppRoutes() {
     <>
       <SessionServices />
       {setupDone && <PwaInstallGate compactBanner={showInstallBanner} />}
-      <Routes>
-        <Route path="/login" element={<Lazy><Login /></Lazy>} />
-        <Route path="/join/:code" element={<Lazy><Join /></Lazy>} />
-        <Route path="/setup" element={<PrivateRoute><Setup /></PrivateRoute>} />
-        <Route path="/" element={<PrivateRoute><Hub /></PrivateRoute>} />
-        <Route path="/arena" element={<PrivateRoute><Arena /></PrivateRoute>} />
-        <Route path="/tienda" element={<PrivateRoute><Tienda /></PrivateRoute>} />
-        <Route path="/eventos" element={<PrivateRoute><Eventos /></PrivateRoute>} />
-        <Route path="/cofre" element={<PrivateRoute><Cofre /></PrivateRoute>} />
-        <Route path="/confesion" element={<PrivateRoute><Confesion /></PrivateRoute>} />
-        <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
-        <Route path="/perfil" element={<PrivateRoute><Perfil /></PrivateRoute>} />
-        <Route path="/finale" element={<PrivateRoute><Finale /></PrivateRoute>} />
-        <Route path="/admin" element={<PrivateRoute><MasterRoute><Lazy><Admin /></Lazy></MasterRoute></PrivateRoute>} />
-        <Route path="/admin/users" element={<PrivateRoute><MasterRoute><Lazy><AdminUsers /></Lazy></MasterRoute></PrivateRoute>} />
-        <Route path="/admin/whatsapp" element={<PrivateRoute><MasterRoute><Lazy><WhatsAppAdmin /></Lazy></MasterRoute></PrivateRoute>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <PageTransition>
+        <Routes location={location}>
+            <Route path="/login" element={<Lazy><Login /></Lazy>} />
+            <Route path="/join/:code" element={<Lazy><Join /></Lazy>} />
+            <Route path="/setup" element={<PrivateRoute><Setup /></PrivateRoute>} />
+            <Route path="/" element={<PrivateRoute><Hub /></PrivateRoute>} />
+            <Route path="/arena" element={<PrivateRoute><Arena /></PrivateRoute>} />
+            <Route path="/tienda" element={<PrivateRoute><Tienda /></PrivateRoute>} />
+            <Route path="/eventos" element={<PrivateRoute><Eventos /></PrivateRoute>} />
+            <Route path="/cofre" element={<PrivateRoute><Cofre /></PrivateRoute>} />
+            <Route path="/confesion" element={<PrivateRoute><Confesion /></PrivateRoute>} />
+            <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
+            <Route path="/perfil" element={<PrivateRoute><Perfil /></PrivateRoute>} />
+            <Route path="/finale" element={<PrivateRoute><Finale /></PrivateRoute>} />
+            <Route path="/admin" element={<PrivateRoute><MasterRoute><Lazy><Admin /></Lazy></MasterRoute></PrivateRoute>} />
+            <Route path="/admin/users" element={<PrivateRoute><MasterRoute><Lazy><AdminUsers /></Lazy></MasterRoute></PrivateRoute>} />
+            <Route path="/admin/whatsapp" element={<PrivateRoute><MasterRoute><Lazy><WhatsAppAdmin /></Lazy></MasterRoute></PrivateRoute>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </PageTransition>
     </>
   );
 }

@@ -116,15 +116,20 @@ export async function getRegistrationOptions(userId: string, userEmail: string, 
   return options;
 }
 
-export async function verifyRegistration(body: Record<string, unknown> & { deviceName?: string }, userId: string) {
+export async function verifyRegistration(
+  body: Record<string, unknown> & { deviceName?: string },
+  userId: string,
+  requestOrigin?: string
+) {
   try {
+    const expectedOrigin = getExpectedOrigin(requestOrigin);
     const verification = await verifyRegistrationResponse({
       response: body as unknown as Parameters<typeof verifyRegistrationResponse>[0]['response'],
       expectedChallenge: async (challenge) => {
         const result = await verifyChallenge(challenge);
         return result !== null && result.userId === userId;
       },
-      expectedOrigin: webauthnConfig.origin,
+      expectedOrigin,
       expectedRPID: webauthnConfig.rpID
     });
     if (!verification.verified || !verification.registrationInfo) {

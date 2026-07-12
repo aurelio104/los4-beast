@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { ActionInfo } from '../lib/actionInfo';
+import { useModalBackClose } from '../hooks/useModalBackClose';
+import { overlayFade, overlayTransition, slideSheet, slideSheetTransition } from '../lib/motion';
 
 interface ActionInfoModalProps {
   info: ActionInfo;
@@ -19,19 +21,23 @@ export function ActionInfoModal({
   loading,
   disabled
 }: ActionInfoModalProps) {
+  useModalBackClose(true, onClose);
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] bg-black/60 backdrop-blur-sm"
+      initial={overlayFade.initial}
+      animate={overlayFade.animate}
+      exit={overlayFade.exit}
+      transition={overlayTransition}
+      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] modal-overlay"
       onClick={onClose}
     >
       <motion.div
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        exit={{ y: 100 }}
-        className="glass-strong w-full max-w-md rounded-3xl p-5 sm:p-6 max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem))] overflow-y-auto"
+        initial={slideSheet.initial}
+        animate={slideSheet.animate}
+        exit={slideSheet.exit}
+        transition={slideSheetTransition}
+        className="glass-strong glass-aurora-top w-full max-w-md rounded-3xl p-5 sm:p-6 max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem))] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 mb-4">
@@ -42,27 +48,27 @@ export function ActionInfoModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl bg-white/5 text-white/50 hover:text-white"
+            className="p-2 rounded-xl glass-subtle text-white/55 hover:text-white"
             aria-label="Cerrar"
           >
             <X size={18} />
           </button>
         </div>
 
-        <p className="text-sm text-white/75 leading-relaxed mb-4">{info.description}</p>
+        <p className="text-sm text-white/80 leading-relaxed mb-4">{info.description}</p>
 
         {info.points && info.points !== '—' && (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-reto-gold/15 border border-reto-gold/30 mb-4">
-            <span className="text-xs text-white/50 uppercase tracking-wider">Puntos</span>
-            <span className="text-sm font-bold text-reto-gold">{info.points}</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-reto-gold/25 border border-reto-gold/40 mb-4">
+            <span className="text-xs text-white/55 uppercase tracking-wider">Puntos</span>
+            <span className="text-sm font-bold text-glow-gold">{info.points}</span>
           </div>
         )}
 
         <div className="mb-6">
-          <p className="text-xs uppercase tracking-widest text-white/40 mb-2">Reglas</p>
+          <p className="text-xs uppercase tracking-widest text-white/55 mb-2">Reglas</p>
           <ul className="space-y-2">
             {info.rules.map((rule) => (
-              <li key={rule} className="flex items-start gap-2 text-sm text-white/65">
+              <li key={rule} className="flex items-start gap-2 text-sm text-white/70">
                 <span className="text-reto-cyan mt-0.5">•</span>
                 <span>{rule}</span>
               </li>
@@ -83,8 +89,7 @@ export function ActionInfoModal({
               type="button"
               onClick={onConfirm}
               disabled={loading || disabled}
-              className="flex-1 py-3.5 rounded-2xl font-bold disabled:opacity-40"
-              style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
+              className="flex-1 py-3.5 rounded-2xl font-bold disabled:opacity-40 btn-primary"
             >
               {loading ? '...' : confirmLabel}
             </button>

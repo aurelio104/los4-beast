@@ -267,7 +267,8 @@ authRouter.get('/webauthn/register-options', authMiddleware, async (req: Request
 authRouter.post('/webauthn/register', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = (req as Request & { user: { userId: string } }).user.userId;
-    const result = await verifyRegistration(req.body, userId);
+    const origin = req.get('origin') || (req.headers.origin as string | undefined);
+    const result = await verifyRegistration(req.body, userId, origin);
     if (!result.verified) return res.status(400).json({ success: false, error: result.error });
     res.json({ success: true });
   } catch {

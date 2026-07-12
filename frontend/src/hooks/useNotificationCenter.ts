@@ -29,7 +29,9 @@ export function useNotificationCenter() {
   const [chatUnread, setChatUnread] = useState(() => getUnreadCountByTag('chat'));
   const [recent, setRecent] = useState<StoredAlert[]>(getRecentAlerts);
   const [toast, setToast] = useState<AlertPayload | null>(null);
+  const [appMessage, setAppMessage] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
+  const appTimer = useRef<number | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -42,6 +44,17 @@ export function useNotificationCenter() {
   const dismissToast = useCallback(() => {
     setToast(null);
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
+  }, []);
+
+  const showAppToast = useCallback((message: string) => {
+    setAppMessage(message);
+    if (appTimer.current) window.clearTimeout(appTimer.current);
+    appTimer.current = window.setTimeout(() => setAppMessage(null), 3200);
+  }, []);
+
+  const dismissAppToast = useCallback(() => {
+    setAppMessage(null);
+    if (appTimer.current) window.clearTimeout(appTimer.current);
   }, []);
 
   const refresh = useCallback(() => {
@@ -140,5 +153,5 @@ export function useNotificationCenter() {
     navigate(first?.url || '/');
   }, [navigate, refresh]);
 
-  return { unread, chatUnread, recent, toast, openInbox, refresh, markAllRead, dismissToast };
+  return { unread, chatUnread, recent, toast, appMessage, openInbox, refresh, markAllRead, dismissToast, showAppToast, dismissAppToast };
 }

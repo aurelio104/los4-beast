@@ -4,36 +4,59 @@ import type { AlertPayload } from '../lib/notification-center';
 
 type Props = {
   toast: AlertPayload | null;
+  appMessage: string | null;
   onDismiss: () => void;
+  onDismissApp: () => void;
 };
 
-export function NotificationAlerts({ toast, onDismiss }: Props) {
+export function NotificationAlerts({ toast, appMessage, onDismiss, onDismissApp }: Props) {
   return (
-    <AnimatePresence>
-      {toast && (
-        <motion.div
-          initial={{ opacity: 0, y: -24, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -16 }}
-          className="fixed top-[max(0.75rem,env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-[90] w-[min(22rem,calc(100vw-1.5rem))] glass-strong rounded-2xl p-4 shadow-2xl border border-reto-pink/30"
-          role="alert"
-        >
-          <div className="flex gap-3 items-start">
-            <div className="relative shrink-0">
-              <Bell size={22} className="text-reto-gold mt-0.5" />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-reto-red ring-2 ring-black/40" />
+    <>
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16 }}
+            className="fixed top-[max(0.75rem,env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-[90] w-[min(22rem,calc(100vw-1.5rem))] glass-strong rounded-2xl p-4 shadow-2xl border border-reto-pink/30"
+            role="alert"
+          >
+            <div className="flex gap-3 items-start">
+              <div className="relative shrink-0">
+                <Bell size={22} className="text-reto-gold mt-0.5" />
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-reto-red ring-2 ring-black/40" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold leading-tight">{toast.title}</p>
+                <p className="text-xs text-white/65 mt-1 line-clamp-2">{toast.body}</p>
+              </div>
+              <button type="button" className="text-white/40 min-w-[44px] min-h-[44px] flex items-center justify-center" onClick={onDismiss} aria-label="Cerrar">
+                <X size={16} />
+              </button>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold leading-tight">{toast.title}</p>
-              <p className="text-xs text-white/65 mt-1 line-clamp-2">{toast.body}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {appMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed left-1/2 -translate-x-1/2 z-[85] w-[min(22rem,calc(100vw-2rem))] glass-strong toast-enter px-5 py-3 rounded-2xl text-sm font-semibold text-center toast-bottom-safe"
+            role="status"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="flex-1">{appMessage}</span>
+              <button type="button" className="text-white/45 min-w-[36px] min-h-[36px] flex items-center justify-center shrink-0" onClick={onDismissApp} aria-label="Cerrar">
+                <X size={14} />
+              </button>
             </div>
-            <button type="button" className="text-white/40 p-1" onClick={onDismiss} aria-label="Cerrar">
-              <X size={16} />
-            </button>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -48,7 +71,7 @@ export function NotificationBellButton({ unread, onClick, className = '' }: Bell
     <button
       type="button"
       onClick={onClick}
-      className={`relative glass-btn p-2.5 rounded-xl shrink-0 ${className}`}
+      className={`relative glass-btn p-2.5 rounded-xl shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center ${className}`}
       aria-label={unread ? `${unread} notificaciones sin leer` : 'Notificaciones'}
     >
       <Bell size={20} className="text-white/90" />

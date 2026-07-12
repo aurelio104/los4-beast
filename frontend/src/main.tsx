@@ -7,6 +7,10 @@ import { NotificationProvider } from './components/NotificationProvider';
 import { useOnlineStatus } from './hooks/useOnlineStatus';
 import './index.css';
 
+function removeBootSplash() {
+  document.getElementById('boot-splash')?.remove();
+}
+
 function Root() {
   const online = useOnlineStatus();
   return (
@@ -24,3 +28,5 @@ createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </StrictMode>
 );
+
+removeBootSplash();

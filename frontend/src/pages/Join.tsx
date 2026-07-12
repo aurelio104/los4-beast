@@ -331,8 +331,7 @@ export default function Join() {
                 <button
                   type="button"
                   onClick={() => navigate('/setup', { replace: true })}
-                  className="w-full py-4 rounded-2xl font-bold inline-flex items-center justify-center gap-2"
-                  style={{ background: 'linear-gradient(135deg, #ffbe0b, #ff006e)' }}
+                  className="w-full py-4 rounded-2xl font-bold inline-flex items-center justify-center gap-2 btn-primary btn-primary-gold"
                 >
                   Configurar Reto <ArrowRight size={18} />
                 </button>
@@ -353,8 +352,7 @@ export default function Join() {
                 type="button"
                 onClick={next}
                 disabled={loading || (step === 2 && (!isPasswordOrPinValid(password) || password !== confirmPassword))}
-                className="flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-1 disabled:opacity-40"
-                style={{ background: step === 2 ? 'linear-gradient(135deg, #ffbe0b, #ff006e)' : 'linear-gradient(135deg, #8338ec, #ff006e)' }}
+                className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-1 disabled:opacity-40 btn-primary ${step === 2 ? 'btn-primary-gold' : ''}`}
               >
                 {loading ? <Loader2 className="animate-spin" size={18} /> : (
                   <>

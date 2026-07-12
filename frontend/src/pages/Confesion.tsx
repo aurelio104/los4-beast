@@ -8,6 +8,7 @@ import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../lib/api';
 import { celebrateWin } from '../lib/celebrate';
+import { useNotifications } from '../components/NotificationProvider';
 
 interface ConfessionItem {
   id: string;
@@ -20,9 +21,9 @@ interface ConfessionItem {
 
 export default function Confesion() {
   const navigate = useNavigate();
+  const { showAppToast } = useNotifications();
   const [list, setList] = useState<ConfessionItem[]>([]);
   const [message, setMessage] = useState('');
-  const [toast, setToast] = useState('');
 
   const load = () => api.confessions().then((r) => {
     if (r.success) setList(r.confessions as ConfessionItem[]);
@@ -35,13 +36,12 @@ export default function Confesion() {
     const res = await api.confession(message.trim());
     if (res.success) {
       celebrateWin(20);
-      setToast('Confesión guardada — se revela el 29 ago 🤐');
+      showAppToast('Confesión guardada — se revela el 29 ago');
       setMessage('');
       load();
     } else {
-      setToast(res.error || 'Error');
+      showAppToast(res.error || 'Error');
     }
-    setTimeout(() => setToast(''), 3000);
   };
 
   return (
@@ -55,8 +55,7 @@ export default function Confesion() {
         <GlassCard strong glow="pink" className="p-5 mb-6">
           <textarea rows={4} placeholder="Algo que quieras decir al grupo..." value={message} onChange={(e) => setMessage(e.target.value)} maxLength={500} />
           <motion.button whileTap={{ scale: 0.98 }} onClick={submit}
-            className="w-full mt-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}>
+            className="w-full mt-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 btn-primary">
             <MessageSquare size={18} /> Confesar (+20 Puntos)
           </motion.button>
         </GlassCard>
@@ -73,13 +72,7 @@ export default function Confesion() {
           ))}
           {!list.length && <p className="text-center text-white/30 py-8">Nadie ha confesado aún...</p>}
         </div>
-
-        {toast && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 glass-strong px-6 py-3 rounded-2xl z-50">
-            {toast}
-          </motion.div>
-        )}</PageContainer>
+      </PageContainer>
     </AppShell>
   );
 }

@@ -11,7 +11,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationContext.Provider value={center}>
-      <NotificationAlerts toast={center.toast} onDismiss={center.dismissToast} />
+      <NotificationAlerts
+        toast={center.toast}
+        appMessage={center.appMessage}
+        onDismiss={center.dismissToast}
+        onDismissApp={center.dismissAppToast}
+      />
       {children}
     </NotificationContext.Provider>
   );

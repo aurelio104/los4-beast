@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Share, X, Smartphone } from 'lucide-react';
 import { RetoLogo } from './RetoLogo';
+import { useModalBackClose } from '../hooks/useModalBackClose';
 
 type PwaInstallPromptProps = {
   open: boolean;
@@ -11,6 +12,8 @@ type PwaInstallPromptProps = {
 };
 
 export function PwaInstallPrompt({ open, canNativeInstall, needsIOSGuide, onInstall, onDismiss }: PwaInstallPromptProps) {
+  useModalBackClose(open, onDismiss);
+
   return (
     <AnimatePresence>
       {open && (
@@ -24,7 +27,7 @@ export function PwaInstallPrompt({ open, canNativeInstall, needsIOSGuide, onInst
           <motion.button
             type="button"
             aria-label="Cerrar"
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 modal-overlay"
             onClick={onDismiss}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -79,8 +82,7 @@ export function PwaInstallPrompt({ open, canNativeInstall, needsIOSGuide, onInst
                 <button
                   type="button"
                   onClick={onInstall}
-                  className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 mb-2"
-                  style={{ background: 'linear-gradient(135deg, #ffbe0b, #ff006e)' }}
+                  className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 mb-2 btn-primary btn-primary-gold"
                 >
                   <Download size={20} />
                   Instalar ahora

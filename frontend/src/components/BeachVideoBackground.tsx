@@ -33,7 +33,7 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
   const [videoReady, setVideoReady] = useState(false);
   const [allowVideo, setAllowVideo] = useState(() => !prefersSaveData());
   const [videoSrc, setVideoSrc] = useState(VIDEO_720);
-  const [deferVideo, setDeferVideo] = useState(variant !== 'hero');
+  const [deferVideo, setDeferVideo] = useState(false);
 
   const isHero = variant === 'hero';
 
@@ -59,13 +59,8 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
   }, []);
 
   useEffect(() => {
-    if (isHero || !allowVideo) {
-      setDeferVideo(false);
-      return;
-    }
-    const t = window.setTimeout(() => setDeferVideo(false), 2200);
-    return () => window.clearTimeout(t);
-  }, [isHero, allowVideo]);
+    if (!allowVideo) setDeferVideo(false);
+  }, [allowVideo]);
 
   useEffect(() => {
     const root = wrapRef.current;
@@ -144,7 +139,7 @@ export function BeachVideoBackground({ variant = 'full', className = '' }: Beach
         style={{
           background: isHero
             ? 'linear-gradient(180deg, rgba(5,5,12,0.3) 0%, rgba(5,5,12,0.5) 55%, rgba(5,5,12,0.92) 100%)'
-            : 'linear-gradient(180deg, rgba(5,5,12,0.4) 0%, rgba(5,5,12,0.6) 40%, rgba(5,5,12,0.88) 100%)'
+            : 'linear-gradient(180deg, rgba(5,5,12,0.12) 0%, rgba(5,5,12,0.28) 45%, rgba(5,5,12,0.65) 100%)'
         }}
       />
 

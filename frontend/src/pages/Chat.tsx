@@ -9,6 +9,8 @@ import { GlassCard } from '../components/GlassCard';
 import { Avatar } from '../components/Avatar';
 import { api } from '../lib/api';
 import { useLivePoll } from '../hooks/useLivePoll';
+import { useNotifications } from '../components/NotificationProvider';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 interface ChatMsg {
   id: string;
@@ -20,6 +22,8 @@ interface ChatMsg {
 
 export default function Chat() {
   const navigate = useNavigate();
+  const { showAppToast } = useNotifications();
+  const online = useOnlineStatus();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -63,15 +67,26 @@ export default function Chat() {
   const send = async () => {
     const body = text.trim();
     if (!body || sending) return;
+    if (!online) {
+      showAppToast('Sin conexión — no se puede enviar');
+      return;
+    }
     setSending(true);
+    const draft = body;
     setText('');
     try {
-      const res = await api.chatSend(body);
+      const res = await api.chatSend(draft);
       if (res.success && res.message) {
         const msg = res.message as ChatMsg;
         setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
         lastAt.current = msg.createdAt;
+      } else {
+        setText(draft);
+        showAppToast(res.error || 'No se envió el mensaje');
       }
+    } catch {
+      setText(draft);
+      showAppToast('Error de conexión');
     } finally {
       setSending(false);
     }
@@ -79,14 +94,15 @@ export default function Chat() {
 
   return (
     <AppShell>
-      <PageContainer variant="chat">
+      <div className="h-[100dvh] max-h-[100dvh] flex flex-col overflow-hidden">
+      <PageContainer variant="chat" className="flex-1 min-h-0 flex flex-col">
         <PageTopBar onBack={() => navigate('/')} />
 
         <h2 className="text-page-title font-black gradient-text mb-1 shrink-0">Chat del grupo</h2>
         <p className="text-white/40 text-sm mb-4">Habla con los miembros del Reto · se actualiza solo</p>
 
-        <GlassCard strong className="flex-1 p-3 mb-4 overflow-hidden flex flex-col min-h-[50dvh]">
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+        <GlassCard strong className="flex-1 min-h-0 p-3 mb-2 overflow-hidden flex flex-col">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 overscroll-contain">
             {messages.map((m) => (
               <motion.div
                 key={m.id}
@@ -121,8 +137,8 @@ export default function Chat() {
           </div>
         </GlassCard>
 
-        <div className="fixed bottom-0 inset-x-0 z-50 p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <div className="app-container !py-0 flex gap-2">
+        <div className="shrink-0 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="flex gap-2">
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -134,21 +150,24 @@ export default function Chat() {
               }}
               maxLength={500}
               placeholder="Escribe al grupo..."
-              className="flex-1 glass-btn rounded-2xl px-4 py-3 text-sm outline-none"
+              enterKeyHint="send"
+              autoComplete="off"
+              className="flex-1 glass-btn rounded-2xl px-4 py-3 text-base outline-none"
             />
             <motion.button
               type="button"
               whileTap={{ scale: 0.94 }}
-              disabled={sending || !text.trim()}
+              disabled={sending || !text.trim() || !online}
               onClick={send}
-              className="rounded-2xl px-4 py-3 font-bold disabled:opacity-40"
-              style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
+              className="rounded-2xl px-4 py-3 font-bold disabled:opacity-40 btn-primary min-w-[48px] min-h-[48px] flex items-center justify-center"
+              aria-label="Enviar mensaje"
             >
               <Send size={18} />
             </motion.button>
           </div>
         </div>
       </PageContainer>
+      </div>
     </AppShell>
   );
 }

@@ -111,8 +111,7 @@ export default function Login() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-              className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2"
-              style={{ background: 'linear-gradient(135deg, #ff006e, #8338ec)' }}
+              className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 btn-primary btn-primary-pink"
             >
               {loading ? <Loader2 className="animate-spin" size={20} /> : <KeyRound size={20} />}
               Entrar

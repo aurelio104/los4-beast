@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  CircleCheck, Handshake, HeartCrack, Skull, Gift, Swords, Trophy, ShoppingBag,
-  Settings, Gamepad2, DollarSign, Vote, Users, MessageSquare, MessagesSquare,
-  Calendar, Package, User, Zap, Crosshair, Music2
+  CircleCheck, Handshake, HeartCrack, Skull, Swords, Trophy, ShoppingBag,
+  Gamepad2, DollarSign, Vote, Users, MessageSquare, MessagesSquare,
+  Calendar, Package, Zap, Crosshair, Music2
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { AppShell, HeroSection } from '../components/AppShell';
+import { AppShell } from '../components/AppShell';
 import { GlassCard } from '../components/GlassCard';
 import { GlassButton } from '../components/GlassButton';
+import { MainTabLayout } from '../components/MainTabLayout';
 import { CountdownTimer } from '../components/CountdownTimer';
 import { DramaFeed } from '../components/DramaFeed';
 import { ActionInfoModal } from '../components/ActionInfoModal';
@@ -18,7 +18,6 @@ import { StoryStrip } from '../components/StoryStrip';
 import { StoryViewerModal } from '../components/StoryViewerModal';
 import { StoryCreateModal } from '../components/StoryCreateModal';
 import { QuickChip } from '../components/QuickChip';
-import { RetoLogo } from '../components/RetoLogo';
 import { Avatar } from '../components/Avatar';
 import { VotePanel } from '../components/VotePanel';
 import { api } from '../lib/api';
@@ -31,17 +30,21 @@ import { useLivePoll } from '../hooks/useLivePoll';
 import { useNotifications } from '../components/NotificationProvider';
 import { RadioSubmitModal } from '../components/RadioSubmitModal';
 import { useNowPlaying } from '../components/BackgroundMusic';
+import { staggerContainer, staggerItem, slideSheet, slideSheetTransition, overlayFade, overlayTransition } from '../lib/motion';
+import { getStoredUser } from '../lib/user';
+import { useReducedMotion } from '../hooks/useReducedMotion';
+import { useModalBackClose } from '../hooks/useModalBackClose';
 
 export default function Hub() {
   const navigate = useNavigate();
-  const location = useLocation();
   const push = usePushNotifications();
-  const { chatUnread } = useNotifications();
-  const [user, setUser] = useState<UserType | null>(null);
+  const { chatUnread, showAppToast } = useNotifications();
+  const reducedMotion = useReducedMotion();
+  const [user, setUser] = useState<UserType | null>(getStoredUser);
   const [booting, setBooting] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [toast, setToast] = useState('');
   const [loading, setLoading] = useState<string | null>(null);
   const [showRenegotiate, setShowRenegotiate] = useState(false);
   const [proposal, setProposal] = useState('');
@@ -68,35 +71,48 @@ export default function Hub() {
     const stored = localStorage.getItem('user');
     if (!stored) { navigate('/login'); return; }
 
-    const snap = await api.hubSnapshot();
-
-    if (snap.success) {
-      setUser(snap.user as UserType);
-      localStorage.setItem('user', JSON.stringify(snap.user));
-      void hydratePushFromServer(snap.user as UserType);
-      setFeed((snap.feed || []) as FeedItem[]);
-      setPlayers((snap.players || []) as Player[]);
-      setDaysLeft(snap.daysUntilChallenge);
-      setEventActive(snap.isEventActive);
-      setCurrentEvent(snap.event as RetoEvent);
-      if (snap.player) setPlayerCtx(snap.player);
-      setVoteTally(snap.tally || []);
-      setBribeOffer({ ...snap.bribe.offer, alreadyAccepted: snap.bribe.alreadyAccepted });
-      setStoryGroups(snap.stories || []);
-      setStoriesLoading(false);
-    } else {
-      setUser(JSON.parse(stored));
+    let cached: UserType;
+    try {
+      cached = JSON.parse(stored) as UserType;
+    } catch {
+      navigate('/login');
+      return;
     }
-    setBooting(false);
+
+    setUser((prev) => prev ?? cached);
+
+    try {
+      const snap = await api.hubSnapshot();
+
+      if (snap.success) {
+        setLoadError(null);
+        setUser(snap.user as UserType);
+        localStorage.setItem('user', JSON.stringify(snap.user));
+        void hydratePushFromServer(snap.user as UserType);
+        setFeed((snap.feed || []) as FeedItem[]);
+        setPlayers((snap.players || []) as Player[]);
+        setDaysLeft(snap.daysUntilChallenge);
+        setEventActive(snap.isEventActive);
+        setCurrentEvent(snap.event as RetoEvent);
+        if (snap.player) setPlayerCtx(snap.player);
+        setVoteTally(snap.tally || []);
+        setBribeOffer({ ...snap.bribe.offer, alreadyAccepted: snap.bribe.alreadyAccepted });
+        setStoryGroups(snap.stories || []);
+      } else {
+        setLoadError((snap as { error?: string }).error || 'No se pudieron actualizar los datos');
+      }
+    } catch {
+      setLoadError('Sin conexión — mostrando datos guardados');
+    } finally {
+      setStoriesLoading(false);
+      setBooting(false);
+    }
   }, [navigate]);
 
   useEffect(() => { load(); }, [load]);
   useLivePoll(load, 30000);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3000);
-  };
+  const showToast = (msg: string) => showAppToast(msg);
 
   const action = async (
     key: string,
@@ -117,7 +133,15 @@ export default function Hub() {
           onSuccess?.(res);
         } else showToast(res.message || res.penalty || '¡Hecho!');
         await load();
-      } else showToast(res.error || 'Error');
+      } else {
+        const msg = res.error || 'Error';
+        showToast(msg);
+        showAppToast(msg);
+      }
+    } catch {
+      const msg = 'Sin conexión — inténtalo de nuevo';
+      showToast(msg);
+      showAppToast(msg);
     } finally {
       setLoading(null);
     }
@@ -126,18 +150,18 @@ export default function Hub() {
   if (booting || !user) {
     return (
       <AppShell>
-        <div className="hub-layout">
-          <div className="hub-layout__scroll app-container space-y-4 animate-pulse">
+        <MainTabLayout>
+          <div className="app-container space-y-4 animate-pulse pt-safe">
             <div className="h-36 rounded-3xl bg-white/5" />
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {[1, 2, 3, 4, 5, 6].map((n) => (
-                <div key={n} className="h-16 rounded-2xl bg-white/5" />
+                <div key={n} className="hub-tile rounded-2xl bg-white/5" />
               ))}
             </div>
             <div className="h-48 rounded-3xl bg-white/5" />
             <div className="h-32 rounded-3xl bg-white/5" />
           </div>
-        </div>
+        </MainTabLayout>
       </AppShell>
     );
   }
@@ -219,9 +243,17 @@ export default function Hub() {
 
   return (
     <AppShell>
-      <div className="hub-layout">
-        <div className="hub-layout__scroll app-container">
-        <HeroSection>
+      <MainTabLayout>
+        <div className="app-container">
+        {loadError && (
+          <div className="mb-3 glass-subtle rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
+            <p className="text-xs text-white/70">{loadError}</p>
+            <button type="button" onClick={() => void load()} className="text-xs font-bold text-reto-cyan shrink-0 min-h-[44px] px-2">
+              Reintentar
+            </button>
+          </div>
+        )}
+        <div className="hub-hero">
           <HubHeader
             displayName={user.displayName}
             avatarUrl={user.avatarUrl}
@@ -239,30 +271,30 @@ export default function Hub() {
 
           {eventActive && currentEvent && (
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} onClick={() => openInfo('evento-activo')} className="mb-4">
-              <GlassCard glow="pink" className="p-4 cursor-pointer flex items-center gap-3 bg-black/20">
-                <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.5 }}>
-                  <Zap className="text-reto-pink" />
+              <div className="hub-event-pill flex items-center gap-3 p-4">
+                <motion.div animate={reducedMotion ? {} : { scale: [1, 1.2, 1] }} transition={reducedMotion ? undefined : { repeat: Infinity, duration: 1.5 }}>
+                  <Zap className="text-reto-pink shrink-0" size={22} />
                 </motion.div>
-                <div>
-                  <p className="text-xs text-reto-pink font-bold uppercase">Evento activo</p>
-                  <p className="font-bold">{currentEvent.emoji} {currentEvent.name}</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] text-reto-pink font-bold uppercase tracking-wider">Evento activo</p>
+                  <p className="font-bold text-white truncate">{currentEvent.emoji} {currentEvent.name}</p>
                 </div>
-              </GlassCard>
+              </div>
             </motion.div>
           )}
 
-          <GlassCard strong glow="pink" className="hub-hero-card bg-black/25 backdrop-blur-2xl">
-            <p className="text-center text-[10px] sm:text-xs uppercase tracking-[0.25em] sm:tracking-[0.3em] text-white/60 mb-3 sm:mb-4">Reto final · 29 Ago</p>
+          <div className="hub-hero-countdown">
+            <p className="hub-hero-eyebrow">Reto final · 29 Ago</p>
             <CountdownTimer />
             <motion.p
-              className="hub-hero-tagline text-center text-xs sm:text-sm text-white/70 mt-3 sm:mt-4 italic"
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 3, repeat: Infinity }}
+              className="hub-hero-tagline"
+              animate={reducedMotion ? { opacity: 0.85 } : { opacity: [0.5, 1, 0.5] }}
+              transition={reducedMotion ? undefined : { duration: 3, repeat: Infinity }}
             >
               Playa · Reto
             </motion.p>
-          </GlassCard>
-        </HeroSection>
+          </div>
+        </div>
 
 
         {/* Accesos rápidos — scroll horizontal en móvil */}
@@ -294,8 +326,8 @@ export default function Hub() {
         </div>
 
         {playerCtx?.featuredGame && eventActive && (
-          <GlassCard glow="cyan" className="p-4 mb-4 cursor-pointer flex items-center gap-3" onClick={() => navigate(`/arena?game=${playerCtx.featuredGame}`)}>
-            <motion.span animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.2 }} className="text-2xl">🎮</motion.span>
+          <GlassCard glow="cyan" interactive className="p-4 mb-4 flex items-center gap-3" onClick={() => navigate(`/arena?game=${playerCtx.featuredGame}`)}>
+            <motion.span animate={reducedMotion ? {} : { scale: [1, 1.2, 1] }} transition={reducedMotion ? undefined : { repeat: Infinity, duration: 1.2 }} className="text-2xl">🎮</motion.span>
             <div className="flex-1">
               <p className="text-xs text-reto-cyan font-bold uppercase">Juego del evento</p>
               <p className="font-bold text-sm">Jugar ahora en Arena →</p>
@@ -320,23 +352,28 @@ export default function Hub() {
           </GlassCard>
         )}
 
-        <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-3 px-0.5">Acciones</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-white/55 mb-3 px-0.5">Acciones</p>
         <div className="hub-actions-wrap mb-4">
-          <div className="action-grid">
-          <GlassButton icon={CircleCheck} label="Continuar" sublabel={playerCtx?.continuedToday ? 'Hecho hoy ✓' : '+10 Puntos'} variant="success" loading={loading === 'continue'} showInfoHint badge={playerCtx ? !playerCtx.continuedToday : undefined} onClick={() => openInfo('continue')} />
-          <GlassButton icon={HeartCrack} label="Clemencia" sublabel="1×/10 días" variant="gold" loading={loading === 'clemency'} showInfoHint onClick={() => openInfo('clemency')} />
-          <GlassButton icon={Handshake} label="Renegociar" showInfoHint onClick={() => openInfo('renegotiate')} />
-          <GlassButton icon={Skull} label="Traicionar" sublabel="+150 Puntos" variant="danger" showInfoHint pulse onClick={() => openInfo('betray')} />
-          <GlassButton icon={DollarSign} label="Soborno" sublabel={bribeOffer ? `${bribeOffer.points} Puntos` : '...'} variant="gold" showInfoHint badge={playerCtx && !playerCtx.bribeAccepted && !bribeOffer?.alreadyAccepted ? true : undefined} onClick={() => openInfo('bribe')} />
-          <GlassButton icon={Vote} label="Votar" sublabel="Eliminar" showInfoHint badge={playerCtx ? !playerCtx.hasVoted : undefined} onClick={() => openInfo('vote')} />
-          <GlassButton icon={Users} label="Alianza" sublabel={playerCtx?.alliance ? playerCtx.alliance.name : 'Secreto'} showInfoHint onClick={() => openInfo('alliance')} />
-          <GlassButton icon={Crosshair} label="Desafío 1v1" showInfoHint onClick={() => openInfo('challenge')} />
-          <GlassButton icon={Gamepad2} label="Arena" variant="gold" showInfoHint pulse={!!playerCtx?.featuredGame} badge={playerCtx?.featuredGame ? '🎮' : undefined} onClick={() => openInfo('arena')} />
-          <GlassButton icon={ShoppingBag} label="Tienda" showInfoHint onClick={() => openInfo('tienda')} />
-          <GlassButton icon={MessageSquare} label="Confesión" showInfoHint onClick={() => openInfo('confesion')} />
-          <GlassButton icon={MessagesSquare} label="Chat" sublabel="Grupo" variant="gold" showInfoHint pulse badge={chatUnread > 0 ? chatUnread : undefined} onClick={() => openInfo('chat')} />
-          <GlassButton icon={Calendar} label="Eventos" showInfoHint onClick={() => openInfo('eventos')} />
-          </div>
+          <motion.div
+            className="action-grid"
+            variants={reducedMotion ? undefined : staggerContainer}
+            initial={reducedMotion ? false : 'hidden'}
+            animate={reducedMotion ? undefined : 'show'}
+          >
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={CircleCheck} label="Continuar" sublabel={playerCtx?.continuedToday ? 'Hecho hoy ✓' : '+10 Puntos'} variant="success" loading={loading === 'continue'} showInfoHint badge={playerCtx ? !playerCtx.continuedToday : undefined} onClick={() => openInfo('continue')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={HeartCrack} label="Clemencia" sublabel="1×/10 días" variant="gold" loading={loading === 'clemency'} showInfoHint onClick={() => openInfo('clemency')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={Handshake} label="Renegociar" showInfoHint onClick={() => openInfo('renegotiate')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={Skull} label="Traicionar" sublabel="+150 Puntos" variant="danger" showInfoHint pulse onClick={() => openInfo('betray')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={DollarSign} label="Soborno" sublabel={bribeOffer ? `${bribeOffer.points} Puntos` : '...'} variant="gold" showInfoHint badge={playerCtx && !playerCtx.bribeAccepted && !bribeOffer?.alreadyAccepted ? true : undefined} onClick={() => openInfo('bribe')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={Vote} label="Votar" sublabel="Eliminar" showInfoHint badge={playerCtx ? !playerCtx.hasVoted : undefined} onClick={() => openInfo('vote')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={Users} label="Alianza" sublabel={playerCtx?.alliance ? playerCtx.alliance.name : 'Secreto'} showInfoHint onClick={() => openInfo('alliance')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={Crosshair} label="Desafío 1v1" showInfoHint onClick={() => openInfo('challenge')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={Gamepad2} label="Arena" variant="gold" showInfoHint pulse={!!playerCtx?.featuredGame} badge={playerCtx?.featuredGame ? '🎮' : undefined} onClick={() => openInfo('arena')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={ShoppingBag} label="Tienda" showInfoHint onClick={() => openInfo('tienda')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={MessageSquare} label="Confesión" showInfoHint onClick={() => openInfo('confesion')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={MessagesSquare} label="Chat" sublabel="Grupo" variant="gold" showInfoHint pulse badge={chatUnread > 0 ? chatUnread : undefined} onClick={() => openInfo('chat')} /></motion.div>
+          <motion.div variants={reducedMotion ? undefined : staggerItem} className="hub-tile-cell"><GlassButton icon={Calendar} label="Eventos" showInfoHint onClick={() => openInfo('eventos')} /></motion.div>
+          </motion.div>
         </div>
 
         <VotePanel tally={voteTally} />
@@ -369,31 +406,7 @@ export default function Hub() {
           <DramaFeed items={feed} />
         </GlassCard>
         </div>
-
-        <div className="bottom-nav-bar">
-          <div className="bottom-nav-inner glass-strong rounded-3xl p-1.5 sm:p-2">
-            {([
-              { path: '/', active: true, logo: true as const },
-              { icon: Gamepad2, path: '/arena' },
-              { icon: Package, path: '/cofre' },
-              { icon: Gift, path: '/tienda' },
-              { icon: User, path: '/perfil' },
-              ...(user.role === 'MASTER' ? [{ icon: Settings, path: '/admin' }] : [])
-            ] as Array<{ path: string; active?: boolean; logo: true } | { path: string; active?: boolean; icon: LucideIcon }>).map((item) => {
-              const active = location.pathname === item.path || ('active' in item && item.active);
-              return (
-                <button key={item.path} type="button" onClick={() => navigate(item.path)} className={`bottom-nav-btn ${active ? 'bg-white/10' : ''}`}>
-                  {'logo' in item ? (
-                    <RetoLogo size="xs" className={active ? '' : 'opacity-50'} />
-                  ) : (
-                    (() => { const Icon = item.icon; return <Icon size={20} className={item.path === '/admin' ? 'text-reto-gold' : active ? 'text-white' : 'text-white/50'} />; })()
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+      </MainTabLayout>
 
       <AnimatePresence>
         {infoKey && (
@@ -419,6 +432,7 @@ export default function Hub() {
         )}
         {storyViewerId && storyGroups.some((g) => g.userId === storyViewerId && g.stories.length > 0) && (
           <StoryViewerModal
+            key={storyViewerId}
             groups={storyGroups.filter((g) => g.stories.length > 0)}
             initialUserId={storyViewerId}
             onClose={() => setStoryViewerId(null)}
@@ -428,13 +442,6 @@ export default function Hub() {
               setShowCreateStory(true);
             }}
           />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {toast && (
-          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] glass-strong px-6 py-3 rounded-2xl text-sm font-semibold toast-above-nav max-w-[min(22rem,calc(100vw-2rem))] text-center">{toast}</motion.div>
         )}
       </AnimatePresence>
 
@@ -509,7 +516,7 @@ export default function Hub() {
               <>
                 <motion.p animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="text-4xl font-black text-glow-gold text-center my-4">+{bribeOffer.points} Puntos</motion.p>
                 <p className="text-sm text-reto-red text-center mb-4">Penalización: {bribeOffer.penalty}</p>
-                <button className="w-full py-4 rounded-2xl font-bold" style={{ background: 'linear-gradient(135deg,#ffbe0b,#ff006e)' }}
+                <button className="w-full py-4 rounded-2xl font-bold btn-primary btn-primary-gold"
                   onClick={async () => { await action('bribe', api.acceptBribe); setShowBribe(false); }}>Aceptar soborno</button>
               </>
             )}
@@ -532,10 +539,11 @@ export default function Hub() {
 }
 
 function Modal({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
+  useModalBackClose(true, onClose);
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="glass-strong w-full max-w-md rounded-3xl p-6 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <motion.div initial={overlayFade.initial} animate={overlayFade.animate} exit={overlayFade.exit} transition={overlayTransition}
+      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 modal-overlay" onClick={onClose}>
+      <motion.div initial={slideSheet.initial} animate={slideSheet.animate} exit={slideSheet.exit} transition={slideSheetTransition} className="glass-strong glass-aurora-top w-full max-w-md rounded-3xl p-6 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-bold mb-4">{title}</h3>
         {children}
       </motion.div>

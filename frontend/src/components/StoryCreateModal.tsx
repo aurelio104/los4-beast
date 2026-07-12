@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Camera, Loader2, X } from 'lucide-react';
 import { compressImageFile } from '../lib/image';
 import { api } from '../lib/api';
+import { useModalBackClose } from '../hooks/useModalBackClose';
 import { StoryUserGroup } from '../types';
 
 type StoryCreateModalProps = {
@@ -11,6 +12,7 @@ type StoryCreateModalProps = {
 };
 
 export function StoryCreateModal({ onClose, onPublished }: StoryCreateModalProps) {
+  useModalBackClose(true, onClose);
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
@@ -48,7 +50,7 @@ export function StoryCreateModal({ onClose, onPublished }: StoryCreateModalProps
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[85] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4"
+      className="fixed inset-0 z-[85] flex items-end sm:items-center justify-center modal-overlay p-0 sm:p-4"
       onClick={onClose}
     >
       <motion.div
