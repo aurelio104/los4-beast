@@ -6,9 +6,35 @@ export type NowPlaying = {
   title: string;
   submittedBy: string;
   audioUrl: string;
+  sourceType?: string;
+  youtubeVideoId?: string | null;
 } | null;
 
-/** Música comunitaria (optimizada en servidor) + fallback playa. */
+type RadioTrack = {
+  title: string;
+  audioUrl: string;
+  sourceType: string;
+  youtubeVideoId?: string | null;
+  submittedBy: string;
+};
+
+function youtubeEmbedSrc(videoId: string): string {
+  const params = new URLSearchParams({
+    autoplay: '1',
+    controls: '0',
+    disablekb: '1',
+    fs: '0',
+    iv_load_policy: '3',
+    loop: '1',
+    modestbranding: '1',
+    playsinline: '1',
+    playlist: videoId,
+    rel: '0'
+  });
+  return `https://www.youtube-nocookie.com/embed/${videoId}?${params}`;
+}
+
+/** Música comunitaria (MP3 en servidor o link YouTube) + fallback ambiente. */
 export function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -16,22 +42,50 @@ export function BackgroundMusic() {
   const [on, setOn] = useState(() => getPreferences().music);
   const [booted, setBooted] = useState(false);
   const [src, setSrc] = useState<string | null>(null);
+  const [youtubeVideoId, setYoutubeVideoId] = useState<string | null>(null);
   const [hasCommunityTrack, setHasCommunityTrack] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
+
+  const applyTrack = (track: RadioTrack | null) => {
+    if (!track) {
+      setSrc(null);
+      setYoutubeVideoId(null);
+      setHasCommunityTrack(false);
+      return;
+    }
+    if (track.sourceType === 'youtube' && track.youtubeVideoId) {
+      setSrc(null);
+      setYoutubeVideoId(track.youtubeVideoId);
+      setHasCommunityTrack(true);
+      return;
+    }
+    if (track.audioUrl) {
+      setYoutubeVideoId(null);
+      setSrc(track.audioUrl);
+      setHasCommunityTrack(true);
+      return;
+    }
+    setSrc(null);
+    setYoutubeVideoId(null);
+    setHasCommunityTrack(false);
+  };
 
   const loadRadio = async () => {
     try {
       const r = await api.radioCurrent();
-      if (r.success && r.track?.audioUrl) {
-        setSrc(r.track.audioUrl);
-        setHasCommunityTrack(true);
+      if (r.success && r.track) {
+        applyTrack({
+          title: r.track.title,
+          audioUrl: r.track.audioUrl,
+          sourceType: r.track.sourceType,
+          youtubeVideoId: r.track.youtubeVideoId,
+          submittedBy: r.track.submittedBy
+        });
       } else {
-        setSrc(null);
-        setHasCommunityTrack(false);
+        applyTrack(null);
       }
     } catch {
-      setSrc(null);
-      setHasCommunityTrack(false);
+      applyTrack(null);
     }
   };
 
@@ -140,6 +194,12 @@ export function BackgroundMusic() {
       return;
     }
 
+    if (youtubeVideoId) {
+      audioRef.current?.pause();
+      stopAmbient();
+      return;
+    }
+
     const audio = audioRef.current;
     if (hasCommunityTrack && audio && audioReady) {
       stopAmbient();
@@ -151,9 +211,20 @@ export function BackgroundMusic() {
       audio?.pause();
       startAmbient().catch(() => {});
     }
-  }, [on, booted, hasCommunityTrack, audioReady, src]);
+  }, [on, booted, hasCommunityTrack, audioReady, src, youtubeVideoId]);
 
-  return null;
+  const playYoutube = on && booted && !!youtubeVideoId;
+
+  return playYoutube ? (
+    <iframe
+      key={youtubeVideoId}
+      title="Radio Reto"
+      src={youtubeEmbedSrc(youtubeVideoId!)}
+      allow="autoplay; encrypted-media"
+      className="pointer-events-none fixed opacity-0"
+      style={{ width: 1, height: 1, border: 0, left: -9999, top: -9999 }}
+    />
+  ) : null;
 }
 
 export function useNowPlaying(): NowPlaying {
@@ -165,7 +236,9 @@ export function useNowPlaying(): NowPlaying {
           setNowPlaying({
             title: r.track.title,
             submittedBy: r.track.submittedBy,
-            audioUrl: r.track.audioUrl
+            audioUrl: r.track.audioUrl,
+            sourceType: r.track.sourceType,
+            youtubeVideoId: r.track.youtubeVideoId
           });
         } else setNowPlaying(null);
       });

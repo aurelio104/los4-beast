@@ -4,7 +4,7 @@ import path from 'path';
 import { prisma } from './prisma.js';
 import { awardPoints, playedMiniGameToday } from './points.js';
 import { optimizeAudioToMp3 } from './audio-optimize.js';
-import { downloadYoutubeAudio, isValidYoutubeUrl } from './youtube-audio.js';
+import { extractYoutubeVideoId, isValidYoutubeUrl } from './youtube-audio.js';
 import {
   RADIO_POINTS,
   deleteRadioFile,
@@ -21,6 +21,7 @@ export type RadioTrackPublic = {
   audioUrl: string;
   durationSec: number | null;
   sourceType: string;
+  youtubeVideoId: string | null;
   submittedBy: string;
   submittedAt: string;
 };
@@ -38,6 +39,7 @@ export async function getCurrentRadioTrack(): Promise<RadioTrackPublic | null> {
     audioUrl: track.audioUrl,
     durationSec: track.durationSec,
     sourceType: track.sourceType,
+    youtubeVideoId: track.sourceType === 'youtube' ? track.sourceRef : null,
     submittedBy: track.user.nickname || track.user.displayName,
     submittedAt: track.createdAt.toISOString()
   };
@@ -46,7 +48,7 @@ export async function getCurrentRadioTrack(): Promise<RadioTrackPublic | null> {
 async function deactivateAllTracks(exceptId?: string) {
   const active = await prisma.communityRadioTrack.findMany({
     where: { isActive: true, ...(exceptId ? { id: { not: exceptId } } : {}) },
-    select: { id: true, audioFile: true }
+    select: { id: true, audioFile: true, sourceType: true }
   });
   if (active.length) {
     await prisma.communityRadioTrack.updateMany({
@@ -54,7 +56,7 @@ async function deactivateAllTracks(exceptId?: string) {
       data: { isActive: false }
     });
     for (const t of active) {
-      if (t.id !== exceptId) deleteRadioFile(t.audioFile);
+      if (t.id !== exceptId && t.sourceType !== 'youtube') deleteRadioFile(t.audioFile);
     }
   }
 }
@@ -142,26 +144,39 @@ export async function submitRadioFromYoutube(userId: string, title: string, yout
   if (cleanTitle.length < 2) throw new Error('Indica el nombre de la canción');
   if (!isValidYoutubeUrl(youtubeUrl)) throw new Error('Link de YouTube inválido');
 
+  const videoId = extractYoutubeVideoId(youtubeUrl);
+  if (!videoId) throw new Error('Link de YouTube inválido');
+
   if (await playedMiniGameToday(userId, 'RADIO_DJ')) {
     throw new Error('Ya pusiste música hoy — mañana puedes de nuevo (+75 Puntos)');
   }
 
-  const base = path.join(os.tmpdir(), `reto-yt-${userId}-${Date.now()}`);
-  let downloaded = '';
-  const tmpOut = `${base}-opt.mp3`;
-  try {
-    downloaded = await downloadYoutubeAudio(youtubeUrl.trim(), base);
-    const meta = await optimizeAudioToMp3(downloaded, tmpOut);
-    return finalizeTrack(userId, cleanTitle, 'youtube', youtubeUrl.trim(), tmpOut, meta);
-  } finally {
-    for (const p of [downloaded, tmpOut]) {
-      if (p && fs.existsSync(p)) {
-        try {
-          fs.unlinkSync(p);
-        } catch {
-          /* ignore */
-        }
-      }
+  const track = await prisma.communityRadioTrack.create({
+    data: {
+      userId,
+      title: cleanTitle,
+      sourceType: 'youtube',
+      sourceRef: videoId,
+      audioFile: `yt-${videoId}`,
+      audioUrl: '',
+      durationSec: null,
+      fileSizeKb: null,
+      isActive: true
     }
-  }
+  });
+
+  await deactivateAllTracks(track.id);
+
+  const { gained, points } = await awardPoints(userId, 'RADIO_DJ', RADIO_POINTS, {
+    title: cleanTitle,
+    sourceType: 'youtube',
+    trackId: track.id,
+    youtubeVideoId: videoId
+  });
+
+  return {
+    track: await getCurrentRadioTrack(),
+    gained,
+    points
+  };
 }

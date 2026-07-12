@@ -15,7 +15,7 @@ type Props = {
 const ACCEPT = 'audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/ogg,audio/webm,audio/aac,.mp3,.m4a,.wav,.ogg,.webm,.aac';
 
 export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentTitle }: Props) {
-  const [mode, setMode] = useState<'file' | 'youtube'>('file');
+  const [mode, setMode] = useState<'file' | 'youtube'>('youtube');
   const [title, setTitle] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -27,7 +27,7 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
     setYoutubeUrl('');
     setFile(null);
     setError('');
-    setMode('file');
+    setMode('youtube');
   };
 
   const close = () => {
@@ -93,7 +93,8 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
                     <Radio size={20} className="text-reto-cyan" /> DJ del Reto
                   </p>
                   <p className="text-xs text-white/50 mt-1 leading-relaxed">
-                    Sube audio o un link de YouTube. Se optimiza a MP3 ligero — todos la escuchan al abrir la app. <strong className="text-reto-gold">+75 Puntos</strong> · 1 vez al día.
+                    Pega un link de YouTube o sube un archivo. Todos lo escuchan con la música activada en Perfil.{' '}
+                    <strong className="text-reto-gold">+75 Puntos</strong> · 1 vez al día.
                   </p>
                 </div>
                 <button type="button" onClick={close} className="glass-btn p-2 rounded-xl" aria-label="Cerrar">
@@ -157,8 +158,7 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
                       autoComplete="off"
                     />
                     <p className="text-[10px] text-white/35 mt-1 leading-relaxed">
-                      En el servidor a veces YouTube bloquea el link. Si falla, descarga el audio en tu móvil y usa{' '}
-                      <strong className="text-white/55">Archivo</strong>.
+                      Solo guardamos el link — cada uno reproduce el audio desde YouTube (sin descargar en el servidor).
                     </p>
                   </div>
                 )}
@@ -174,7 +174,7 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
                 style={{ background: 'linear-gradient(135deg, #8338ec, #ff006e)' }}
               >
                 {loading ? <Loader2 className="animate-spin" size={20} /> : <Radio size={20} />}
-                {loading ? 'Optimizando…' : 'Poner para todos'}
+                {loading ? (mode === 'youtube' ? 'Guardando…' : 'Optimizando…') : 'Poner para todos'}
               </button>
             </GlassCard>
           </motion.div>

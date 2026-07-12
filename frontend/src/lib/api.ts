@@ -237,6 +237,7 @@ export const api = {
         audioUrl: string;
         durationSec: number | null;
         sourceType: string;
+        youtubeVideoId?: string | null;
         submittedBy: string;
         submittedAt: string;
       } | null;

@@ -17,7 +17,14 @@ const YOUTUBE_STRATEGIES = [
 ] as const;
 
 export function isValidYoutubeUrl(raw: string): boolean {
-  return /(?:youtube\.com\/(?:watch\?.*v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/i.test(raw.trim());
+  return extractYoutubeVideoId(raw) !== null;
+}
+
+export function extractYoutubeVideoId(raw: string): string | null {
+  const m = raw
+    .trim()
+    .match(/(?:youtube\.com\/(?:watch\?.*v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/i);
+  return m?.[1] ?? null;
 }
 
 export async function isYtDlpAvailable(): Promise<boolean> {
