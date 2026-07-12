@@ -634,20 +634,29 @@ input:focus, select:focus, textarea:focus {
 }
 
 .story-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
   height: 100dvh;
   height: 100svh;
   overflow: hidden;
   touch-action: pan-y;
+  background: #000;
+}
+
+body.story-viewer-open {
+  overflow: hidden;
 }
 
 .story-viewer__stage {
   touch-action: manipulation;
+  background: #000;
 }
 
 .story-viewer__img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   display: block;
   user-select: none;
@@ -671,6 +680,72 @@ input:focus, select:focus, textarea:focus {
 .story-viewer__caption {
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
   text-align: left;
+}
+
+.story-viewer__caption--float {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.story-viewer__dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10001;
+  pointer-events: auto;
+  padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.45) 75%, transparent 100%);
+}
+
+.story-viewer__dock-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding-bottom: 0.1rem;
+}
+
+.story-viewer__reactions-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.story-viewer__showcase-emoji {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.2rem 0.35rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  opacity: 0.55;
+}
+
+.story-viewer__showcase-emoji--has {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.story-viewer__showcase-count {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
 }
 
 .story-viewer__progress {
@@ -748,7 +823,7 @@ input:focus, select:focus, textarea:focus {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.35rem 0.65rem;
+  padding: 0.4rem 0.7rem;
   border-radius: 9999px;
   background: rgba(0, 0, 0, 0.35);
   border: none;
@@ -757,80 +832,76 @@ input:focus, select:focus, textarea:focus {
   font-weight: 600;
   cursor: pointer;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-}
-
-.story-viewer__composer {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.story-viewer__quick-reactions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.85rem;
-}
-
-.story-viewer__quick-emoji {
-  font-size: 1.75rem;
-  line-height: 1;
-  padding: 0.15rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.65));
-  transition: transform 0.15s ease;
-  user-select: none;
-}
-
-.story-viewer__quick-emoji:active {
-  transform: scale(1.35);
-}
-
-.story-viewer__quick-emoji--active {
-  transform: scale(1.15);
-}
-
-.story-viewer__send-row {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
+  flex-shrink: 0;
 }
 
 .story-viewer__send-input {
   flex: 1;
   min-width: 0;
-  height: 2.75rem;
-  padding: 0 1rem;
+  height: 2.5rem;
+  padding: 0 0.85rem;
   display: flex;
   align-items: center;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.8125rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.story-viewer__send-heart {
+.story-viewer__sent-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(3.75rem + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 10003;
+  margin: 0;
+  padding: 0.55rem 1rem;
+  border-radius: 9999px;
+  background: rgba(20, 20, 28, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.story-viewer__quick-emoji {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  flex-shrink: 0;
-  color: #fff;
-  background: transparent;
-  border: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.14);
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 9999px;
   cursor: pointer;
-  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.55));
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
 }
 
-.story-viewer__send-heart--active {
-  color: #ff3040;
+.story-viewer__quick-emoji:active {
+  transform: scale(1.15);
+}
+
+.story-viewer__quick-emoji--active {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: scale(1.08);
+}
+
+.story-viewer__emoji-glyph {
+  font-size: 1.55rem;
+  line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  user-select: none;
+  pointer-events: none;
 }
 
 .story-viewer__float-emoji {
@@ -847,7 +918,7 @@ input:focus, select:focus, textarea:focus {
 .story-viewer__tap {
   position: absolute;
   top: 0;
-  bottom: 0;
+  bottom: calc(3.75rem + env(safe-area-inset-bottom));
   width: 35%;
   background: transparent;
   border: none;
@@ -924,8 +995,9 @@ input:focus, select:focus, textarea:focus {
 }
 
 .story-viewer-reaction {
-  font-size: 1.125rem;
+  font-size: 1.375rem;
   line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 }
 
 /* legacy story strip helpers */

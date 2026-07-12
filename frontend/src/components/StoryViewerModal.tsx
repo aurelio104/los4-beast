@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X, MoreHorizontal, Eye, Heart } from 'lucide-react';
+import { X, MoreHorizontal, Eye } from 'lucide-react';
 import { StoryUserGroup, StoryViewer } from '../types';
 import { Avatar } from './Avatar';
 import { api } from '../lib/api';
@@ -58,6 +59,8 @@ export function StoryViewerModal({
   const [reacting, setReacting] = useState(false);
   const [held, setHeld] = useState(false);
   const [floatEmoji, setFloatEmoji] = useState<string | null>(null);
+  const [sentToast, setSentToast] = useState<string | null>(null);
+  const sentToastTimer = useRef<number | null>(null);
   const timerRef = useRef<number | null>(null);
   const holdRef = useRef<number | null>(null);
   const viewedRef = useRef<Set<string>>(new Set());
@@ -182,6 +185,14 @@ export function StoryViewerModal({
     });
   }, [story?.id, group?.isOwn]);
 
+  useEffect(() => {
+    document.body.classList.add('story-viewer-open');
+    return () => {
+      document.body.classList.remove('story-viewer-open');
+      if (sentToastTimer.current) window.clearTimeout(sentToastTimer.current);
+    };
+  }, []);
+
   if (!group || !story) return null;
 
   const handleDelete = async () => {
@@ -214,6 +225,13 @@ export function StoryViewerModal({
     window.setTimeout(() => setFloatEmoji(null), 900);
   };
 
+  const showSentToast = (glyph: string) => {
+    const msg = `${glyph} Enviado a ${firstName}`;
+    setSentToast(msg);
+    if (sentToastTimer.current) window.clearTimeout(sentToastTimer.current);
+    sentToastTimer.current = window.setTimeout(() => setSentToast(null), 2200);
+  };
+
   const handleReact = async (emoji: string) => {
     if (group.isOwn || reacting) return;
     const glyph = STORY_REACTIONS.find((r) => r.id === emoji)?.glyph;
@@ -222,7 +240,10 @@ export function StoryViewerModal({
     const res = await api.reactStory(story.id, emoji);
     if (res.success && res.reaction) {
       setMyReaction(res.reaction);
-      if (glyph) showFloatReaction(glyph);
+      if (glyph) {
+        showFloatReaction(glyph);
+        showSentToast(glyph);
+      }
       if (!viewedRef.current.has(story.id)) {
         viewedRef.current.add(story.id);
         onGroupsChange(
@@ -264,12 +285,12 @@ export function StoryViewerModal({
 
   const onPointerUp = () => clearHold();
 
-  return (
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="story-viewer fixed inset-0 z-[85] bg-black"
+      className="story-viewer"
       role="dialog"
       aria-modal="true"
     >
@@ -401,54 +422,81 @@ export function StoryViewerModal({
         </div>
 
         <div className="flex-1 min-h-0" aria-hidden />
+      </div>
 
-        {!showViewers && (
-          <div className="story-viewer__bottom pointer-events-auto shrink-0">
-            {story.caption && (
-              <p className="story-viewer__caption px-3 pb-3 text-[15px] text-white leading-snug">{story.caption}</p>
-            )}
+      {!showViewers && story.caption && (
+        <p className="story-viewer__caption story-viewer__caption--float px-3 text-[15px] text-white leading-snug pointer-events-none">
+          {story.caption}
+        </p>
+      )}
 
+      {!showViewers && (
+        <div className="story-viewer__dock px-3">
+          <div className="story-viewer__dock-bar">
             {group.isOwn ? (
-              <button type="button" onClick={openViewers} className="story-viewer__views-pill mx-3 mb-3">
+              <button type="button" onClick={openViewers} className="story-viewer__views-pill">
                 <Eye size={15} strokeWidth={2} />
                 <span>{viewersLoading && !viewers.length ? '…' : viewers.length}</span>
               </button>
             ) : (
-              <div className="story-viewer__composer px-3 pb-3">
-                <div className="story-viewer__quick-reactions">
-                  {STORY_REACTIONS.map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => void handleReact(r.id)}
-                      disabled={reacting}
-                      aria-label={r.label}
-                      aria-pressed={myReaction === r.id}
-                      className={`story-viewer__quick-emoji ${myReaction === r.id ? 'story-viewer__quick-emoji--active' : ''}`}
-                    >
-                      {r.glyph}
-                    </button>
-                  ))}
-                </div>
-                <div className="story-viewer__send-row">
-                  <div className="story-viewer__send-input" aria-hidden>
-                    Enviar mensaje a {firstName}…
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void handleReact('heart')}
-                    disabled={reacting}
-                    className={`story-viewer__send-heart ${myReaction === 'heart' ? 'story-viewer__send-heart--active' : ''}`}
-                    aria-label="Corazón"
-                  >
-                    <Heart size={24} strokeWidth={myReaction === 'heart' ? 2.5 : 1.75} fill={myReaction === 'heart' ? 'currentColor' : 'none'} />
-                  </button>
-                </div>
+              <div className="story-viewer__send-input" aria-hidden>
+                Enviar mensaje a {firstName}…
               </div>
             )}
+
+            <div
+              className="story-viewer__reactions-row"
+              role={group.isOwn ? undefined : 'group'}
+              aria-label={group.isOwn ? 'Reacciones en tu historia' : 'Reacciones'}
+            >
+              {STORY_REACTIONS.map((r) => {
+                const count = group.isOwn ? viewers.filter((v) => v.reaction === r.id).length : 0;
+                if (group.isOwn) {
+                  return (
+                    <div
+                      key={r.id}
+                      className={`story-viewer__showcase-emoji ${count > 0 ? 'story-viewer__showcase-emoji--has' : ''}`}
+                    >
+                      <span className="story-viewer__emoji-glyph">{r.glyph}</span>
+                      {count > 0 && <span className="story-viewer__showcase-count">{count}</span>}
+                    </div>
+                  );
+                }
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => void handleReact(r.id)}
+                    disabled={reacting}
+                    aria-label={r.label}
+                    aria-pressed={myReaction === r.id}
+                    className={`story-viewer__quick-emoji ${myReaction === r.id ? 'story-viewer__quick-emoji--active' : ''}`}
+                  >
+                    <span className="story-viewer__emoji-glyph" aria-hidden>
+                      {r.glyph}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
+        </div>
+      )}
+
+      <AnimatePresence>
+        {sentToast && (
+          <motion.p
+            initial={{ opacity: 0, y: 12, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+            transition={{ duration: 0.2 }}
+            className="story-viewer__sent-toast"
+            role="status"
+          >
+            {sentToast}
+          </motion.p>
         )}
-      </div>
+      </AnimatePresence>
 
       <AnimatePresence>
         {group.isOwn && showViewers && (
@@ -491,11 +539,11 @@ export function StoryViewerModal({
                       <li key={v.userId} className="story-viewers-sheet__row">
                         <Avatar url={v.avatarUrl} emoji={v.avatarEmoji} name={v.displayName} size="sm" expandable={false} className="!w-9 !h-9" />
                         <span className="story-viewers-sheet__name">{v.displayName}</span>
-                        {v.reaction && (
+                        {v.reaction ? (
                           <span className="story-viewer-reaction shrink-0" title="Reacción">
                             {storyReactionGlyph(v.reaction)}
                           </span>
-                        )}
+                        ) : null}
                         <span className="story-viewers-sheet__time">{viewerTimeAgo(v.viewedAt)}</span>
                       </li>
                     ))}
@@ -506,6 +554,7 @@ export function StoryViewerModal({
           </>
         )}
       </AnimatePresence>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }

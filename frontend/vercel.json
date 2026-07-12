@@ -9,7 +9,7 @@
       "destination": "https://los4-game-aurelio104-6f5cac3b.koyeb.app/api/$1"
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/((?!api/|assets/|manifest\\.webmanifest|sw\\.js|workbox-|push-handler\\.js|favicon\\.png|pwa-|apple-touch-icon|wallpapers/|audio/).*)",
       "destination": "/index.html"
     }
   ],

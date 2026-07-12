@@ -207,11 +207,31 @@ export async function reactToStory(storyId: string, userId: string, emoji: strin
 
   await markStoryViewed(storyId, userId);
 
+  const [existing, reactor, owner] = await Promise.all([
+    prisma.storyReaction.findUnique({ where: { storyId_userId: { storyId, userId } } }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { displayName: true, nickname: true, username: true }
+    }),
+    prisma.user.findUnique({
+      where: { id: story.userId },
+      select: { displayName: true, nickname: true, username: true }
+    })
+  ]);
+
   await prisma.storyReaction.upsert({
     where: { storyId_userId: { storyId, userId } },
     create: { storyId, userId, emoji },
     update: { emoji }
   });
+
+  if ((!existing || existing.emoji !== emoji) && reactor && owner) {
+    const reactorName = resolvePublicName(reactor);
+    const ownerName = resolvePublicName(owner);
+    void import('./push.js').then(({ notifyStoryReaction }) =>
+      notifyStoryReaction(userId, reactorName, ownerName, emoji).catch(() => {})
+    );
+  }
 
   return emoji;
 }

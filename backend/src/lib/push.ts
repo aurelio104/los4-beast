@@ -81,6 +81,42 @@ export async function notifyNewStory(authorId: string, authorName: string) {
   return { sent, total: subs.length };
 }
 
+const STORY_REACTION_GLYPHS: Record<string, string> = {
+  heart: '❤️',
+  fire: '🔥',
+  devil: '😈'
+};
+
+/** Avisa a todos (menos quien reaccionó) que hubo reacción en una historia — solo push. */
+export async function notifyStoryReaction(
+  reactorId: string,
+  reactorName: string,
+  storyOwnerName: string,
+  emoji: string
+) {
+  if (!isPushConfigured()) return { sent: 0, total: 0 };
+
+  const glyph = STORY_REACTION_GLYPHS[emoji] || '✨';
+  const payload = {
+    title: `${glyph} ${reactorName}`,
+    body: `Reaccionó a la historia de ${storyOwnerName}`,
+    url: '/',
+    tag: 'story-reaction'
+  };
+
+  const subs = await prisma.pushSubscription.findMany({
+    where: { userId: { not: reactorId }, user: { isActive: true } }
+  });
+
+  let sent = 0;
+  for (const sub of subs) {
+    const r = await sendPushToUser(sub.userId, payload, { skipWhatsApp: true });
+    sent += r.sent;
+  }
+
+  return { sent, total: subs.length };
+}
+
 export async function broadcastPush(payload: { title: string; body: string; url?: string; tag?: string }) {
   const { buildChangeAlertMessage, sendWhatsAppMessage } = await import('./whatsapp.js');
   const msg = buildChangeAlertMessage(payload.title, payload.body, payload.url);

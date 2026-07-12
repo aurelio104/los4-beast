@@ -87,8 +87,8 @@ export default defineConfig({
           { src: 'apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'any' }
         ],
         shortcuts: [
-          { name: 'Arena', short_name: 'Arena', url: '/arena', icons: [{ src: 'pwa-192.png', sizes: '192x192' }] },
-          { name: 'Chat', short_name: 'Chat', url: '/chat', icons: [{ src: 'pwa-192.png', sizes: '192x192' }] }
+          { name: 'Arena', short_name: 'Arena', url: '/arena', icons: [{ src: 'pwa-192.png', sizes: '192x192', type: 'image/png' }] },
+          { name: 'Chat', short_name: 'Chat', url: '/chat', icons: [{ src: 'pwa-192.png', sizes: '192x192', type: 'image/png' }] }
         ]
       }
     })
