@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Camera, Loader2, X } from 'lucide-react';
 import { compressImageFile } from '../lib/image';
@@ -13,6 +14,10 @@ type StoryCreateModalProps = {
 
 export function StoryCreateModal({ onClose, onPublished }: StoryCreateModalProps) {
   useModalBackClose(true, onClose);
+  useEffect(() => {
+    document.body.classList.add('story-create-open');
+    return () => document.body.classList.remove('story-create-open');
+  }, []);
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
@@ -45,12 +50,15 @@ export function StoryCreateModal({ onClose, onPublished }: StoryCreateModalProps
     }
   };
 
-  return (
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[85] flex items-end sm:items-center justify-center modal-overlay p-0 sm:p-4"
+      className="story-create-modal flex items-end sm:items-center justify-center modal-overlay p-0 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="story-create-title"
       onClick={onClose}
     >
       <motion.div
@@ -61,7 +69,7 @@ export function StoryCreateModal({ onClose, onPublished }: StoryCreateModalProps
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-black">Nueva historia</h3>
+          <h3 id="story-create-title" className="text-lg font-black">Nueva historia</h3>
           <button type="button" onClick={onClose} className="p-2 text-white/50" aria-label="Cerrar">
             <X size={20} />
           </button>
@@ -119,6 +127,7 @@ export function StoryCreateModal({ onClose, onPublished }: StoryCreateModalProps
           Publicar historia
         </button>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }

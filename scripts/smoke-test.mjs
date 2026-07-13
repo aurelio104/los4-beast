@@ -320,6 +320,7 @@ async function testMobileReadiness() {
     ['Hub layout transparent', readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').includes('hub-layout') && readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').includes('background: transparent')],
     ['Video full auto-play', readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'BeachVideoBackground.tsx'), 'utf8').includes("variant === 'full'")],
     ['Story cleanup body class', readFileSync(join(process.cwd(), 'frontend', 'src', 'pages', 'Hub.tsx'), 'utf8').includes('remove(\'story-viewer-open\')')],
+    ['Story create portal', readFileSync(join(process.cwd(), 'frontend', 'src', 'components', 'StoryCreateModal.tsx'), 'utf8').includes('createPortal') && readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').includes('.story-create-modal')],
     ['BottomNav component', existsSync(join(process.cwd(), 'frontend', 'src', 'components', 'BottomNav.tsx'))],
     ['MainTabLayout', existsSync(join(process.cwd(), 'frontend', 'src', 'components', 'MainTabLayout.tsx'))],
     ['Hub layout no 100svh height', !readFileSync(join(process.cwd(), 'frontend', 'src', 'index.css'), 'utf8').match(/\.hub-layout\s*\{[^}]*height:\s*100svh/s)],

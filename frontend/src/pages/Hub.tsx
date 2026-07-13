@@ -129,7 +129,11 @@ export default function Hub() {
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    if (!storyViewerId) document.body.classList.remove('story-viewer-open');
+    if (storyViewerId) {
+      document.body.classList.add('story-viewer-open');
+      return () => document.body.classList.remove('story-viewer-open');
+    }
+    document.body.classList.remove('story-viewer-open');
   }, [storyViewerId]);
 
   useLivePoll(load, 30000);
