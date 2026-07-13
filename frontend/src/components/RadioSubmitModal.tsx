@@ -4,6 +4,7 @@ import { Music2, Upload, Link2, Loader2, X, Radio } from 'lucide-react';
 import { GlassCard } from './GlassCard';
 import { api } from '../lib/api';
 import { useModalBackClose } from '../hooks/useModalBackClose';
+import { ModalPortal } from './ModalPortal';
 
 type Props = {
   open: boolean;
@@ -74,11 +75,14 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
   return (
     <AnimatePresence>
       {open && (
+        <ModalPortal>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 modal-overlay"
+          className="app-modal-overlay flex items-end sm:items-center justify-center p-4 modal-overlay"
+          role="dialog"
+          aria-modal="true"
           onClick={close}
         >
           <motion.div
@@ -181,6 +185,7 @@ export function RadioSubmitModal({ open, onClose, onSuccess, currentDj, currentT
             </GlassCard>
           </motion.div>
         </motion.div>
+        </ModalPortal>
       )}
     </AnimatePresence>
   );

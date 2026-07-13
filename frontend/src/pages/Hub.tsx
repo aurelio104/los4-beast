@@ -34,6 +34,7 @@ import { staggerContainer, staggerItem, slideSheet, slideSheetTransition, overla
 import { getStoredUser } from '../lib/user';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useModalBackClose } from '../hooks/useModalBackClose';
+import { ModalPortal } from '../components/ModalPortal';
 
 export default function Hub() {
   const navigate = useNavigate();
@@ -569,12 +570,14 @@ export default function Hub() {
 function Modal({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
   useModalBackClose(true, onClose);
   return (
-    <motion.div initial={overlayFade.initial} animate={overlayFade.animate} exit={overlayFade.exit} transition={overlayTransition}
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 modal-overlay" onClick={onClose}>
-      <motion.div initial={slideSheet.initial} animate={slideSheet.animate} exit={slideSheet.exit} transition={slideSheetTransition} className="glass-strong glass-aurora-top w-full max-w-md rounded-3xl p-6 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-bold mb-4">{title}</h3>
-        {children}
+    <ModalPortal>
+      <motion.div initial={overlayFade.initial} animate={overlayFade.animate} exit={overlayFade.exit} transition={overlayTransition}
+        className="app-modal-overlay flex items-end sm:items-center justify-center p-4 modal-overlay" role="dialog" aria-modal="true" onClick={onClose}>
+        <motion.div initial={slideSheet.initial} animate={slideSheet.animate} exit={slideSheet.exit} transition={slideSheetTransition} className="glass-strong glass-aurora-top w-full max-w-md rounded-3xl p-6 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <h3 className="text-lg font-bold mb-4">{title}</h3>
+          {children}
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </ModalPortal>
   );
 }

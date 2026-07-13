@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Share, X, Smartphone } from 'lucide-react';
 import { RetoLogo } from './RetoLogo';
 import { useModalBackClose } from '../hooks/useModalBackClose';
+import { ModalPortal } from './ModalPortal';
 
 type PwaInstallPromptProps = {
   open: boolean;
@@ -17,12 +18,15 @@ export function PwaInstallPrompt({ open, canNativeInstall, needsIOSGuide, onInst
   return (
     <AnimatePresence>
       {open && (
+        <ModalPortal>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4"
+          className="app-modal-overlay flex items-end sm:items-center justify-center p-0 sm:p-4"
           style={{ paddingBottom: 'max(0px, env(safe-area-inset-bottom))' }}
+          role="dialog"
+          aria-modal="true"
         >
           <motion.button
             type="button"
@@ -95,6 +99,7 @@ export function PwaInstallPrompt({ open, canNativeInstall, needsIOSGuide, onInst
             </div>
           </motion.div>
         </motion.div>
+        </ModalPortal>
       )}
     </AnimatePresence>
   );

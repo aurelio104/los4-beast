@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Camera, Loader2, X } from 'lucide-react';
 import { compressImageFile } from '../lib/image';
 import { api } from '../lib/api';
 import { useModalBackClose } from '../hooks/useModalBackClose';
+import { useAppModalLayer } from './ModalPortal';
 import { StoryUserGroup } from '../types';
 
 type StoryCreateModalProps = {
@@ -14,10 +15,7 @@ type StoryCreateModalProps = {
 
 export function StoryCreateModal({ onClose, onPublished }: StoryCreateModalProps) {
   useModalBackClose(true, onClose);
-  useEffect(() => {
-    document.body.classList.add('story-create-open');
-    return () => document.body.classList.remove('story-create-open');
-  }, []);
+  useAppModalLayer();
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
@@ -55,7 +53,7 @@ export function StoryCreateModal({ onClose, onPublished }: StoryCreateModalProps
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="story-create-modal flex items-end sm:items-center justify-center modal-overlay p-0 sm:p-4"
+      className="app-modal-overlay flex items-end sm:items-center justify-center modal-overlay p-0 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="story-create-title"

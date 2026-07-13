@@ -1276,11 +1276,14 @@ body.story-viewer-open {
 body.story-viewer-open .hub-layout,
 body.story-viewer-open .bottom-nav-bar,
 body.story-create-open .hub-layout,
-body.story-create-open .bottom-nav-bar {
+body.story-create-open .bottom-nav-bar,
+body.app-modal-open .hub-layout,
+body.app-modal-open .bottom-nav-bar {
   visibility: hidden !important;
   pointer-events: none !important;
 }
 
+.app-modal-overlay,
 .story-create-modal {
   position: fixed;
   inset: 0;
@@ -1293,8 +1296,11 @@ body.story-create-open .bottom-nav-bar {
   overflow: hidden;
   touch-action: manipulation;
   isolation: isolate;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
+body.app-modal-open,
 body.story-create-open {
   overflow: hidden;
 }

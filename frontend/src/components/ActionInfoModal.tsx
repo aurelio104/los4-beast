@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { ActionInfo } from '../lib/actionInfo';
 import { useModalBackClose } from '../hooks/useModalBackClose';
 import { overlayFade, overlayTransition, slideSheet, slideSheetTransition } from '../lib/motion';
+import { ModalPortal } from './ModalPortal';
 
 interface ActionInfoModalProps {
   info: ActionInfo;
@@ -24,14 +25,17 @@ export function ActionInfoModal({
   useModalBackClose(true, onClose);
 
   return (
-    <motion.div
-      initial={overlayFade.initial}
-      animate={overlayFade.animate}
-      exit={overlayFade.exit}
-      transition={overlayTransition}
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] modal-overlay"
-      onClick={onClose}
-    >
+    <ModalPortal>
+      <motion.div
+        initial={overlayFade.initial}
+        animate={overlayFade.animate}
+        exit={overlayFade.exit}
+        transition={overlayTransition}
+        className="app-modal-overlay flex items-end sm:items-center justify-center p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] modal-overlay"
+        role="dialog"
+        aria-modal="true"
+        onClick={onClose}
+      >
       <motion.div
         initial={slideSheet.initial}
         animate={slideSheet.animate}
@@ -97,5 +101,6 @@ export function ActionInfoModal({
         </div>
       </motion.div>
     </motion.div>
+    </ModalPortal>
   );
 }
