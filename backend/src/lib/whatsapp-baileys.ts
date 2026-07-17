@@ -131,11 +131,12 @@ const AUTH_FOLDER = process.env.WHATSAPP_AUTH_FOLDER || './whatsapp-auth';
 const AUTH_ROOT = path.resolve(AUTH_FOLDER);
 
 /**
- * Baileys 7.0.0-rc.9 trae `[2,3000,1027934701]`; WhatsApp ya no lo acepta → 405 en el WebSocket.
+ * Baileys 7.0.0-rc.9 traía `[2,3000,1027934701]`; WhatsApp rechaza versiones viejas → 405.
+ * Fallback si falla fetchLatestBaileysVersion. Override fijo: WHATSAPP_WA_VERSION=2,3000,...
+ * Desactivar fetch: WHATSAPP_USE_LATEST_WA_VERSION=0
  * @see https://github.com/WhiskeySockets/Baileys/issues/2376
- * Override: WHATSAPP_WA_VERSION=2,3000,1034074495
  */
-const DEFAULT_WA_PROTOCOL_VERSION: [number, number, number] = [2, 3000, 1034074495];
+const DEFAULT_WA_PROTOCOL_VERSION: [number, number, number] = [2, 3000, 1035194821];
 
 function parseWaVersionFromEnv(): [number, number, number] | undefined {
   const raw = process.env.WHATSAPP_WA_VERSION?.trim();
@@ -146,6 +147,31 @@ function parseWaVersionFromEnv(): [number, number, number] | undefined {
   }
   console.warn('⚠️ WHATSAPP_WA_VERSION inválido; se usa la versión por defecto.');
   return undefined;
+}
+
+async function resolveWaProtocolVersion(): Promise<[number, number, number]> {
+  const fromEnv = parseWaVersionFromEnv();
+  if (fromEnv) {
+    console.log(`📱 WhatsApp: versión fija WHATSAPP_WA_VERSION=${fromEnv.join('.')}`);
+    return fromEnv;
+  }
+
+  const useLatest = process.env.WHATSAPP_USE_LATEST_WA_VERSION !== '0';
+  if (useLatest) {
+    try {
+      const { version, isLatest } = await fetchLatestBaileysVersion();
+      const tuple = version as [number, number, number];
+      console.log(
+        `📱 WhatsApp: versión protocolo ${tuple.join('.')} (fetchLatest${isLatest ? ', isLatest' : ''})`
+      );
+      return tuple;
+    } catch (e) {
+      console.warn('⚠️ fetchLatestBaileysVersion falló; se usa fallback local:', e);
+    }
+  }
+
+  console.log(`📱 WhatsApp: versión protocolo ${DEFAULT_WA_PROTOCOL_VERSION.join('.')} (fallback)`);
+  return DEFAULT_WA_PROTOCOL_VERSION;
 }
 
 if (!fs.existsSync(AUTH_ROOT)) {
@@ -285,16 +311,10 @@ export async function initWhatsApp(opts?: { userInitiated?: boolean }): Promise<
     };
 
     /**
-     * Versión WA: por defecto triple actualizado (evita 405). Opcional: WHATSAPP_WA_VERSION=2,3000,...
-     * fetchLatestBaileysVersion: opt-in WHATSAPP_USE_LATEST_WA_VERSION=1 (puede dar 515 si el proto npm va rezagado).
+     * Versión WA: por defecto fetchLatestBaileysVersion (evita 405 por build obsoleto).
+     * Fija: WHATSAPP_WA_VERSION=2,3000,...  · sin fetch: WHATSAPP_USE_LATEST_WA_VERSION=0
      */
-    type WaVersionTuple = [number, number, number];
-    let waVersion: WaVersionTuple =
-      parseWaVersionFromEnv() ?? DEFAULT_WA_PROTOCOL_VERSION;
-    if (process.env.WHATSAPP_USE_LATEST_WA_VERSION === '1') {
-      const { version } = await fetchLatestBaileysVersion();
-      waVersion = version as WaVersionTuple;
-    }
+    const waVersion = await resolveWaProtocolVersion();
 
     sock = makeWASocket({
       version: waVersion,
@@ -429,7 +449,7 @@ export async function initWhatsApp(opts?: { userInitiated?: boolean }): Promise<
           scheduleWaAuto515Restart();
         } else if (isWaRejected) {
           console.warn(
-            '📱 WhatsApp: rechazo al conectar (403/405/503). Suele ser versión de protocolo o límites de WhatsApp. Redeploy con el backend actualizado; si persiste, prueba WHATSAPP_USE_LATEST_WA_VERSION=1 o WHATSAPP_WA_VERSION según docs del proyecto.'
+            '📱 WhatsApp: rechazo al conectar (403/405/503). Suele ser versión de protocolo o límites de WhatsApp. El backend ya intenta fetchLatestBaileysVersion; si persiste, define WHATSAPP_WA_VERSION o revisa el panel Admin → WhatsApp.'
           );
         } else if (isQRTimeout) {
           console.log('📱 WhatsApp: tiempo de espera del QR. Pulsa Conectar y escanea en menos de un minuto.');
