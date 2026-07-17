@@ -13,6 +13,7 @@ import { useLivePoll } from '../hooks/useLivePoll';
 import { useNotifications } from '../components/NotificationProvider';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import type { Player } from '../types';
+import { getStoredUser } from '../lib/user';
 
 interface ChatMsg {
   id: string;
@@ -22,13 +23,31 @@ interface ChatMsg {
   user: { id: string; name: string; emoji: string; avatarUrl?: string | null };
 }
 
+function playerFromChatUser(
+  user: ChatMsg['user'],
+  catalog: Player[]
+): Player {
+  const found = catalog.find((p) => p.id === user.id);
+  if (found) return found;
+  return {
+    id: user.id,
+    displayName: user.name,
+    gender: 'OTHER',
+    points: 0,
+    avatarEmoji: user.emoji,
+    avatarUrl: user.avatarUrl,
+    bio: null
+  };
+}
+
 export default function Chat() {
   const navigate = useNavigate();
   const { showAppToast } = useNotifications();
   const online = useOnlineStatus();
+  const me = getStoredUser();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [profilePlayerId, setProfilePlayerId] = useState<string | null>(null);
+  const [profilePlayer, setProfilePlayer] = useState<Player | null>(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -102,20 +121,20 @@ export default function Chat() {
     }
   };
 
-  const profilePlayer = profilePlayerId
-    ? players.find((p) => p.id === profilePlayerId) ?? null
-    : null;
+  const openProfile = (msgUser: ChatMsg['user']) => {
+    setProfilePlayer(playerFromChatUser(msgUser, players));
+    if (players.some((p) => p.id === msgUser.id)) return;
+    void api.players().then((res) => {
+      if (!res.success) return;
+      const list = (res.players || []) as Player[];
+      setPlayers(list);
+      setProfilePlayer(playerFromChatUser(msgUser, list));
+    });
+  };
+
   const profileRank = profilePlayer
     ? players.findIndex((p) => p.id === profilePlayer.id) + 1
     : undefined;
-
-  const openProfile = (userId: string) => {
-    if (!players.some((p) => p.id === userId)) {
-      void loadPlayers().then(() => setProfilePlayerId(userId));
-      return;
-    }
-    setProfilePlayerId(userId);
-  };
 
   return (
     <AppShell>
@@ -124,7 +143,7 @@ export default function Chat() {
         <PageTopBar onBack={() => navigate('/')} />
 
         <h2 className="text-page-title font-black gradient-text mb-1 shrink-0">Chat del grupo</h2>
-        <p className="text-white/40 text-sm mb-4">Habla con los miembros del Reto · se actualiza solo</p>
+        <p className="text-white/40 text-sm mb-4">Toca la foto para ver su perfil</p>
 
         <GlassCard strong className="flex-1 min-h-0 p-3 mb-2 overflow-hidden flex flex-col">
           <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 overscroll-contain">
@@ -133,10 +152,26 @@ export default function Chat() {
                 key={m.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`flex ${m.isOwn ? 'justify-end' : 'justify-start'}`}
+                className={`flex items-end gap-2 ${m.isOwn ? 'justify-end' : 'justify-start'}`}
               >
+                {!m.isOwn && (
+                  <button
+                    type="button"
+                    onClick={() => openProfile(m.user)}
+                    className="shrink-0 mb-0.5 rounded-full active:scale-95 transition-transform"
+                    aria-label={`Ver perfil de ${m.user.name}`}
+                  >
+                    <Avatar
+                      url={m.user.avatarUrl}
+                      emoji={m.user.emoji}
+                      name={m.user.name}
+                      size="sm"
+                      expandable={false}
+                    />
+                  </button>
+                )}
                 <div
-                  className={`max-w-[85%] rounded-2xl px-3 py-2 ${
+                  className={`max-w-[78%] rounded-2xl px-3 py-2 ${
                     m.isOwn
                       ? 'bg-gradient-to-br from-reto-pink/40 to-reto-purple/30 border border-white/15'
                       : 'bg-white/8 border border-white/10'
@@ -145,17 +180,9 @@ export default function Chat() {
                   {!m.isOwn && (
                     <button
                       type="button"
-                      onClick={() => openProfile(m.user.id)}
-                      className="text-[11px] text-white/50 mb-1 flex items-center gap-1.5 hover:text-white/80 transition-colors"
+                      onClick={() => openProfile(m.user)}
+                      className="text-[11px] font-semibold text-reto-cyan/90 mb-1 hover:text-reto-cyan transition-colors"
                     >
-                      <Avatar
-                        url={m.user.avatarUrl}
-                        emoji={m.user.emoji}
-                        name={m.user.name}
-                        size="xs"
-                        expandable={false}
-                        className="!w-5 !h-5 !text-[10px]"
-                      />
                       {m.user.name}
                     </button>
                   )}
@@ -167,7 +194,7 @@ export default function Chat() {
               </motion.div>
             ))}
             {!messages.length && (
-              <p className="text-center text-white/30 py-12 text-sm">Sé el primero en escribir 👋</p>
+              <p className="text-center text-white/30 py-12 text-sm">Sé el primero en escribir</p>
             )}
             <div ref={bottomRef} />
           </div>
@@ -210,8 +237,17 @@ export default function Chat() {
           <PlayerProfileSheet
             key={profilePlayer.id}
             player={profilePlayer}
-            rank={profileRank || undefined}
-            onClose={() => setProfilePlayerId(null)}
+            rank={profileRank && profileRank > 0 ? profileRank : undefined}
+            isOwn={profilePlayer.id === me?.id}
+            onClose={() => setProfilePlayer(null)}
+            onEditProfile={
+              profilePlayer.id === me?.id
+                ? () => {
+                    setProfilePlayer(null);
+                    navigate('/perfil');
+                  }
+                : undefined
+            }
           />
         )}
       </AnimatePresence>
