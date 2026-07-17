@@ -28,6 +28,7 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import { hydratePushFromServer } from '../hooks/usePushNotifications';
 import { useLivePoll } from '../hooks/useLivePoll';
 import { useNotifications } from '../components/NotificationProvider';
+import { PlayerProfileSheet } from '../components/PlayerProfileSheet';
 import { RadioSubmitModal } from '../components/RadioSubmitModal';
 import { useNowPlaying } from '../components/BackgroundMusic';
 import { staggerContainer, staggerItem, slideSheet, slideSheetTransition, overlayFade, overlayTransition } from '../lib/motion';
@@ -66,6 +67,7 @@ export default function Hub() {
   const [storiesLoading, setStoriesLoading] = useState(true);
   const [storyViewerId, setStoryViewerId] = useState<string | null>(null);
   const [showCreateStory, setShowCreateStory] = useState(false);
+  const [profilePlayerId, setProfilePlayerId] = useState<string | null>(null);
   const nowPlaying = useNowPlaying();
 
   const closeStoryViewer = useCallback(() => setStoryViewerId(null), []);
@@ -74,7 +76,18 @@ export default function Hub() {
   }, []);
   const closeCreateStory = useCallback(() => setShowCreateStory(false), []);
   const openCreateStory = useCallback(() => setShowCreateStory(true), []);
+  const openPlayerProfile = useCallback((userId: string) => setProfilePlayerId(userId), []);
+  const closePlayerProfile = useCallback(() => setProfilePlayerId(null), []);
 
+  const profilePlayer = profilePlayerId
+    ? players.find((p) => p.id === profilePlayerId) ?? null
+    : null;
+  const profileRank = profilePlayer
+    ? players.findIndex((p) => p.id === profilePlayer.id) + 1
+    : undefined;
+  const profileHasStories = profilePlayer
+    ? storyGroups.some((g) => g.userId === profilePlayer.id && g.stories.length > 0)
+    : false;
   const storyGroupsWithContent = storyGroups.filter((g) => g.stories.length > 0);
   const canShowStoryViewer =
     !!storyViewerId &&
@@ -291,9 +304,11 @@ export default function Hub() {
           <StoryStrip
             currentUser={user}
             groups={storyGroups}
+            players={players}
             loading={storiesLoading}
             onOpenCreate={openCreateStory}
             onOpenViewer={openStoryViewer}
+            onOpenProfile={openPlayerProfile}
           />
 
           {eventActive && currentEvent && (
@@ -418,13 +433,21 @@ export default function Hub() {
 
         <GlassCard className="p-4 mb-4">
           <div className="flex items-center gap-2 mb-3"><Trophy size={16} className="text-reto-gold" /><span className="text-sm font-bold">Ranking</span></div>
-          {players.slice(0, 6).map((p, i) => (
-            <motion.div key={p.id} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }} className="flex items-center gap-3 py-1.5">
+          {players.map((p, i) => (
+            <motion.button
+              key={p.id}
+              type="button"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: Math.min(i, 8) * 0.06 }}
+              onClick={() => openPlayerProfile(p.id)}
+              className="flex items-center gap-3 py-1.5 w-full text-left rounded-xl hover:bg-white/5 active:bg-white/8 transition-colors -mx-1 px-1"
+            >
               <span className="w-6 text-center shrink-0">{i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
-              <Avatar url={p.avatarUrl} emoji={p.avatarEmoji} name={p.displayName} size="xs" />
+              <Avatar url={p.avatarUrl} emoji={p.avatarEmoji} name={p.displayName} size="sm" expandable={false} />
               <span className="flex-1 text-sm truncate">{p.nickname || p.displayName}</span>
               <span className="text-xs font-bold text-reto-gold">{p.points} Puntos</span>
-            </motion.div>
+            </motion.button>
           ))}
         </GlassCard>
 
@@ -473,6 +496,28 @@ export default function Hub() {
           }}
         />
       )}
+
+      <AnimatePresence>
+        {profilePlayer && (
+          <PlayerProfileSheet
+            key={profilePlayer.id}
+            player={profilePlayer}
+            rank={profileRank}
+            isOwn={profilePlayer.id === user?.id}
+            hasStories={profileHasStories}
+            onClose={closePlayerProfile}
+            onViewStories={() => {
+              const id = profilePlayer.id;
+              closePlayerProfile();
+              openStoryViewer(id);
+            }}
+            onEditProfile={() => {
+              closePlayerProfile();
+              navigate('/perfil');
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showRenegotiate && (

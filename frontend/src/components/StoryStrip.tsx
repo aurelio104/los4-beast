@@ -1,25 +1,68 @@
-import { useRef } from 'react';
 import { Loader2 } from 'lucide-react';
-import { StoryUserGroup, User } from '../types';
+import { Player, StoryUserGroup, User } from '../types';
 import { StoryBubble } from './StoryBubble';
 
 type StoryStripProps = {
   currentUser: User;
   groups: StoryUserGroup[];
+  /** Jugadores del hub: aparecen con anillo vacío aunque aún no publiquen */
+  players?: Player[];
   loading?: boolean;
   onOpenCreate: () => void;
   onOpenViewer: (userId: string) => void;
+  /** Abre ficha de perfil (foto → perfil) */
+  onOpenProfile?: (userId: string) => void;
 };
+
+function mergeOthers(
+  currentUserId: string,
+  groups: StoryUserGroup[],
+  players: Player[]
+): StoryUserGroup[] {
+  const byId = new Map(players.map((p) => [p.id, p]));
+  const withStories = groups
+    .filter((g) => !g.isOwn)
+    .map((g) => {
+      const p = byId.get(g.userId);
+      if (!p) return g;
+      return {
+        ...g,
+        displayName: g.displayName || p.nickname || p.displayName,
+        avatarUrl: g.avatarUrl || p.avatarUrl,
+        avatarEmoji: g.avatarEmoji || p.avatarEmoji
+      };
+    });
+  const seen = new Set(withStories.map((g) => g.userId));
+  const empty: StoryUserGroup[] = [];
+
+  for (const p of players) {
+    if (p.id === currentUserId || seen.has(p.id)) continue;
+    empty.push({
+      userId: p.id,
+      displayName: p.nickname || p.displayName,
+      avatarUrl: p.avatarUrl,
+      avatarEmoji: p.avatarEmoji,
+      previewUrl: null,
+      hasUnseen: false,
+      isOwn: false,
+      stories: []
+    });
+  }
+
+  return [...withStories, ...empty];
+}
 
 export function StoryStrip({
   currentUser,
   groups,
+  players = [],
   loading,
   onOpenCreate,
-  onOpenViewer
+  onOpenViewer,
+  onOpenProfile
 }: StoryStripProps) {
   const ownGroup = groups.find((g) => g.isOwn);
-  const others = groups.filter((g) => !g.isOwn);
+  const others = mergeOthers(currentUser.id, groups, players);
 
   const handleOwnClick = () => {
     if (ownGroup?.stories.length) onOpenViewer(ownGroup.userId);
@@ -33,7 +76,6 @@ export function StoryStrip({
           displayName={currentUser.displayName}
           avatarUrl={currentUser.avatarUrl}
           avatarEmoji={currentUser.avatarEmoji}
-          previewUrl={ownGroup?.previewUrl ?? ownGroup?.stories.at(-1)?.mediaUrl}
           hasStory={!!ownGroup?.stories.length}
           hasUnseen={false}
           isOwn
@@ -52,10 +94,12 @@ export function StoryStrip({
             displayName={group.displayName}
             avatarUrl={group.avatarUrl}
             avatarEmoji={group.avatarEmoji}
-            previewUrl={group.previewUrl ?? group.stories.at(-1)?.mediaUrl}
             hasStory={group.stories.length > 0}
             hasUnseen={group.hasUnseen}
-            onClick={() => onOpenViewer(group.userId)}
+            onClick={() => {
+              if (onOpenProfile) onOpenProfile(group.userId);
+              else if (group.stories.length > 0) onOpenViewer(group.userId);
+            }}
           />
         ))}
       </div>

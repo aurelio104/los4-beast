@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Send } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { PageContainer } from '../components/PageContainer';
 import { PageTopBar } from '../components/PageTopBar';
 import { GlassCard } from '../components/GlassCard';
 import { Avatar } from '../components/Avatar';
+import { PlayerProfileSheet } from '../components/PlayerProfileSheet';
 import { api } from '../lib/api';
 import { useLivePoll } from '../hooks/useLivePoll';
 import { useNotifications } from '../components/NotificationProvider';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import type { Player } from '../types';
 
 interface ChatMsg {
   id: string;
@@ -25,6 +27,8 @@ export default function Chat() {
   const { showAppToast } = useNotifications();
   const online = useOnlineStatus();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [profilePlayerId, setProfilePlayerId] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -36,6 +40,11 @@ export default function Chat() {
     const list = (res.messages || []) as ChatMsg[];
     setMessages(list);
     if (list.length) lastAt.current = list[list.length - 1].createdAt;
+  };
+
+  const loadPlayers = async () => {
+    const res = await api.players();
+    if (res.success) setPlayers((res.players || []) as Player[]);
   };
 
   const pollNew = async () => {
@@ -56,7 +65,8 @@ export default function Chat() {
   };
 
   useEffect(() => {
-    load();
+    void load();
+    void loadPlayers();
   }, []);
   useLivePoll(pollNew, 8000);
 
@@ -92,6 +102,21 @@ export default function Chat() {
     }
   };
 
+  const profilePlayer = profilePlayerId
+    ? players.find((p) => p.id === profilePlayerId) ?? null
+    : null;
+  const profileRank = profilePlayer
+    ? players.findIndex((p) => p.id === profilePlayer.id) + 1
+    : undefined;
+
+  const openProfile = (userId: string) => {
+    if (!players.some((p) => p.id === userId)) {
+      void loadPlayers().then(() => setProfilePlayerId(userId));
+      return;
+    }
+    setProfilePlayerId(userId);
+  };
+
   return (
     <AppShell>
       <div className="chat-screen">
@@ -118,10 +143,21 @@ export default function Chat() {
                   }`}
                 >
                   {!m.isOwn && (
-                    <p className="text-[11px] text-white/50 mb-1 flex items-center gap-1.5">
-                      <Avatar url={m.user.avatarUrl} emoji={m.user.emoji} name={m.user.name} size="xs" className="!w-5 !h-5 !text-[10px]" />
+                    <button
+                      type="button"
+                      onClick={() => openProfile(m.user.id)}
+                      className="text-[11px] text-white/50 mb-1 flex items-center gap-1.5 hover:text-white/80 transition-colors"
+                    >
+                      <Avatar
+                        url={m.user.avatarUrl}
+                        emoji={m.user.emoji}
+                        name={m.user.name}
+                        size="xs"
+                        expandable={false}
+                        className="!w-5 !h-5 !text-[10px]"
+                      />
                       {m.user.name}
-                    </p>
+                    </button>
                   )}
                   <p className="text-sm text-white/95 whitespace-pre-wrap break-words">{m.body}</p>
                   <p className="text-[10px] text-white/35 mt-1 text-right">
@@ -168,6 +204,17 @@ export default function Chat() {
         </div>
       </PageContainer>
       </div>
+
+      <AnimatePresence>
+        {profilePlayer && (
+          <PlayerProfileSheet
+            key={profilePlayer.id}
+            player={profilePlayer}
+            rank={profileRank || undefined}
+            onClose={() => setProfilePlayerId(null)}
+          />
+        )}
+      </AnimatePresence>
     </AppShell>
   );
 }

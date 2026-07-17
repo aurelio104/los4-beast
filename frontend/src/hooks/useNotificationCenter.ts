@@ -103,6 +103,8 @@ export function useNotificationCenter() {
   // Chat en vivo cuando la app está abierta (sin depender solo del push)
   useEffect(() => {
     if (location.pathname === '/chat') return;
+    if (!localStorage.getItem('token')) return;
+    if (location.pathname === '/login' || location.pathname.startsWith('/join')) return;
 
     let pushActive = false;
     try {
