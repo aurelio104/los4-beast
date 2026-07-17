@@ -38,6 +38,8 @@ type StoryViewerModalProps = {
   onClose: () => void;
   onGroupsChange: (groups: StoryUserGroup[]) => void;
   onAddStory?: () => void;
+  /** Tocar foto/nombre del autor → perfil */
+  onOpenProfile?: (userId: string) => void;
 };
 
 export function StoryViewerModal({
@@ -45,7 +47,8 @@ export function StoryViewerModal({
   initialUserId,
   onClose,
   onGroupsChange,
-  onAddStory
+  onAddStory,
+  onOpenProfile
 }: StoryViewerModalProps) {
   const [userIndex, setUserIndex] = useState(() =>
     Math.max(0, groups.findIndex((g) => g.userId === initialUserId))
@@ -384,19 +387,26 @@ export function StoryViewerModal({
           </div>
 
           <div className="story-viewer__header px-3 pb-2 flex items-center gap-2">
-            <Avatar
-              url={group.avatarUrl}
-              emoji={group.avatarEmoji}
-              name={group.displayName}
-              size="xs"
-              expandable={false}
-              className="!w-8 !h-8 !ring-[1.5px] !ring-white/30"
-            />
-            <div className="story-viewer__user flex-1 min-w-0 flex items-center gap-1">
-              <span className="text-[13px] font-semibold truncate">{group.displayName}</span>
-              <span className="text-[13px] text-white/55 shrink-0">·</span>
-              <span className="text-[13px] text-white/55 shrink-0">{igTimeAgo(story.createdAt)}</span>
-            </div>
+            <button
+              type="button"
+              className="flex items-center gap-2 flex-1 min-w-0 text-left active:opacity-80"
+              onClick={() => onOpenProfile?.(group.userId)}
+              aria-label={`Ver perfil de ${group.displayName}`}
+            >
+              <Avatar
+                url={group.avatarUrl}
+                emoji={group.avatarEmoji}
+                name={group.displayName}
+                size="xs"
+                expandable={false}
+                className="!w-8 !h-8 !ring-[1.5px] !ring-white/30"
+              />
+              <div className="story-viewer__user flex-1 min-w-0 flex items-center gap-1">
+                <span className="text-[13px] font-semibold truncate">{group.displayName}</span>
+                <span className="text-[13px] text-white/55 shrink-0">·</span>
+                <span className="text-[13px] text-white/55 shrink-0">{igTimeAgo(story.createdAt)}</span>
+              </div>
+            </button>
 
             <div className="story-viewer__actions flex items-center shrink-0">
               {group.isOwn && (

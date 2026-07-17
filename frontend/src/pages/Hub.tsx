@@ -494,6 +494,10 @@ export default function Hub() {
             setStoryViewerId(null);
             setShowCreateStory(true);
           }}
+          onOpenProfile={(userId) => {
+            closeStoryViewer();
+            openPlayerProfile(userId);
+          }}
         />
       )}
 
