@@ -76,6 +76,7 @@ export function StoryStrip({
           displayName={currentUser.displayName}
           avatarUrl={currentUser.avatarUrl}
           avatarEmoji={currentUser.avatarEmoji}
+          previewUrl={ownGroup?.previewUrl ?? ownGroup?.stories.at(-1)?.mediaUrl}
           hasStory={!!ownGroup?.stories.length}
           hasUnseen={false}
           isOwn
@@ -88,20 +89,25 @@ export function StoryStrip({
           </div>
         )}
 
-        {others.map((group) => (
-          <StoryBubble
-            key={group.userId}
-            displayName={group.displayName}
-            avatarUrl={group.avatarUrl}
-            avatarEmoji={group.avatarEmoji}
-            hasStory={group.stories.length > 0}
-            hasUnseen={group.hasUnseen}
-            onClick={() => {
-              if (onOpenProfile) onOpenProfile(group.userId);
-              else if (group.stories.length > 0) onOpenViewer(group.userId);
-            }}
-          />
-        ))}
+        {others.map((group) => {
+          const hasStory = group.stories.length > 0;
+          const previewUrl = group.previewUrl ?? group.stories.at(-1)?.mediaUrl ?? null;
+          return (
+            <StoryBubble
+              key={group.userId}
+              displayName={group.displayName}
+              avatarUrl={group.avatarUrl}
+              avatarEmoji={group.avatarEmoji}
+              previewUrl={previewUrl}
+              hasStory={hasStory}
+              hasUnseen={group.hasUnseen}
+              onClick={() => {
+                if (hasStory) onOpenViewer(group.userId);
+                else onOpenProfile?.(group.userId);
+              }}
+            />
+          );
+        })}
       </div>
     </div>
   );
