@@ -552,7 +552,6 @@ export default function HoneycombGame({ onFinish, onBack }: HoneycombGameProps) 
 
     const onStart = (e: PointerEvent) => {
       if (stateRef.current.finished || stateRef.current.submitted) return;
-      if (phase === 'review') return;
       dismissTip();
       e.preventDefault();
       canvas.setPointerCapture(e.pointerId);
