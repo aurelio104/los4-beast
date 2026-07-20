@@ -153,23 +153,23 @@ export const GAME_ACTION_INFO: Record<GameActionKey, ActionInfo> = {
   redlight: {
     emoji: '🚦',
     title: 'Red Light',
-    description: 'Toca la pantalla solo cuando la luz esté verde. Si tocas en rojo, pierdes. Llega a 10 taps para ganar.',
-    points: 'Ganas: +80 Puntos · Pierdes: −20 Puntos',
-    rules: ['1 partida por día', 'Inspirado en Squid Game', 'Reflejos y paciencia']
+    description: 'Toca el orbe solo cuando la luz esté verde. Si tocas en rojo, te eliminan. Llega a 10 taps para cruzar.',
+    points: 'Sobrevive: +80 BP · Eliminado: −20 BP',
+    rules: ['1 partida por día', 'Cuenta atrás 3-2-1', 'Reflejos y paciencia']
   },
   trivia: {
     emoji: '🧠',
     title: 'Trivia',
-    description: 'Preguntas rápidas sobre el grupo y el reto. Responde bien para sumar puntos.',
-    points: 'Correcta: +100 Puntos · Fallo: +10 Puntos',
-    rules: ['1 partida por día', 'Preguntas del grupo', 'Siempre ganas algo']
+    description: 'Preguntas rápidas sobre el grupo y el reto. Acerta al menos 2 de 4 para llevarte el premio grande.',
+    points: '≥2 aciertos: +100 BP · Menos: +10 BP',
+    rules: ['1 partida por día', 'Feedback al instante', 'Siempre ganas algo']
   },
   ddakji: {
     emoji: '🎯',
     title: 'Ddakji Flip',
-    description: 'Lanza la ficha para voltear la del rival. Suerte y timing — como en Squid Game.',
-    points: 'Ganas: +90 Puntos · Pierdes: +15 Puntos',
-    rules: ['1 partida por día', 'Toca para lanzar', 'Animación aleatoria']
+    description: 'Lanza la ficha para voltear la del rival. Elige nivel: Fácil, Medio o Difícil (zona más estrecha y barra más rápida).',
+    points: 'N1 +60 · N2 +90 · N3 +150 (acierto) · Fallo: +12/+15/+20',
+    rules: ['1 partida por nivel al día', 'Elige dificultad antes de jugar', 'Toca en la zona dorada']
   },
   glass: {
     emoji: '🌉',

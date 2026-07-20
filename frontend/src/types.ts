@@ -125,6 +125,9 @@ export const ACTION_LABELS: Record<string, string> = {
   RED_LIGHT: '🚦 Red Light',
   TRIVIA: '🧠 Trivia',
   DDAKJI: '🎯 Ddakji',
+  DDAKJI_L1: '🎯 Ddakji Fácil',
+  DDAKJI_L2: '🎯 Ddakji Medio',
+  DDAKJI_L3: '🎯 Ddakji Difícil',
   GLASS_BRIDGE: '🌉 Glass Bridge',
   HONEYCOMB: '🍯 Honeycomb',
   MYSTERY_BOX: '🎁 Caja misteriosa',
@@ -137,9 +140,9 @@ export const ACTION_LABELS: Record<string, string> = {
 };
 
 export const GAME_LIST = [
-  { id: 'redlight', icon: '🚦', title: 'Red Light', desc: '+80 Puntos', color: 'pink' as const },
-  { id: 'trivia', icon: '🧠', title: 'Trivia', desc: '+100 Puntos', color: 'purple' as const },
-  { id: 'ddakji', icon: '🎯', title: 'Ddakji Flip', desc: '+90 Puntos', color: 'gold' as const },
+  { id: 'redlight', icon: '🚦', title: 'Red Light', desc: '+80 · toca en verde', color: 'pink' as const },
+  { id: 'trivia', icon: '🧠', title: 'Trivia', desc: '≥2 aciertos · +100', color: 'purple' as const },
+  { id: 'ddakji', icon: '🎯', title: 'Ddakji Flip', desc: 'N1–N3 · hasta +150', color: 'gold' as const },
   { id: 'glass', icon: '🌉', title: 'Glass Bridge', desc: 'Hasta +200 Puntos', color: 'cyan' as const },
   { id: 'honeycomb', icon: '🍯', title: 'Honeycomb', desc: 'Precisión', color: 'gold' as const },
   { id: 'mystery', icon: '🎁', title: 'Caja Misteriosa', desc: '+120 Puntos', color: 'pink' as const },

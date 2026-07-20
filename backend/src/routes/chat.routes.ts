@@ -84,14 +84,15 @@ chatRouter.post('/messages', async (req: Request, res: Response) => {
     const senderName = resolvePublicName(msg.user);
     void (async () => {
       const { sendPushToUser } = await import('../lib/push.js');
-      const subs = await prisma.pushSubscription.findMany({
+      const recipients = await prisma.pushSubscription.findMany({
         where: { userId: { not: userId } },
-        select: { userId: true }
+        select: { userId: true },
+        distinct: ['userId']
       });
       await Promise.all(
-        subs.map((s) =>
+        recipients.map((s) =>
           sendPushToUser(s.userId, {
-            title: `💬 ${senderName}`,
+            title: senderName,
             body: body.slice(0, 120),
             url: '/chat',
             tag: 'chat'

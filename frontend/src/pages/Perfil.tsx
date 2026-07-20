@@ -510,30 +510,46 @@ export default function Perfil() {
           <GlassCard glow="gold" className="p-5 mb-4">
             <p className="font-bold flex items-center gap-2"><Bell size={18} /> Notificaciones</p>
             <p className="text-xs text-white/50 mt-1">
-              En iPhone, añade Reto a la pantalla de inicio para activar alertas push.
+              En iPhone/iPad: toca Compartir → Añadir a pantalla de inicio. Las push solo funcionan con Reto instalado como app.
             </p>
           </GlassCard>
         )}
 
-        {push.supported && (
+        {push.permissionDenied && !push.needsStandalone && (
+          <GlassCard glow="pink" className="p-5 mb-4">
+            <p className="font-bold flex items-center gap-2"><Bell size={18} /> Permiso bloqueado</p>
+            <p className="text-xs text-white/50 mt-1">
+              Activa notificaciones en Ajustes del sistema para este navegador o app, y vuelve a entrar a Reto.
+            </p>
+          </GlassCard>
+        )}
+
+        {push.supported && !push.permissionDenied && (
           <GlassCard glow="gold" className="p-5 mb-4">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <p className="font-bold flex items-center gap-2"><Bell size={18} /> Notificaciones</p>
-                <p className="text-xs text-white/50">Eventos y drama del grupo</p>
+                <p className="text-xs text-white/50 mt-0.5">
+                  {push.subscribed
+                    ? 'Activas en este dispositivo · también llegan a tus otros equipos'
+                    : 'Eventos, chat e historias en todos tus dispositivos'}
+                </p>
               </div>
               <button
                 type="button"
                 onClick={async () => {
                   if (push.subscribed) await push.unsubscribe();
-                  else await push.subscribe();
+                  else {
+                    const ok = await push.subscribe();
+                    if (!ok) showAppToast('No se pudo activar. Revisa el permiso del sistema.');
+                  }
                   await refreshUserPushState();
                   const me = await api.me();
                   if (me.success && me.user) applyUser(me.user as User);
                   void push.refresh();
                 }}
                 disabled={push.loading}
-                className="glass-btn px-4 py-2 rounded-xl text-sm font-semibold"
+                className="glass-btn px-4 py-2 rounded-xl text-sm font-semibold shrink-0"
               >
                 {push.subscribed ? 'Desactivar' : push.loading ? '...' : 'Activar'}
               </button>

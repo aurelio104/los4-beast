@@ -302,8 +302,33 @@ gameRouter.post('/minigame/trivia', authMiddleware, async (req, res) => {
 });
 
 gameRouter.post('/minigame/ddakji', authMiddleware, async (req, res) => {
-  const { won } = req.body as { won?: boolean };
-  return miniGame(req, res, 'DDAKJI', won ? 90 : 15, { won });
+  const { won, level } = req.body as { won?: boolean; level?: number };
+  const lv = level === 1 || level === 3 ? level : 2;
+  const winPts = lv === 1 ? 60 : lv === 3 ? 150 : 90;
+  const losePts = lv === 1 ? 12 : lv === 3 ? 20 : 15;
+  const type = `DDAKJI_L${lv}`;
+  const uid = userId(req);
+
+  if (await playedMiniGameToday(uid, type)) {
+    // 200 (no 400 en consola) — 1 partida por nivel/día; se puede jugar otro nivel
+    return res.json({
+      success: false,
+      alreadyPlayed: true,
+      error: `Ya jugaste Ddakji ${lv === 1 ? 'Fácil' : lv === 3 ? 'Difícil' : 'Medio'} hoy. Prueba otro nivel.`,
+    });
+  }
+
+  // Compat: también bloquea el tipo legacy DDAKJI si ya jugó la versión sin niveles
+  if (lv === 2 && (await playedMiniGameToday(uid, 'DDAKJI'))) {
+    return res.json({
+      success: false,
+      alreadyPlayed: true,
+      error: 'Ya jugaste Ddakji Medio hoy. Prueba Fácil o Difícil.',
+    });
+  }
+
+  const result = await awardPoints(uid, type, won ? winPts : losePts, { won: Boolean(won), level: lv });
+  res.json({ success: true, ...result, points: result.gained, level: lv });
 });
 
 gameRouter.post('/minigame/glass-bridge', authMiddleware, async (req, res) => {
@@ -320,10 +345,18 @@ gameRouter.post('/minigame/honeycomb', authMiddleware, async (req, res) => {
 });
 
 gameRouter.post('/minigame/mystery-box', authMiddleware, async (req, res) => {
+  const uid = userId(req);
   const { boxIndex } = req.body as { boxIndex?: number };
+  if (boxIndex == null || boxIndex < 0 || boxIndex > 2) {
+    return res.status(400).json({ success: false, error: 'Elige un cofre' });
+  }
+  if (await playedMiniGameToday(uid, 'MYSTERY_BOX')) {
+    return res.status(400).json({ success: false, error: 'Ya jugaste esto hoy' });
+  }
   const winBox = Math.floor(Math.random() * 3);
   const won = boxIndex === winBox;
-  return miniGame(req, res, 'MYSTERY_BOX', won ? 120 : 5, { boxIndex, winBox, won });
+  const awarded = await awardPoints(uid, 'MYSTERY_BOX', won ? 120 : 5, { boxIndex, winBox, won });
+  res.json({ success: true, ...awarded, points: awarded.gained, won, winBox });
 });
 
 gameRouter.post('/minigame/coin-flip', authMiddleware, async (req, res) => {

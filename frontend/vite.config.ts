@@ -36,7 +36,9 @@ export default defineConfig({
           '**/logoR.png',
           '**/*Admin*.js',
           '**/qrcode-*.js',
-          '**/WhatsAppAdmin*.js'
+          '**/WhatsAppAdmin*.js',
+          '**/RedLightGame*.js',
+          '**/r3f-*.js'
         ],
         maximumFileSizeToCacheInBytes: 512 * 1024,
         runtimeCaching: [
@@ -110,12 +112,31 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
+            if (
+              id.includes('three') ||
+              id.includes('@react-three') ||
+              id.includes('three-stdlib') ||
+              id.includes('maath') ||
+              id.includes('troika') ||
+              id.includes('meshline') ||
+              id.includes('draco') ||
+              id.includes('glsl-noise')
+            ) {
+              return 'r3f';
+            }
             if (id.includes('framer-motion')) return 'motion';
             if (id.includes('lucide-react')) return 'icons';
             if (id.includes('@simplewebauthn')) return 'webauthn';
             if (id.includes('qrcode')) return 'qrcode';
             if (id.includes('canvas-confetti')) return 'confetti';
-            if (id.includes('react-dom') || id.includes('react-router') || id.includes('/react/')) return 'vendor';
+            if (
+              id.includes('react-dom') ||
+              id.includes('react-router') ||
+              /node_modules\/react\//.test(id) ||
+              /node_modules\/\.pnpm\/react@/.test(id)
+            ) {
+              return 'vendor';
+            }
           }
         }
       }

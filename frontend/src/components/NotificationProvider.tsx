@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useNotificationCenter } from '../hooks/useNotificationCenter';
 import { NotificationAlerts, NotificationBellButton } from './NotificationAlerts';
+import { NotificationInboxSheet } from './NotificationInboxSheet';
 
 type Ctx = ReturnType<typeof useNotificationCenter>;
 
@@ -16,6 +17,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         appMessage={center.appMessage}
         onDismiss={center.dismissToast}
         onDismissApp={center.dismissAppToast}
+        onOpenToast={center.openInbox}
+      />
+      <NotificationInboxSheet
+        open={center.inboxOpen}
+        alerts={center.recent}
+        unread={center.unread}
+        onClose={center.closeInbox}
+        onOpenAlert={center.openAlert}
+        onMarkAllRead={center.markAllRead}
+        onClearAll={center.clearAll}
       />
       {children}
     </NotificationContext.Provider>

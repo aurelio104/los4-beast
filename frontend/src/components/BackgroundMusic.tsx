@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { getPreferences } from '../lib/preferences';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Music2, X } from 'lucide-react';
+import { getPreferences, setPreferences } from '../lib/preferences';
 import { api } from '../lib/api';
 
 export type NowPlaying = {
@@ -34,6 +36,10 @@ function youtubeEmbedSrc(videoId: string): string {
   return `https://www.youtube-nocookie.com/embed/${videoId}?${params}`;
 }
 
+function trackNudgeKey(track: Pick<RadioTrack, 'title' | 'audioUrl' | 'youtubeVideoId'>): string {
+  return `reto_music_nudge:${track.youtubeVideoId || track.audioUrl || track.title}`;
+}
+
 /** Música comunitaria (MP3 en servidor o link YouTube) + fallback ambiente. */
 export function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -44,15 +50,19 @@ export function BackgroundMusic() {
   const [src, setSrc] = useState<string | null>(null);
   const [youtubeVideoId, setYoutubeVideoId] = useState<string | null>(null);
   const [hasCommunityTrack, setHasCommunityTrack] = useState(false);
+  const [trackMeta, setTrackMeta] = useState<{ title: string; by: string } | null>(null);
   const [audioReady, setAudioReady] = useState(false);
+  const [showMuteNudge, setShowMuteNudge] = useState(false);
 
   const applyTrack = (track: RadioTrack | null) => {
     if (!track) {
       setSrc(null);
       setYoutubeVideoId(null);
       setHasCommunityTrack(false);
+      setTrackMeta(null);
       return;
     }
+    setTrackMeta({ title: track.title, by: track.submittedBy });
     if (track.sourceType === 'youtube' && track.youtubeVideoId) {
       setSrc(null);
       setYoutubeVideoId(track.youtubeVideoId);
@@ -68,6 +78,7 @@ export function BackgroundMusic() {
     setSrc(null);
     setYoutubeVideoId(null);
     setHasCommunityTrack(false);
+    setTrackMeta(null);
   };
 
   const loadRadio = async () => {
@@ -115,6 +126,48 @@ export function BackgroundMusic() {
     window.addEventListener('reto-prefs', onPrefs);
     return () => window.removeEventListener('reto-prefs', onPrefs);
   }, []);
+
+  useEffect(() => {
+    if (!hasCommunityTrack || on || !trackMeta) {
+      setShowMuteNudge(false);
+      return;
+    }
+    const key = trackNudgeKey({
+      title: trackMeta.title,
+      audioUrl: src || '',
+      youtubeVideoId
+    });
+    try {
+      if (sessionStorage.getItem(key) === '1') {
+        setShowMuteNudge(false);
+        return;
+      }
+    } catch {
+      /* private mode */
+    }
+    setShowMuteNudge(true);
+  }, [hasCommunityTrack, on, trackMeta, src, youtubeVideoId]);
+
+  const dismissMuteNudge = () => {
+    setShowMuteNudge(false);
+    if (!trackMeta) return;
+    const key = trackNudgeKey({
+      title: trackMeta.title,
+      audioUrl: src || '',
+      youtubeVideoId
+    });
+    try {
+      sessionStorage.setItem(key, '1');
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const enableMusic = () => {
+    setPreferences({ music: true });
+    setOn(true);
+    dismissMuteNudge();
+  };
 
   useEffect(() => {
     if (!booted) return;
@@ -215,16 +268,58 @@ export function BackgroundMusic() {
 
   const playYoutube = on && booted && !!youtubeVideoId;
 
-  return playYoutube ? (
-    <iframe
-      key={youtubeVideoId}
-      title="Radio Reto"
-      src={youtubeEmbedSrc(youtubeVideoId!)}
-      allow="autoplay; encrypted-media"
-      className="pointer-events-none fixed opacity-0"
-      style={{ width: 1, height: 1, border: 0, left: -9999, top: -9999 }}
-    />
-  ) : null;
+  return (
+    <>
+      {playYoutube ? (
+        <iframe
+          key={youtubeVideoId}
+          title="Radio Reto"
+          src={youtubeEmbedSrc(youtubeVideoId!)}
+          allow="autoplay; encrypted-media"
+          className="pointer-events-none fixed opacity-0"
+          style={{ width: 1, height: 1, border: 0, left: -9999, top: -9999 }}
+        />
+      ) : null}
+
+      <AnimatePresence>
+        {showMuteNudge && trackMeta && (
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            className="fixed left-1/2 -translate-x-1/2 z-[86] w-[min(22rem,calc(100vw-2rem))] glass-strong rounded-2xl px-4 py-3 shadow-2xl border border-reto-cyan/35 toast-bottom-safe"
+            role="status"
+          >
+            <div className="flex items-start gap-3">
+              <Music2 size={20} className="text-reto-cyan shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold leading-tight">Hay música en el Reto</p>
+                <p className="text-xs text-white/65 mt-1 line-clamp-2">
+                  Activa el sonido para escuchar «{trackMeta.title}»
+                  {trackMeta.by ? ` · ${trackMeta.by}` : ''}
+                </p>
+                <button
+                  type="button"
+                  onClick={enableMusic}
+                  className="mt-2.5 w-full py-2 rounded-xl text-sm font-bold btn-primary"
+                >
+                  Activar sonido
+                </button>
+              </div>
+              <button
+                type="button"
+                className="text-white/40 min-w-[36px] min-h-[36px] flex items-center justify-center shrink-0"
+                onClick={dismissMuteNudge}
+                aria-label="Cerrar"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
 }
 
 export function useNowPlaying(): NowPlaying {

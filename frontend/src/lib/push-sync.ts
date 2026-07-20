@@ -46,7 +46,8 @@ export async function syncPushSubscription(): Promise<boolean> {
     const json = sub.toJSON();
     await api.pushSubscribe({
       endpoint: json.endpoint!,
-      keys: { p256dh: json.keys!.p256dh!, auth: json.keys!.auth! }
+      keys: { p256dh: json.keys!.p256dh!, auth: json.keys!.auth! },
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined
     });
     return true;
   } catch {

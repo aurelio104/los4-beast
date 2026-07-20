@@ -17,6 +17,30 @@ export function getVapidPublicKey() {
   return VAPID_PUBLIC || null;
 }
 
+async function deliverToSubscription(
+  sub: { id: string; endpoint: string; p256dh: string; auth: string },
+  payload: { title: string; body: string; url?: string; tag?: string }
+): Promise<boolean> {
+  try {
+    await webpush.sendNotification(
+      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+      JSON.stringify({
+        ...payload,
+        url: payload.url || '/',
+        tag: payload.tag || 'reto'
+      }),
+      { TTL: 86400, urgency: 'high' as webpush.Urgency }
+    );
+    return true;
+  } catch (e) {
+    const err = e as { statusCode?: number };
+    if (err.statusCode === 410 || err.statusCode === 404) {
+      await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+    }
+    return false;
+  }
+}
+
 export async function sendPushToUser(
   userId: string,
   payload: { title: string; body: string; url?: string; tag?: string },
@@ -24,26 +48,9 @@ export async function sendPushToUser(
 ) {
   let pushSent = 0;
   if (isPushConfigured()) {
-    const sub = await prisma.pushSubscription.findUnique({ where: { userId } });
-    if (sub) {
-      try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify({
-            ...payload,
-            url: payload.url || '/',
-            tag: payload.tag || 'reto',
-            badgeCount: 1
-          }),
-          { TTL: 86400, urgency: 'high' as webpush.Urgency }
-        );
-        pushSent = 1;
-      } catch (e) {
-        const err = e as { statusCode?: number };
-        if (err.statusCode === 410 || err.statusCode === 404) {
-          await prisma.pushSubscription.delete({ where: { userId } }).catch(() => {});
-        }
-      }
+    const subs = await prisma.pushSubscription.findMany({ where: { userId } });
+    for (const sub of subs) {
+      if (await deliverToSubscription(sub, payload)) pushSent++;
     }
   }
 
@@ -57,14 +64,24 @@ export async function sendPushToUser(
   return { sent: pushSent, whatsapp: wa };
 }
 
+/** Usuarios activos con opt-in o al menos una suscripción (excluye opcional). */
+async function recipientUserIds(excludeUserId?: string): Promise<string[]> {
+  const users = await prisma.user.findMany({
+    where: {
+      isActive: true,
+      ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
+      OR: [{ pushOptIn: true }, { pushSubscriptions: { some: {} } }]
+    },
+    select: { id: true }
+  });
+  return users.map((u) => u.id);
+}
+
 /** Avisa a todos (menos el autor) que hay historia nueva — solo push, sin WhatsApp. */
 export async function notifyNewStory(authorId: string, authorName: string) {
   if (!isPushConfigured()) return { sent: 0, total: 0 };
 
-  const subs = await prisma.pushSubscription.findMany({
-    where: { userId: { not: authorId }, user: { isActive: true } }
-  });
-
+  const ids = await recipientUserIds(authorId);
   const payload = {
     title: `📸 ${authorName}`,
     body: 'Publicó una nueva historia',
@@ -73,12 +90,12 @@ export async function notifyNewStory(authorId: string, authorName: string) {
   };
 
   let sent = 0;
-  for (const sub of subs) {
-    const r = await sendPushToUser(sub.userId, payload, { skipWhatsApp: true });
+  for (const id of ids) {
+    const r = await sendPushToUser(id, payload, { skipWhatsApp: true });
     sent += r.sent;
   }
 
-  return { sent, total: subs.length };
+  return { sent, total: ids.length };
 }
 
 const STORY_REACTION_GLYPHS: Record<string, string> = {
@@ -104,34 +121,31 @@ export async function notifyStoryReaction(
     tag: 'story-reaction'
   };
 
-  const subs = await prisma.pushSubscription.findMany({
-    where: { userId: { not: reactorId }, user: { isActive: true } }
-  });
-
+  const ids = await recipientUserIds(reactorId);
   let sent = 0;
-  for (const sub of subs) {
-    const r = await sendPushToUser(sub.userId, payload, { skipWhatsApp: true });
+  for (const id of ids) {
+    const r = await sendPushToUser(id, payload, { skipWhatsApp: true });
     sent += r.sent;
   }
 
-  return { sent, total: subs.length };
+  return { sent, total: ids.length };
 }
 
 export async function broadcastPush(payload: { title: string; body: string; url?: string; tag?: string }) {
   const { buildChangeAlertMessage, sendWhatsAppMessage } = await import('./whatsapp.js');
   const msg = buildChangeAlertMessage(payload.title, payload.body, payload.url);
 
-  const subs = await prisma.pushSubscription.findMany();
+  const ids = await recipientUserIds();
   const notifiedWa = new Set<string>();
   let sent = 0;
   let waSent = 0;
 
-  for (const sub of subs) {
-    const r = await sendPushToUser(sub.userId, payload);
+  for (const id of ids) {
+    const r = await sendPushToUser(id, payload);
     sent += r.sent;
     if (r.whatsapp?.sent) {
       waSent++;
-      notifiedWa.add(sub.userId);
+      notifiedWa.add(id);
     }
   }
 
@@ -151,7 +165,7 @@ export async function broadcastPush(payload: { title: string; body: string; url?
     if (r.sent) waSent++;
   }
 
-  return { sent, total: subs.length, whatsappSent: waSent };
+  return { sent, total: ids.length, whatsappSent: waSent };
 }
 
 export async function notifyEventReminder() {

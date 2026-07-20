@@ -7,34 +7,53 @@ type Props = {
   appMessage: string | null;
   onDismiss: () => void;
   onDismissApp: () => void;
+  onOpenToast?: () => void;
 };
 
-export function NotificationAlerts({ toast, appMessage, onDismiss, onDismissApp }: Props) {
+export function NotificationAlerts({ toast, appMessage, onDismiss, onDismissApp, onOpenToast }: Props) {
   return (
     <>
       <AnimatePresence>
         {toast && (
-          <motion.div
+          <motion.button
+            type="button"
             initial={{ opacity: 0, y: -24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -16 }}
-            className="fixed top-[max(0.75rem,env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-[90] w-[min(22rem,calc(100vw-1.5rem))] glass-strong rounded-2xl p-4 shadow-2xl border border-reto-pink/30"
+            className="notif-toast"
             role="alert"
+            onClick={() => {
+              onOpenToast?.();
+              onDismiss();
+            }}
           >
-            <div className="flex gap-3 items-start">
-              <div className="relative shrink-0">
-                <Bell size={22} className="text-reto-gold mt-0.5" />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-reto-red ring-2 ring-black/40" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold leading-tight">{toast.title}</p>
-                <p className="text-xs text-white/65 mt-1 line-clamp-2">{toast.body}</p>
-              </div>
-              <button type="button" className="text-white/40 min-w-[44px] min-h-[44px] flex items-center justify-center" onClick={onDismiss} aria-label="Cerrar">
-                <X size={16} />
-              </button>
+            <div className="notif-toast__lamp" aria-hidden>
+              <Bell size={18} />
+              <span className="notif-toast__pulse" />
             </div>
-          </motion.div>
+            <div className="notif-toast__copy">
+              <p className="notif-toast__title">{toast.title}</p>
+              <p className="notif-toast__body">{toast.body}</p>
+            </div>
+            <span
+              role="button"
+              tabIndex={0}
+              className="notif-toast__x"
+              aria-label="Cerrar"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDismiss();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation();
+                  onDismiss();
+                }
+              }}
+            >
+              <X size={15} />
+            </span>
+          </motion.button>
         )}
       </AnimatePresence>
 
@@ -44,15 +63,13 @@ export function NotificationAlerts({ toast, appMessage, onDismiss, onDismissApp 
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed left-1/2 -translate-x-1/2 z-[85] w-[min(22rem,calc(100vw-2rem))] glass-strong toast-enter px-5 py-3 rounded-2xl text-sm font-semibold text-center toast-bottom-safe"
+            className="notif-app-toast"
             role="status"
           >
-            <div className="flex items-center justify-between gap-3">
-              <span className="flex-1">{appMessage}</span>
-              <button type="button" className="text-white/45 min-w-[36px] min-h-[36px] flex items-center justify-center shrink-0" onClick={onDismissApp} aria-label="Cerrar">
-                <X size={14} />
-              </button>
-            </div>
+            <span className="notif-app-toast__text">{appMessage}</span>
+            <button type="button" className="notif-app-toast__x" onClick={onDismissApp} aria-label="Cerrar">
+              <X size={14} />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -71,14 +88,13 @@ export function NotificationBellButton({ unread, onClick, className = '' }: Bell
     <button
       type="button"
       onClick={onClick}
-      className={`relative glass-btn p-2.5 rounded-xl shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center ${className}`}
+      className={`notif-bell ${unread > 0 ? 'is-hot' : ''} ${className}`.trim()}
       aria-label={unread ? `${unread} notificaciones sin leer` : 'Notificaciones'}
     >
-      <Bell size={20} className="text-white/90" />
+      <span className="notif-bell__ring" aria-hidden />
+      <Bell size={19} strokeWidth={2.25} className="notif-bell__icon" />
       {unread > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-reto-red text-[10px] font-black flex items-center justify-center ring-2 ring-[#0a0a0f] animate-pulse">
-          {unread > 9 ? '9+' : unread}
-        </span>
+        <span className="notif-bell__badge">{unread > 9 ? '9+' : unread}</span>
       )}
     </button>
   );

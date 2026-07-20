@@ -1,12 +1,11 @@
-/* Push + badge — iOS/Android PWA (importado por Workbox) */
+/* Push + badge — iOS/Android/Desktop PWA (importado por Workbox) */
 
 function parsePushData(event) {
   const fallback = {
     title: 'Reto',
     body: 'Nueva actividad en el reto',
     url: '/',
-    tag: 'reto',
-    badgeCount: 1
+    tag: 'reto'
   };
   try {
     if (event.data) return { ...fallback, ...event.data.json() };
@@ -21,6 +20,7 @@ function notifyClients(payload) {
     list.forEach((client) => {
       client.postMessage({ type: 'RETO_PUSH', payload });
     });
+    return list;
   });
 }
 
@@ -45,13 +45,14 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     (async () => {
-      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const clients = await notifyClients(data);
       const foreground = clients.some((c) => c.visibilityState === 'visible');
 
-      await notifyClients(data);
-
-      const count = typeof data.badgeCount === 'number' ? data.badgeCount : 1;
-      await setBadgeCount(count);
+      // Si hay clientes vivos, ellos sincronizan el badge real vía addAlert.
+      // Solo forzamos badge=1 cuando la app está completamente cerrada.
+      if (!clients.length) {
+        await setBadgeCount(1);
+      }
 
       if (foreground) return;
 
@@ -65,7 +66,7 @@ self.addEventListener('push', (event) => {
         silent: false,
         vibrate: [120, 60, 120, 60, 200],
         timestamp: Date.now(),
-        data: { url: data.url || '/', tag: data.tag, badgeCount: count },
+        data: { url: data.url || '/', tag: data.tag },
         requireInteraction: false,
         actions: [{ action: 'open', title: 'Abrir' }]
       });
@@ -79,7 +80,6 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     (async () => {
-      await setBadgeCount(0);
       const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       for (const client of list) {
         client.postMessage({ type: 'RETO_PUSH_OPEN', url });

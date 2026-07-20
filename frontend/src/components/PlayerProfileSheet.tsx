@@ -74,8 +74,13 @@ export function PlayerProfileSheet({
               emoji={player.avatarEmoji}
               name={player.displayName}
               size="xl"
-              className="!ring-white/25 mb-3"
+              className="!ring-white/25 mb-1"
             />
+            {player.avatarUrl ? (
+              <p className="text-[11px] text-white/40 mb-3">Toca la foto para ampliar</p>
+            ) : (
+              <div className="mb-3" />
+            )}
             <h3 className="text-xl font-black text-white leading-tight">{name}</h3>
             {player.nickname && player.nickname !== player.displayName && (
               <p className="text-sm text-white/45 mt-0.5">{player.displayName}</p>

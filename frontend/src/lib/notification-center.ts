@@ -38,11 +38,23 @@ export function getUnreadCountByTag(tag: string): number {
   return load().filter((a) => !a.read && a.tag === tag).length;
 }
 
-export function getRecentAlerts(limit = 8): StoredAlert[] {
+export function getRecentAlerts(limit = 20): StoredAlert[] {
   return load().slice(0, limit);
 }
 
 export function addAlert(payload: AlertPayload): StoredAlert {
+  const items = load();
+  // Dedup: mismo tag+body en los últimos 8s (push + poll chat)
+  const recentDup = items.find(
+    (a) =>
+      a.tag &&
+      payload.tag &&
+      a.tag === payload.tag &&
+      a.body === payload.body &&
+      Date.now() - a.at < 8000
+  );
+  if (recentDup) return recentDup;
+
   const item: StoredAlert = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     at: Date.now(),
@@ -52,10 +64,15 @@ export function addAlert(payload: AlertPayload): StoredAlert {
     url: payload.url || '/',
     tag: payload.tag
   };
-  const items = [item, ...load().filter((a) => a.id !== item.id)];
-  save(items);
+  save([item, ...items.filter((a) => a.id !== item.id)]);
   void syncAppBadge();
   return item;
+}
+
+export function markAlertRead(id: string) {
+  const items = load().map((a) => (a.id === id ? { ...a, read: true } : a));
+  save(items);
+  void syncAppBadge();
 }
 
 export function markAllRead() {

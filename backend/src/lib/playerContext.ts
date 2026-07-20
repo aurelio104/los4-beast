@@ -5,6 +5,9 @@ export const EVENT_GAME_MAP: Record<string, string> = {
   RED_LIGHT: 'redlight',
   HONEYCOMB: 'honeycomb',
   DDAKJI: 'ddakji',
+  DDAKJI_L1: 'ddakji',
+  DDAKJI_L2: 'ddakji',
+  DDAKJI_L3: 'ddakji',
   GLASS_BRIDGE: 'glass'
 };
 
@@ -114,7 +117,7 @@ function buildAchievements(points: number, streak: number, counts: Record<string
     { id: 'streak_3', emoji: '🔥', title: 'Racha 3 días', unlocked: streak >= 3 },
     { id: 'streak_7', emoji: '💥', title: 'Racha 7 días', unlocked: streak >= 7 },
     { id: 'betrayer', emoji: '💀', title: 'Primera traición', unlocked: (counts.BETRAY ?? 0) >= 1 },
-    { id: 'arena', emoji: '🎮', title: 'Guerrero Arena', unlocked: ['RED_LIGHT', 'TRIVIA', 'DDAKJI', 'GLASS_BRIDGE', 'HONEYCOMB', 'MYSTERY_BOX', 'COIN_FLIP', 'TUG_WAR'].some((t) => (counts[t] ?? 0) > 0) },
+    { id: 'arena', emoji: '🎮', title: 'Guerrero Arena', unlocked: ['RED_LIGHT', 'TRIVIA', 'DDAKJI', 'DDAKJI_L1', 'DDAKJI_L2', 'DDAKJI_L3', 'GLASS_BRIDGE', 'HONEYCOMB', 'MYSTERY_BOX', 'COIN_FLIP', 'TUG_WAR'].some((t) => (counts[t] ?? 0) > 0) },
     { id: 'bp_500', emoji: '⭐', title: '500 Puntos', unlocked: points >= 500 },
     { id: 'bp_1000', emoji: '👑', title: '1000 Puntos', unlocked: points >= 1000 },
     { id: 'confession', emoji: '🤐', title: 'Confesor', unlocked: (counts.CONFESSION ?? 0) >= 1 }

@@ -2,9 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   addAlert,
+  clearAllAlerts,
   getRecentAlerts,
   getUnreadCount,
   getUnreadCountByTag,
+  markAlertRead,
   markAllRead,
   markReadByTag,
   subscribeAlerts,
@@ -27,9 +29,10 @@ function deliverAlert(payload: AlertPayload, foreground: boolean) {
 export function useNotificationCenter() {
   const [unread, setUnread] = useState(getUnreadCount);
   const [chatUnread, setChatUnread] = useState(() => getUnreadCountByTag('chat'));
-  const [recent, setRecent] = useState<StoredAlert[]>(getRecentAlerts);
+  const [recent, setRecent] = useState<StoredAlert[]>(() => getRecentAlerts(20));
   const [toast, setToast] = useState<AlertPayload | null>(null);
   const [appMessage, setAppMessage] = useState<string | null>(null);
+  const [inboxOpen, setInboxOpen] = useState(false);
   const toastTimer = useRef<number | null>(null);
   const appTimer = useRef<number | null>(null);
   const location = useLocation();
@@ -38,7 +41,7 @@ export function useNotificationCenter() {
   const showToast = useCallback((payload: AlertPayload) => {
     setToast(payload);
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToast(null), 5000);
+    toastTimer.current = window.setTimeout(() => setToast(null), 5200);
   }, []);
 
   const dismissToast = useCallback(() => {
@@ -60,7 +63,7 @@ export function useNotificationCenter() {
   const refresh = useCallback(() => {
     setUnread(getUnreadCount());
     setChatUnread(getUnreadCountByTag('chat'));
-    setRecent(getRecentAlerts());
+    setRecent(getRecentAlerts(20));
   }, []);
 
   useEffect(() => subscribeAlerts(refresh), [refresh]);
@@ -92,6 +95,7 @@ export function useNotificationCenter() {
       if (data.type === 'RETO_PUSH_OPEN' && data.url) {
         markAllRead();
         refresh();
+        setInboxOpen(false);
         navigate(data.url);
       }
     };
@@ -100,7 +104,6 @@ export function useNotificationCenter() {
     return () => navigator.serviceWorker?.removeEventListener('message', onMsg);
   }, [navigate, refresh, showToast]);
 
-  // Chat en vivo cuando la app está abierta (sin depender solo del push)
   useEffect(() => {
     if (location.pathname === '/chat') return;
     if (!localStorage.getItem('token')) return;
@@ -120,7 +123,13 @@ export function useNotificationCenter() {
       try {
         const res = await api.chatMessages(lastAt || undefined);
         if (!res.success || !res.messages?.length) return;
-        const list = res.messages as { id: string; body: string; createdAt: string; isOwn: boolean; user: { name: string } }[];
+        const list = res.messages as {
+          id: string;
+          body: string;
+          createdAt: string;
+          isOwn: boolean;
+          user: { name: string };
+        }[];
         const incoming = list.filter((m) => !m.isOwn && (!lastAt || m.createdAt > lastAt));
         if (!incoming.length) {
           if (list.length) lastAt = list[list.length - 1].createdAt;
@@ -130,7 +139,7 @@ export function useNotificationCenter() {
         lastAt = last.createdAt;
         localStorage.setItem('reto_chat_cursor', lastAt);
         const payload: AlertPayload = {
-          title: `💬 ${last.user.name}`,
+          title: last.user.name,
           body: last.body.slice(0, 120),
           url: '/chat',
           tag: 'chat'
@@ -149,11 +158,52 @@ export function useNotificationCenter() {
   }, [location.pathname, refresh, showToast]);
 
   const openInbox = useCallback(() => {
+    haptic('light');
+    setInboxOpen(true);
+    refresh();
+  }, [refresh]);
+
+  const closeInbox = useCallback(() => {
+    setInboxOpen(false);
+  }, []);
+
+  const openAlert = useCallback(
+    (alert: StoredAlert) => {
+      markAlertRead(alert.id);
+      refresh();
+      setInboxOpen(false);
+      navigate(alert.url || '/');
+    },
+    [navigate, refresh]
+  );
+
+  const handleMarkAllRead = useCallback(() => {
     markAllRead();
     refresh();
-    const first = getRecentAlerts(1)[0];
-    navigate(first?.url || '/');
-  }, [navigate, refresh]);
+    haptic('light');
+  }, [refresh]);
 
-  return { unread, chatUnread, recent, toast, appMessage, openInbox, refresh, markAllRead, dismissToast, showAppToast, dismissAppToast };
+  const handleClearAll = useCallback(() => {
+    clearAllAlerts();
+    refresh();
+    haptic('light');
+  }, [refresh]);
+
+  return {
+    unread,
+    chatUnread,
+    recent,
+    toast,
+    appMessage,
+    inboxOpen,
+    openInbox,
+    closeInbox,
+    openAlert,
+    refresh,
+    markAllRead: handleMarkAllRead,
+    clearAll: handleClearAll,
+    dismissToast,
+    showAppToast,
+    dismissAppToast
+  };
 }

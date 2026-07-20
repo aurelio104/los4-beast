@@ -220,18 +220,36 @@ export const api = {
 
   redLight: (survived: boolean) => request<{ success: boolean; points: number; gained?: number; error?: string }>('/game/minigame/red-light', { method: 'POST', body: JSON.stringify({ survived }) }),
   trivia: (correct: boolean) => request<{ success: boolean; points: number; gained?: number; error?: string }>('/game/minigame/trivia', { method: 'POST', body: JSON.stringify({ correct }) }),
-  ddakji: (won: boolean) => request<{ success: boolean; points: number; gained?: number; error?: string }>('/game/minigame/ddakji', { method: 'POST', body: JSON.stringify({ won }) }),
+  ddakji: (won: boolean, level: 1 | 2 | 3 = 2) =>
+    request<{ success: boolean; points: number; gained?: number; alreadyPlayed?: boolean; level?: number; error?: string }>(
+      '/game/minigame/ddakji',
+      { method: 'POST', body: JSON.stringify({ won, level }) }
+    ),
   glassBridge: (steps: number) => request<{ success: boolean; points: number; gained?: number; error?: string }>('/game/minigame/glass-bridge', { method: 'POST', body: JSON.stringify({ steps }) }),
   honeycomb: (precision: number) => request<{ success: boolean; points: number; gained?: number; error?: string }>('/game/minigame/honeycomb', { method: 'POST', body: JSON.stringify({ precision }) }),
-  mysteryBox: (boxIndex: number) => request<{ success: boolean; points: number; gained?: number; error?: string }>('/game/minigame/mystery-box', { method: 'POST', body: JSON.stringify({ boxIndex }) }),
+  mysteryBox: (boxIndex: number) =>
+    request<{
+      success: boolean;
+      points: number;
+      gained?: number;
+      won?: boolean;
+      winBox?: number;
+      error?: string;
+    }>('/game/minigame/mystery-box', { method: 'POST', body: JSON.stringify({ boxIndex }) }),
   coinFlip: (choice: string, bet: number) => request<{ success: boolean; points: number; gained?: number; won?: boolean; result?: string; error?: string }>('/game/minigame/coin-flip', { method: 'POST', body: JSON.stringify({ choice, bet }) }),
   tugWar: (taps: number) => request<{ success: boolean; points: number; gained?: number; error?: string }>('/game/minigame/tug-war', { method: 'POST', body: JSON.stringify({ taps }) }),
   challenge1v1: (opponentId: string, won: boolean) => request<{ success: boolean; points: number; gained?: number; error?: string }>('/game/minigame/challenge', { method: 'POST', body: JSON.stringify({ opponentId, won }) }),
 
   pushVapidPublic: () => request<{ success: boolean; publicKey?: string; error?: string }>('/push/vapid-public'),
-  pushSubscribe: (body: { endpoint: string; keys: { p256dh: string; auth: string } }) => request<{ success: boolean }>('/push/subscribe', { method: 'POST', body: JSON.stringify(body) }),
-  pushStatus: () => request<{ success: boolean; serverSubscribed?: boolean; pushOptIn?: boolean }>('/push/status'),
-  pushUnsubscribe: () => request<{ success: boolean }>('/push/unsubscribe', { method: 'POST' }),
+  pushSubscribe: (body: { endpoint: string; keys: { p256dh: string; auth: string }; userAgent?: string }) =>
+    request<{ success: boolean; devices?: number }>('/push/subscribe', { method: 'POST', body: JSON.stringify(body) }),
+  pushStatus: () =>
+    request<{ success: boolean; serverSubscribed?: boolean; pushOptIn?: boolean; devices?: number }>('/push/status'),
+  pushUnsubscribe: (body?: { endpoint?: string; all?: boolean }) =>
+    request<{ success: boolean; devices?: number }>('/push/unsubscribe', {
+      method: 'POST',
+      body: JSON.stringify(body || { all: true })
+    }),
   pushTest: () => request<{ success: boolean }>('/push/test', { method: 'POST' }),
   pushBroadcast: (title: string, body: string) => request<{ success: boolean; sent: number }>('/push/broadcast', { method: 'POST', body: JSON.stringify({ title, body }) }),
 

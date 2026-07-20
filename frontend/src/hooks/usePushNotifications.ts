@@ -47,7 +47,12 @@ export function usePushNotifications() {
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [permissionDenied, setPermissionDenied] = useState(
+    () => typeof Notification !== 'undefined' && Notification.permission === 'denied'
+  );
+
   const refresh = useCallback(async () => {
+    setPermissionDenied(typeof Notification !== 'undefined' && Notification.permission === 'denied');
     setSubscribed(await readSubscribedState());
   }, []);
 
@@ -81,7 +86,11 @@ export function usePushNotifications() {
     setLoading(true);
     try {
       const perm = await Notification.requestPermission();
-      if (perm !== 'granted') return false;
+      if (perm !== 'granted') {
+        setPermissionDenied(perm === 'denied');
+        return false;
+      }
+      setPermissionDenied(false);
 
       const ok = await syncPushSubscription();
       if (!ok) return false;
@@ -118,8 +127,10 @@ export function usePushNotifications() {
       const reg = await serviceWorkerReady();
       if (!reg) return false;
       const sub = await reg.pushManager.getSubscription();
+      const endpoint = sub?.endpoint;
       if (sub) await sub.unsubscribe();
-      await api.pushUnsubscribe();
+      // Desactivar en todos los dispositivos (Preferencias)
+      await api.pushUnsubscribe(endpoint ? { all: true } : { all: true });
 
       const user = getStoredUser();
       if (user.id) setPushOptIn(user.id, false);
@@ -138,7 +149,7 @@ export function usePushNotifications() {
     }
   }, [loading]);
 
-  return { supported, needsStandalone, subscribed, loading, subscribe, unsubscribe, refresh };
+  return { supported, needsStandalone, subscribed, loading, permissionDenied, subscribe, unsubscribe, refresh };
 }
 
 /** Sincroniza pushOptIn desde /me y re-registra si el usuario ya lo tenía activo. */
